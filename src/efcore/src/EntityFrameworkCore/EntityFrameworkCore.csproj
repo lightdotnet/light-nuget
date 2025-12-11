@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+	<ImplicitUsings>enable</ImplicitUsings>
+	<Nullable>enable</Nullable>
+	<RootNamespace>Light</RootNamespace>
+	<AssemblyName>Lightsoft.EntityFrameworkCore</AssemblyName>
+	<Title>Lightsoft.EntityFrameworkCore</Title>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<Authors>minhvu</Authors>
+	<Description>EF Core plugin package containing EF Core evaluator.</Description>
+	<Summary>EF Core plugin package containing EF Core evaluator.</Summary>
+	<Version>10.0.0</Version>
+	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
+	<PackageIcon>icon.png</PackageIcon>
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<PublishRepositoryUrl>true</PublishRepositoryUrl>
+	<EmbedUntrackedSources>true</EmbedUntrackedSources>
+	<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<PackageReference Include="Dapper" Version="2.1.66" />
+	<PackageReference Include="Lightsoft.Result" Version="1.*" />
+	<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="$(AspnetVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<ProjectReference Include="..\Specification\Specification.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<Using Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+
+</Project>

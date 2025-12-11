@@ -1,0 +1,19 @@
+name: Setup .NET and Checkout
+
+inputs:
+  dotnet-version:
+    type: string
+    default: '10.x'   # ✅ default value
+    required: false
+  
+runs:
+
+  using: "composite"
+
+  steps:
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ inputs.dotnet-version }}
+

@@ -1,0 +1,25 @@
+﻿@using System.Globalization
+
+@typeparam T
+
+<MudNumericField
+    Value="Value" ValueChanged="ValueChanged"
+    HideSpinButtons=true
+    Immediate="false"
+    Format="N0"
+    Culture="@_en"
+    T="T"
+    Variant="Mud.Variant"
+    Margin="Mud.Margin" />
+
+@code {
+    #nullable disable
+    
+    [Parameter]
+    public T Value { get; set; }
+
+    [Parameter]
+    public EventCallback<T> ValueChanged { get; set; }
+    
+    private CultureInfo _en = CultureInfo.GetCultureInfo("en-US");
+}

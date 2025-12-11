@@ -1,0 +1,146 @@
+﻿@typeparam T where T : class
+@typeparam TLookup where TLookup : class, IPage
+
+@if (SearchContent != null)
+{
+    <Card>
+
+        @SearchContent
+
+        <div class="mt-3">
+            <Button_Search OnClick="SearchAsync" />
+
+            @if (State.ExportApi is not null)
+            {
+                var export = State.ExportApi;
+
+                if (export.ExportByLookupFunc is not null)
+                {
+                    <Button_Export OnClick="ExportByLookupAsync" />
+                }
+                else if (export.ExportFunc is not null)
+                {
+                    <Button_Export Label="@State.ExportApi.ButtonName" OnClick="ExportAsync" />
+                }
+            }
+
+            @if (ButtonsContent != null)
+            {
+                @ButtonsContent
+            }
+        </div>
+    </Card>
+
+    <div class="mb-3"></div>
+}
+
+<Card>
+    @if (!string.IsNullOrEmpty(State.ErrorMessage))
+    {
+        <div class="alert alert-danger text-center p-2" role="alert"><b>@State.ErrorMessage</b></div>
+    }
+
+    <div class="d-flex justify-content-between mb-3">
+        <IconActionButtons IconAction="IconActionButtons.Action.Refresh" OnClick="ReloadAsync" />
+    </div>
+    
+    @if (RowTemplate?.HasSingleTarget is true)
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                @if (HeadContent?.HasSingleTarget is true)
+                {
+                    <thead>
+                        <tr>
+                            @HeadContent
+                        </tr>
+                    </thead>
+                }
+
+                <tbody>
+                    @foreach (var record in records)
+                    {
+                        <tr>
+                            @RowTemplate(record)
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    }
+    else if (CustomRows?.HasSingleTarget is true)
+    {
+        @CustomRows
+    }
+
+    @if (pagination is not null && pagination.TotalPages > 1)
+    {
+        <Pagination State=pagination StateChanged="OnPagedChangedAsync" />
+    }
+
+    <Overlay IsProcessing="processing" />
+</Card>
+
+@code {
+    [Parameter]
+    public RenderFragment? SearchContent { get; set; }
+
+    [Parameter]
+    public string? SearchPermission { get; set; }
+
+    [Parameter]
+    public RenderFragment? ButtonsContent { get; set; }
+
+    [Parameter]
+    public RenderFragment? HeadContent { get; set; }
+
+    [Parameter]
+    public RenderFragment<T> RowTemplate { get; set; } = default!;
+
+    [Parameter]
+    public RenderFragment? CustomRows { get; set; }
+
+    [Parameter]
+    public RemoteTable<T, TLookup> State { get; set; } = default!;
+
+    private IEnumerable<T> records => State.Records;
+
+    private Paged? pagination => State.Pagination;
+
+    private bool processing => State?.Processing ?? false;
+
+    private async Task OnPagedChangedAsync(IPage? page)
+    {
+        if (pagination is not null)
+        {
+            await State.RunUpdateAsync(page);
+        }
+    }
+
+    private Task SearchAsync() => State.SearchAsync();
+
+    private Task ReloadAsync() => State.ReloadAsync();
+
+    private async Task ExportAsync()
+    {
+        if (State?.ExportApi?.ExportFunc is not null)
+        {
+            await CallGuarded.TryDownloadAsync(
+                State.ExportApi.ExportFunc(),
+                $"{State.ExportApi.FileName}.xlsx",
+                JSRuntime);
+        }
+    }
+
+    private async Task ExportByLookupAsync()
+    {
+        if (State?.ExportApi?.ExportByLookupFunc is not null)
+        {
+            await CallGuarded.TryDownloadAsync(
+                State.ExportApi.ExportByLookupFunc(State.Lookup),
+                $"{State.ExportApi.FileName}.xlsx",
+                JSRuntime);
+        }
+    }
+}

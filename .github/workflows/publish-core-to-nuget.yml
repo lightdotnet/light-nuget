@@ -1,0 +1,29 @@
+name: '[NuGet.org] Publish Core packages'
+
+on:
+  workflow_dispatch
+  
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    # must run in every workflows
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: ./.github/actions/dotnet-setup
+          
+    - name: Publish packages
+      uses: ./.github/actions/publish-nuget
+      with:
+        publish-key: ${{ secrets.NUGET_API_KEY }}
+        projects: |
+          [
+            "src/Extensions/Extensions.csproj",
+            "src/SharedKernel/SharedKernel.csproj"
+          ]
+        working-dir: ./src/framework

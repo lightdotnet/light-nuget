@@ -1,0 +1,81 @@
+﻿@page "/tables"
+
+<h3>Table</h3>
+
+<div class="card">
+    <div class="card-header">
+        Pagination
+    </div>
+    <div class="card-body">
+        <Pagination State="paged" PagesOnLeft="5" PagesOnRight="5" />
+    </div>
+</div>
+
+
+<div class="card mt-5">
+    <div class="card-header">
+        Data Table
+    </div>
+    <div class="card-body">
+        <Table State="dataTable">
+            <HeadContent>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Created</th>
+            </HeadContent>
+            <RowTemplate>
+                <td>@context.Id</td>
+                <td>@context.Name</td>
+                <td>@context.Created.ToString("yyyy-MM-dd")</td>
+            </RowTemplate>
+        </Table>
+    </div>
+</div>
+
+<div class="card mt-5">
+    <div class="card-header">
+        Remote Table
+    </div>
+    <div class="card-body">
+        <Remote_Table State="remoteTable">
+            <HeadContent>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Created</th>
+            </HeadContent>
+            <RowTemplate>
+                <td>@context.Id</td>
+                <td>@context.Name</td>
+                <td>@context.Created.ToString("yyyy-MM-dd")</td>
+            </RowTemplate>
+        </Remote_Table>
+    </div>
+</div>
+
+@code {
+    private Paged paged = new Paged
+    {
+        Page = 1,
+        PageSize = 20,
+        TotalPages = 100,
+        TotalRecords = 2000
+    };
+
+    private DataTable<Product> dataTable = null!;
+
+    private RemoteTable<Product, Search> remoteTable = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        remoteTable = new(ProductService.Search);
+        
+        dataTable = new(ProductService.GetAll)
+        {
+            SearchFunc = ProductService.SearchFunc
+        };
+
+        await dataTable.ReloadAsync();
+
+        await remoteTable.ReloadAsync();
+    }
+}

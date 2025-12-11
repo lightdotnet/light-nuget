@@ -1,0 +1,12 @@
+﻿<div class="form-check">
+    <input @bind="Value" class="form-check-input" type="checkbox" onclick="return false;" />
+    <label class="form-check-label">@Label</label>
+</div>
+
+@code {
+    [Parameter]
+    public bool Value { get; set; }
+
+    [Parameter]
+    public string Label { get; set; } = null!;
+}

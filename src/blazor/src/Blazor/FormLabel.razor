@@ -1,0 +1,22 @@
+﻿<b><label>@Title</label></b>
+
+@if (Required)
+{
+    <span class="require">*</span>
+}
+
+@if (!string.IsNullOrEmpty(Note))
+{
+    <small class="text-danger form-note ml-1">@Note</small>
+}
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "";
+
+    [Parameter]
+    public bool Required { get; set; } = false;
+
+    [Parameter]
+    public string? Note { get; set; }
+}

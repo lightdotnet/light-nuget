@@ -1,0 +1,50 @@
+﻿@page "/inputs"
+
+<h3>Inputs</h3>
+
+<div class="card">
+    <div class="card-header">
+        AutoComplete
+    </div>
+    <div class="card-body">
+        @if (viewProducts != null)
+        {
+            <AutoComplete T="Product"
+                          List="viewProducts"
+                          Variant="Mud.Variant"
+                          OnSearch="OnSearchAsync"
+                          SelectedChanged="OnSelected"
+                          ToStringFunc="@(e=> e==null?null : $"[{e.Id}] {e.Name}")" />
+            <br />
+        }
+        
+        <p class="mt-3">
+            Product: @selectedProduct?.Id - @selectedProduct?.Name
+        </p>
+    </div>
+</div>
+
+@code {
+    private IEnumerable<Product> products = [];
+
+    private IEnumerable<Product> viewProducts = [];
+
+    private Product? selectedProduct;
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = (await ProductService.GetResult()).Data;
+        viewProducts = products;
+    }
+
+    private async Task OnSearchAsync(string value)
+    {
+        viewProducts = products.Where(e => ProductService.SearchFunc(value, e));
+        await Task.CompletedTask;
+    }
+
+    private void OnSelected(Product? product)
+    {
+        selectedProduct = product;
+    }
+}

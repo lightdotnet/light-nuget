@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+	<RootNamespace>Light.FluentBlazor</RootNamespace>
+	<AssemblyName>Lightsoft.FluentBlazor</AssemblyName>
+	<Title>Lightsoft.FluentBlazor</Title>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<Authors>minhvu</Authors>
+	<Description>FluentBlazor extra components.</Description>
+	<Summary>FluentBlazor extra components.</Summary>
+	<Version>0.0.0.2-beta1</Version>
+	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
+	<PackageIcon>icon.png</PackageIcon>
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<PublishRepositoryUrl>true</PublishRepositoryUrl>
+	<EmbedUntrackedSources>true</EmbedUntrackedSources>
+	<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.*" />
+	<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.*" />
+	<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Blazor\Blazor.csproj" />
+  </ItemGroup>
+
+</Project>

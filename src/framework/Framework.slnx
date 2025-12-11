@@ -1,0 +1,26 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/Sample.AspNetCore/Sample.AspNetCore.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="../../.github/workflows/aspnetcore/publish-aspnetcore-to-nuget.yml" />
+    <File Path="../../.github/workflows/aspnetcore/publish-identity-to-nuget.yml" />
+    <File Path="../../.github/workflows/publish-core-to-nuget.yml" />
+    <File Path="Directory.Build.props" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Authorization/Authorization.csproj" />
+    <Project Path="src/Extensions/Extensions.csproj" />
+    <Project Path="src/Identity.EntityFrameworkCore/Identity.EntityFrameworkCore.csproj" />
+    <Project Path="src/Identity/Identity.csproj" />
+    <Project Path="src/Modularity/Modularity.csproj" />
+    <Project Path="src/OpenApi/OpenApi.csproj" />
+    <Project Path="src/SharedKernel/SharedKernel.csproj" />
+    <Project Path="src/Swagger/Swagger.csproj" />
+    <Project Path="src/WebHost/WebHost.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/UnitTests/UnitTests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,62 @@
+name: "Publish NuGet Package"
+description: "Restore, build, pack, and publish a .csproj"
+
+inputs:
+  publish-key:
+    required: true
+    description: "api key must have publish permission"
+
+  projects:
+    required: true
+    description: "Path to the .csproj"
+
+  working-dir:
+    required: false
+    default: '.'
+
+runs:
+
+  using: "composite"
+
+  steps:
+    - name: Parse and restore all projects
+      shell: bash
+      working-directory: ${{ inputs.working-dir }}
+      run: |
+        echo "Projects JSON: ${{ inputs.projects }}"
+
+        # Loop through JSON array
+        for project in $(echo '${{ inputs.projects }}' | jq -r '.[]'); do
+          echo "Restoring: $project"
+          dotnet restore "$project"
+        done
+
+    - name: Build all projects
+      shell: bash
+      working-directory: ${{ inputs.working-dir }}
+      run: |
+        for project in $(echo '${{ inputs.projects }}' | jq -r '.[]'); do
+          echo "Building: $project"
+          dotnet build "$project" --configuration Release --no-restore
+        done
+
+    - name: Pack all projects
+      shell: bash
+      working-directory: ${{ inputs.working-dir }}
+      run: |
+        rm -rf nuget/
+        mkdir nuget
+
+        for project in $(echo '${{ inputs.projects }}' | jq -r '.[]'); do
+          echo "Packing: $project"
+          dotnet pack --no-build "$project" --configuration Release --output nuget
+        done
+
+    - name: Publish to NuGet.org
+      shell: bash
+      working-directory: ${{ inputs.working-dir }}
+      run: |
+        dotnet nuget push nuget/*.nupkg \
+          -k '${{ inputs.publish-key }}' \
+          --skip-duplicate \
+          -s https://api.nuget.org/v3/index.json

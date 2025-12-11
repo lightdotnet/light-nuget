@@ -1,0 +1,48 @@
+﻿@typeparam T
+
+<MudTextField T="T" Value=Value ValueChanged=ValueChanged
+    Variant="Variant" Margin="@Mud.Margin"
+    Placeholder="@PlaceHolder"
+    Lines="Lines"
+    AdornmentIcon="@Icon"
+    Adornment="Adornment.End"
+    Class="@Class"
+    Label="@Label"
+    Required="Required" ReadOnly="ReadOnly" AutoGrow="AutoGrow" />
+
+@code {
+    #nullable disable
+
+    [Parameter]
+    public T Value { get; set; }
+
+    [Parameter]
+    public EventCallback<T> ValueChanged { get; set; }
+
+    [Parameter]
+    public bool Required { get; set; }
+
+    [Parameter]
+    public bool ReadOnly { get; set; }
+
+    [Parameter]
+    public int Lines { get; set; } = 1;
+
+    [Parameter]
+    public string PlaceHolder { get; set; }
+
+    [Parameter]
+    public string Icon { get; set; }
+
+    [Parameter]
+    public string Class { get; set; }
+
+    [Parameter]
+    public Variant Variant { get; set; } = Mud.Variant;
+
+    [Parameter]
+    public bool AutoGrow { get; set; }
+
+    [Parameter]
+    public string Label { get; set; }
+}

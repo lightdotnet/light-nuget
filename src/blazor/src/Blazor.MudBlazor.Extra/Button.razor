@@ -1,0 +1,47 @@
+﻿<MudButton
+    Color="Color.Map()"
+    Variant="@variant"
+    DropShadow="false"
+    FullWidth="FullWidth"
+    StartIcon="@StartIcon" EndIcon="@EndIcon"
+    Class="@Class"
+    ButtonType="buttonType"
+    OnClick="OnClick" Href="@Href">
+    @Label
+</MudButton>
+
+@code {
+    [Parameter]
+    public string? Label { get; set; }
+
+    [Parameter]
+    public AppColor Color { get; set; } = AppColor.Default;
+
+    [Parameter]
+    public string? StartIcon { get; set; }
+
+    [Parameter]
+    public string? EndIcon { get; set; }
+
+    [Parameter]
+    public bool FullWidth { get; set; } = false;
+
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    [Parameter]
+    public string? Href { get; set; }
+
+    [Parameter]
+    public bool Submit { get; set; }
+
+    [Parameter]
+    public bool Outlined { get; set; }
+
+    private ButtonType buttonType => Submit ? ButtonType.Submit : ButtonType.Button;
+
+    private Variant variant => Outlined ? Variant.Outlined : Variant.Filled;
+}

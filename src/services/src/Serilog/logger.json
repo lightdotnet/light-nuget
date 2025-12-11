@@ -1,0 +1,84 @@
+{
+  /* Add to configuration for override settings */
+  "Serilog": {
+    "FilePath": "C:\\NetApplication\\LIVE\\BackLogs",
+    "Template": "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} <s:{SourceContext}>{NewLine}{Exception}",
+    "DbConnection": "",
+    "TableName": "Serilogs",
+    "Using": [],
+    "Enrich": [
+      "FromLogContext",
+      "WithMachineName",
+      "WithProcessId",
+      "WithThreadId",
+      "WithHangfireContext"
+    ],
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Hangfire": "Warning",
+        "Microsoft": "Error",
+        "System": "Information",
+        "Microsoft.Hosting.Lifetime": "Information"
+      }
+    },
+    "Filter": [
+      {
+        "Name": "ByExcluding",
+        "Args": {
+          "expression": "@mt = 'An unhandled exception has occurred while executing the request.'"
+        }
+      }
+    ],
+    "WriteTo": [
+      {
+        "Name": "Async",
+        "Args": {
+          "configure": [
+            {
+              "Name": "Console",
+              "Args": {
+                //"theme": "Serilog.Sinks.SystemConsole.Themes.AnsiConsoleTheme::Code, Serilog.Sinks.Console",
+                "outputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} <s:{SourceContext}>{NewLine}{Exception}"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "Name": "Async",
+        "Args": {
+          "configure": [
+            {
+              "Name": "File",
+              "Args": {
+                "path": "./logs/log-.txt",
+                "rollingInterval": "Day",
+                "restrictedToMinimumLevel": "Information"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "Name": "Async",
+        "Args": {
+          "configure": [
+            {
+              "Name": "File",
+              "Args": {
+                "path": "./logs/confuse-.txt",
+                "rollingInterval": "Day",
+                "restrictedToMinimumLevel": "Warning"
+              }
+            }
+          ]
+        }
+      }
+      //{
+      //  "Name": "Seq",
+      //  "Args": { "serverUrl": "https://localhost:8088" }
+      //}
+    ]
+  }
+}

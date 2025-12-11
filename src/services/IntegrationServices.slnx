@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="../../.github/workflows/extensions/publish-caching-to-nuget.yml" />
+    <File Path="../../.github/workflows/extensions/publish-extensions-to-nuget.yml" />
+    <File Path="../../.github/workflows/extensions/publish-services-to-nuget.yml" />
+    <File Path="Directory.Build.props" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/ActiveDirectory/ActiveDirectory.csproj" />
+    <Project Path="src/Caching/Caching.csproj" />
+    <Project Path="src/FileGenerator/FileGenerator.csproj" />
+    <Project Path="src/Graph/Graph.csproj" />
+    <Project Path="src/Mail.Contracts/Mail.Contracts.csproj" />
+    <Project Path="src/Serilog/Serilog.csproj" />
+    <Project Path="src/SmtpMail/SmtpMail.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/UnitTests/UnitTests.csproj" />
+  </Folder>
+  <Project Path="samples/WebApi/WebApi.csproj" />
+</Solution>

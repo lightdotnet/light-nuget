@@ -1,0 +1,23 @@
+﻿@typeparam T where T : struct, System.Enum
+
+<MudSelect T="T" Value="Value" ValueChanged="ValueChanged" Clearable="true" Variant="Mud.Variant" Margin="Mud.Margin" Placeholder="@($"-- {placeHolder} --")">
+    @foreach (var data in enumAsList)
+    {
+        <MudSelectItem T="T" Value="data">@(ShowDescription ? data.GetDescription() : data.ToString())</MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+    [Parameter]
+    public T Value { get; set; }
+
+    [Parameter]
+    public EventCallback<T> ValueChanged { get; set; }
+
+    [Parameter]
+    public bool ShowDescription { get; set; }
+
+    private IEnumerable<T> enumAsList = EnumHelper.GetAll<T>();
+
+    private string placeHolder => typeof(T).Name.ToLower();
+}

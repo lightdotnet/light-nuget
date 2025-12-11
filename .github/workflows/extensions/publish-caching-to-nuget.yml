@@ -1,0 +1,33 @@
+name: Publish Caching to Nuget.org
+
+on:
+  workflow_dispatch
+  
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+          dotnet-version: '10.x'
+          
+    - name: Install dependencies
+      run: |
+        dotnet restore src/Caching/Caching.csproj
+        
+    - name: Build
+      run: |
+        dotnet build src/Caching/Caching.csproj --configuration Release --no-restore
+        
+    - name: Publish to Nuget.org
+      run: |
+        rm -rf nuget/
+        
+        dotnet pack --no-build src/Caching/Caching.csproj --configuration Release --output nuget
+        
+        dotnet nuget push nuget/*.nupkg -k '${{ secrets.NUGET_API_KEY }}' --skip-duplicate -s https://api.nuget.org/v3/index.json

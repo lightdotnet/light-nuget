@@ -1,0 +1,90 @@
+﻿<MudIconButton 
+    ButtonType="buttonType"
+    Icon="@(string.IsNullOrEmpty(CustomIcon) ? icon : CustomIcon)"
+    Color="color"
+    Size="size"
+    Variant="variant"
+    OnClick="OnClick"
+    Href="@Href" />
+
+@code {
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    [Parameter]
+    public string? Href { get; set; }
+
+    [Parameter]
+    public bool Submit { get; set; }
+
+    [Parameter]
+    public Action IconAction { get; set; } = Action.View;
+
+    [Parameter]
+    public string? CustomIcon { get; set; }
+
+    public enum Action
+    {
+        View,
+        Create,
+        Update,
+        Delete,
+        Save,
+        Refresh,
+        Cancel
+    }
+
+    private Color color = Color.Primary;
+
+    private Size size = Size.Small;
+
+    private string icon = Icon.View;
+
+    private Variant variant = Variant.Text;
+
+    private ButtonType buttonType => Submit ? ButtonType.Submit : ButtonType.Button;
+
+    protected override void OnInitialized()
+    {
+        switch (IconAction)
+        {
+            case Action.Create:
+                {
+                    icon = Icon.AddCircle;
+                    variant = Variant.Filled;
+                    size = Size.Medium;
+                    break;
+                }
+            case Action.Update:
+                {
+                    icon = Icon.Edit;
+                    break;
+                }
+            case Action.Delete:
+                {
+                    icon = Icon.Delete;
+                    color = Color.Error;
+                    break;
+                }
+            case Action.Save:
+                {
+                    icon = Icon.Save;
+                    variant = Variant.Filled;
+                    size = Size.Medium;
+                    break;
+                }
+            case Action.Refresh:
+                {
+                    icon = Icon.Refresh;
+                    color = Color.Default;
+                    break;
+                }
+            case Action.Cancel:
+                {
+                    icon = Icon.Clear;
+                    color = Color.Default;
+                    break;
+                }
+        }
+    }
+}

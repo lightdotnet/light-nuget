@@ -1,0 +1,14 @@
+﻿<FluentBadge Appearance="@Appearance" Class="@Class">
+    @Value
+</FluentBadge>
+
+@code {
+    [Parameter]
+    public object Value { get; set; } = null!;
+
+    [Parameter]
+    public Appearance Appearance { get; set; }
+
+    [Parameter]
+    public string? Class { get; set; }
+}

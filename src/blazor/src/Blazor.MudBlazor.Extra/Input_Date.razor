@@ -1,0 +1,34 @@
+﻿@typeparam T
+
+<MudTextField T="T"
+    Value=Value ValueChanged=ValueChanged
+    Placeholder="PlaceHolder"
+    Format="@format"
+    InputType="type"
+    Variant="Mud.Variant"
+    Margin="Mud.Margin"
+    Required="Required" />
+
+@code {
+    #nullable disable
+
+    [Parameter]
+    public T Value { get; set; }
+
+    [Parameter]
+    public EventCallback<T> ValueChanged { get; set; }
+
+    [Parameter]
+    public string PlaceHolder { get; set; }
+
+    [Parameter]
+    public bool Required { get; set; }
+
+    [Parameter]
+    public bool DateTime { get; set; }
+
+    private string format => DateTime ? "s" : "yyyy-MM-dd";
+
+    private InputType type =>
+        DateTime ? InputType.DateTimeLocal : InputType.Date;
+}

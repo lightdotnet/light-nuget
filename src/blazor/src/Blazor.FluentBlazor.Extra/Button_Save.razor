@@ -1,0 +1,18 @@
+﻿<FluentButton
+    Type="@(Submit ? ButtonType.Submit : ButtonType.Button)"
+    Appearance="Appearance.Accent"
+    IconStart="@(new Icons.Regular.Size16.Save())"
+    OnClick=OnClick>
+    @Label
+</FluentButton>
+
+@code {
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    [Parameter]
+    public string Label { get; set; } = "Save";
+
+    [Parameter]
+    public bool Submit { get; set; } = true;
+}

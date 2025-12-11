@@ -1,0 +1,33 @@
+﻿<MudTextField T="string"
+    Value="value.ToString()" ValueChanged=OnValueChanged
+    Placeholder="PlaceHolder"
+    InputType="InputType.Time"
+    Variant="Mud.Variant"
+    Margin="Mud.Margin"
+    Required="Required" />
+
+@code {
+    [Parameter]
+    public TimeOnly Value { get; set; }
+
+    [Parameter]
+    public EventCallback<TimeOnly> ValueChanged { get; set; }
+
+    [Parameter]
+    public string? PlaceHolder { get; set; }
+
+    [Parameter]
+    public bool Required { get; set; }
+
+    private TimeSpan value => Value.ToTimeSpan();
+
+    private async Task OnValueChanged(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return;
+
+        Value = TimeOnly.Parse(value);
+
+        await ValueChanged.InvokeAsync(Value);
+    }
+}

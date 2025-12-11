@@ -1,0 +1,152 @@
+﻿@using System.Collections
+@typeparam T
+
+<Card>
+    @if (Model is null)
+    {
+        <p>no content</p>
+    }
+    else if (Model.IsList())
+    {
+        if (Model is IEnumerable<System.Security.Claims.Claim> claims)
+        {
+            <Button_Export Label="Export" OnClick="ExportAsync" />
+
+            <div class="table-responsive mb-3 mt-3">
+                <table class="table table-hover table-bordered">
+                    <tbody>
+                        @foreach (var claim in claims)
+                        {
+                            <tr>
+                                <td>@claim.Type</td>
+                                <td>@claim.ValueType</td>
+                                <td>@claim.Value</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            var listObj = (IEnumerable<object>)Model;
+
+            if (listObj.Any() is false)
+            {
+                return;
+            }
+
+            var firstRowValues = listObj.First().GetValues();
+
+            <Button_Export Label="Export" OnClick="ExportAsync" />
+
+            <div class="table-responsive mb-3 mt-3">
+                <table class="table table-hover table-bordered">
+                    <thead>
+                        <tr>
+                            @foreach (var obj in firstRowValues)
+                            {
+                                <th>@obj.Key</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var obj in listObj)
+                        {
+                            var childProps = obj.GetValues();
+
+                            <tr>
+                                @foreach (var childProp in childProps)
+                                {
+                                    string childName = childProp.Key;
+                                    object childValue = childProp.Value;
+
+                                    <td>
+                                        @childValue
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+    else
+    {
+        var dictionary = Model.IsDictionary () ? (IDictionary<string, object>)Model : Model.GetValues();
+
+        @foreach (var prop in dictionary)
+        {
+            @if (prop.Value.IsList())
+            {
+                var listObj = (IEnumerable<object>)prop.Value;
+
+                if (listObj.Any() is false)
+                {
+                    return;
+                }
+
+                var firstRowValues = listObj.First().GetValues();
+
+                <b><label class="form-label">@prop.Key</label></b>
+
+                <div class="table-responsive mb-3">
+                    <table class="table table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                @foreach (var obj in firstRowValues)
+                                {
+                                    <th>@obj.Key</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var obj in listObj)
+                            {
+                                var childProps = obj.GetValues();
+
+                                <tr>
+                                    @foreach (var childProp in childProps)
+                                    {
+                                        string childName = childProp.Key;
+                                        object childValue = childProp.Value;
+
+                                        <td>
+                                            @childValue
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="row mb-2">
+                    <label class="col-sm-4 form-label">@prop.Key</label>
+                    <div class="col-md-8">
+                        <input class="form-control" value="@prop.Value" disabled>
+                    </div>
+                </div>
+            }
+        }
+    }
+    
+</Card>
+
+@code {
+    [Parameter]
+    public T Model { get; set; } = default!;
+
+    private async Task ExportAsync()
+    {
+        if (Model != null && Model.IsList())
+        {
+            var file = ExcelService.Export((IEnumerable<T>)Model);
+
+            await JSRuntime.InvokeVoidAsync("downloadBase64String", "results.xlsx", file.ToBase64String());
+        }
+    }
+}

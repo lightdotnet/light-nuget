@@ -1,0 +1,30 @@
+﻿h1:focus {
+    outline: none;
+}
+
+/* Pagination */
+.page-link {
+    color: var(--neutral-foreground-rest) !important;
+}
+
+    .active > .page-link, .page-link.active {
+        color: var(--fill-color) !important;
+        background-color: var(--accent-fill-rest) !important;
+    }
+
+/* fix Toastr display behind modal overlay */
+.fluent-toast-provider {
+    z-index: 9999 !important;
+}
+
+/* Card */
+.card {
+    background: var(--fill-color);
+    color: var(--neutral-foreground-rest);
+}
+
+/* Table */
+.table thead th {
+    text-align: center;
+    text-transform: uppercase;
+}

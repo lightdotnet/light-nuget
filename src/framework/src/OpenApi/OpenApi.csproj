@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	<RootNamespace>Light.AspNetCore.OpenApi</RootNamespace>
+	<AssemblyName>Lightsoft.AspNetCore.OpenApi</AssemblyName>
+	<Title>Lightsoft.AspNetCore.OpenApi</Title>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<Authors>minhvu</Authors>
+	<Description>AspNetCore OpenApi package.</Description>
+	<Summary>AspNetCore OpenApi package.</Summary>
+	<Version>9.0.8</Version>
+	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
+	<PackageIcon>icon.png</PackageIcon>
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<PackageReleaseNotes></PackageReleaseNotes>
+	<PublishRepositoryUrl>true</PublishRepositoryUrl>
+	<EmbedUntrackedSources>true</EmbedUntrackedSources>
+	<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.*" />
+	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
+	<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.0.1" />
+	<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.0.1" />
+  </ItemGroup>
+
+</Project>
