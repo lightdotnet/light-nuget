@@ -1,4 +1,4 @@
-<img align="left" width="116" height="116" src="https://github.com/lightdotnet/lightframework/blob/dev/.github/c-sharp-logo.png" />
+<img align="left" width="116" height="116" src="https://github.com/lightdotnet/light-nuget/blob/dev/.github/light-dotnet.png" />
 <br/>
 
 # Light .NET Packages
