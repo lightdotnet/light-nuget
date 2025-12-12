@@ -20,7 +20,7 @@ jobs:
     - name: Publish packages
       uses: ./.github/actions/publish-nuget
       with:
-        publish-key: ${{ secrets.NUGET_API_KEY }}
+        token: ${{ secrets.NUGET_API_KEY }}
         projects: |
           [
             "src/Extensions/Extensions.csproj",
