@@ -2,7 +2,7 @@ name: "Publish NuGet Package"
 description: "Restore, build, pack, and publish a .csproj"
 
 inputs:
-  publish-key:
+  token:
     required: true
     description: "api key must have publish permission"
 
@@ -57,6 +57,6 @@ runs:
       working-directory: ${{ inputs.working-dir }}
       run: |
         dotnet nuget push nuget/*.nupkg \
-          -k '${{ inputs.publish-key }}' \
+          -k '${{ inputs.token }}' \
           --skip-duplicate \
           -s https://api.nuget.org/v3/index.json
