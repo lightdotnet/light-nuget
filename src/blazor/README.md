@@ -1,2 +1,2 @@
-# BlazorExtraComponents
-Blazor extra components
+# Blazor Extra Components
+
