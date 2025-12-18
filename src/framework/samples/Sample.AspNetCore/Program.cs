@@ -6,6 +6,7 @@ using Light.AspNetCore.Swagger;
 using Light.Extensions.DependencyInjection;
 using Light.Identity;
 using Light.Serilog;
+using Sample.AspNetCore;
 using Sample.AspNetCore.HealthChecks;
 using Sample.AspNetCore.Identity;
 using Sample.AspNetCore.SoapCore;
@@ -63,6 +64,8 @@ try
     builder.Services.AddValidatorsFromAssemblies([executingAssembly]);
 
     builder.Services.AddHealthChecksService();
+
+    builder.Services.AddHostedService<Worker>();
 
     var app = builder.Build();
 

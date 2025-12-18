@@ -3,9 +3,9 @@
     <Project Path="samples/Sample.AspNetCore/Sample.AspNetCore.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
-    <File Path="../../.github/workflows/aspnetcore/publish-aspnetcore-to-nuget.yml" />
-    <File Path="../../.github/workflows/aspnetcore/publish-identity-to-nuget.yml" />
+    <File Path="../../.github/workflows/publish-aspnetcore-to-nuget.yml" />
     <File Path="../../.github/workflows/publish-core-to-nuget.yml" />
+    <File Path="../../.github/workflows/publish-identity-to-nuget.yml" />
     <File Path="Directory.Build.props" />
     <File Path="README.md" />
   </Folder>

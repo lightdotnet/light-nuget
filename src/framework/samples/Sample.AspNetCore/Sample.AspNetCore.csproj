@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Extensions\Extensions.csproj" />
     <ProjectReference Include="..\..\src\Identity.EntityFrameworkCore\Identity.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\src\Modularity\Modularity.csproj" />
     <ProjectReference Include="..\..\src\Swagger\Swagger.csproj" />

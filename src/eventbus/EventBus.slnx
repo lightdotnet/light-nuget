@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/Solution Items/">
-    <File Path="../../.github/workflows/eventbus/publish-eventbus-to-nuget.yml" />
+    <File Path="../../.github/workflows/publish-eventbus-to-nuget.yml" />
     <File Path="README.md" />
   </Folder>
   <Folder Name="/src/">

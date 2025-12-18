@@ -1,0 +1,29 @@
+name: '[NuGet.org] Publish Identity packages'
+
+on:
+  workflow_dispatch
+  
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    # must run in every workflows
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: ./.github/actions/dotnet-setup
+          
+    - name: Publish packages
+      uses: ./.github/actions/publish-nuget
+      with:
+        token: ${{ secrets.NUGET_API_KEY }}
+        projects: |
+          [
+            "src/Identity/Identity.csproj",
+            "src/Identity.EntityFrameworkCore/Identity.EntityFrameworkCore.csproj"
+          ]
+        working-dir: ./src/framework
