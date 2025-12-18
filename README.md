@@ -1,7 +1,7 @@
-<img align="left" width="116" height="116" src="https://github.com/lightdotnet/light-packages/blob/main/.github/c-sharp-logo.png" />
+<img align="left" width="116" height="116" src="https://github.com/lightdotnet/light-nuget/blob/main/.github/light-dotnet.png" />
 <br/>
 
-# Light Framework Packages
+# Light .NET Packages
 
 ## About
-This solution contains Light Framework projects publish to NuGet.org
+This solution contains Light .NET projects publish to NuGet.org

@@ -1,0 +1,9 @@
+﻿<Button Color="AppColor.Primary" StartIcon="@Icon.Create" OnClick="OnClick" Label="Create" Href="@Href" />
+
+@code {
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    [Parameter]
+    public string? Href { get; set; }
+}

@@ -1,0 +1,8 @@
+﻿<FluentOverlay @bind-Visible=IsProcessing Opacity="0.3" Alignment="Align.Center" Justification="JustifyContent.Center" Dismissable="false">
+    <FluentProgressRing />
+</FluentOverlay>
+
+@code {
+    [Parameter]
+    public bool IsProcessing { get; set; } = false;
+}

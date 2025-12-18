@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+	<ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+	  
+	<ExcludeSourceLink>true</ExcludeSourceLink>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
+	<PackageReference Include="FluentValidation" Version="12.1.1" />
+	<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+	<PackageReference Include="Lightsoft.Serilog" Version="1.0.0.2" />
+    <PackageReference Include="Mapster" Version="7.4.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="$(AspnetVersion)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(AspnetVersion)" />
+	<PackageReference Include="SoapCore" Version="1.2.1.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Extensions\Extensions.csproj" />
+    <ProjectReference Include="..\..\src\Identity.EntityFrameworkCore\Identity.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\src\Modularity\Modularity.csproj" />
+    <ProjectReference Include="..\..\src\Swagger\Swagger.csproj" />
+    <ProjectReference Include="..\..\src\WebHost\WebHost.csproj" />
+  </ItemGroup>
+
+</Project>

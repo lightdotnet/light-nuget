@@ -1,0 +1,49 @@
+﻿@if (Rows > 1)
+{
+    <FluentTextArea
+        Class="@Class"
+        Value=@Value ValueChanged=@ValueChanged
+        Label="@Label"
+        Required="@Required"
+        Placeholder="@PlaceHolder"
+        ReadOnly="@ReadOnly"
+        Rows="@Rows"/>
+}
+else
+{
+    <FluentTextField
+        Class="@Class"
+        Value=@Value ValueChanged=@ValueChanged
+        Label="@Label"
+        Required="@Required"
+        Placeholder="@PlaceHolder"
+        ReadOnly="@ReadOnly" />
+}
+
+@code {
+    #nullable disable
+
+    [Parameter]
+    public string Value { get; set; }
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    [Parameter]
+    public bool Required { get; set; }
+
+    [Parameter]
+    public bool ReadOnly { get; set; }
+
+    [Parameter]
+    public string PlaceHolder { get; set; }
+
+    [Parameter]
+    public string Class { get; set; }
+
+    [Parameter]
+    public string Label { get; set; }
+
+    [Parameter]
+    public int Rows { get; set; } = 1;
+}

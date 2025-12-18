@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+	<ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+	  
+	<ExcludeSourceLink>true</ExcludeSourceLink>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lightsoft.Extensions" Version="1.*" />
+    <PackageReference Include="Mapster" Version="7.4.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.0.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ActiveDirectory\ActiveDirectory.csproj" />
+    <ProjectReference Include="..\..\src\Caching\Caching.csproj" />
+    <ProjectReference Include="..\..\src\FileGenerator\FileGenerator.csproj" />
+    <ProjectReference Include="..\..\src\Graph\Graph.csproj" />
+    <ProjectReference Include="..\..\src\Mail.Contracts\Mail.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Serilog\Serilog.csproj" />
+    <ProjectReference Include="..\..\src\SmtpMail\SmtpMail.csproj" />
+  </ItemGroup>
+
+</Project>

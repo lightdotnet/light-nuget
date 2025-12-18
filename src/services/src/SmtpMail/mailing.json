@@ -1,0 +1,9 @@
+{
+  "SMTPMail": {
+    "PreferMailKit": true,
+    "Host": "smtp.ethereal.email",
+    "Port": 587,
+    "UserName": "noe.klein@ethereal.email",
+    "Password": "uaHa8hyw59eUYFAe3z"
+  }
+}

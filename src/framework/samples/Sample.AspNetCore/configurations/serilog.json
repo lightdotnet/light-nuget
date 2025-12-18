@@ -1,0 +1,32 @@
+{
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Hangfire": "Warning",
+        "Microsoft": "Error",
+        "System": "Information",
+        "Microsoft.Hosting.Lifetime": "Information",
+        "Microsoft.EntityFrameworkCore.Database.Command": "Warning"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "FileAsync",
+        "Args": {
+          "Path": null,
+          "Template": "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} <s:{SourceContext}>{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "ElasticsearchAsync",
+        "Args": {
+          "ServiceName": null,
+          "Endpoint": "http://192.168.100.31:9200",
+          "Username": "elastic",
+          "Password": "elastic"
+        }
+      }
+    ]
+  }
+}

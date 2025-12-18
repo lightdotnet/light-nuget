@@ -1,0 +1,9 @@
+﻿<Button Class="mr-2" StartIcon="@Icon.Export" OnClick="OnClick" Label="@Label" />
+
+@code {
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    [Parameter]
+    public string Label { get; set; } = "Export";
+}

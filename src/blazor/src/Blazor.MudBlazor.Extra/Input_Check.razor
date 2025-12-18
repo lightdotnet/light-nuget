@@ -1,0 +1,21 @@
+﻿<MudCheckBox
+    Value="Value"
+    Label="@Label"
+    ValueChanged="ValueChanged"
+    Dense="Mud.Dense"
+    Style="@Style"
+    Size="Size.Small"  />
+
+@code {
+    [Parameter]
+    public bool Value { get; set; }
+
+    [Parameter]
+    public string Label { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<bool> ValueChanged { get; set; }
+
+    [Parameter]
+    public string? Style { get; set; }
+}

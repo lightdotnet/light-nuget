@@ -1,0 +1,19 @@
+﻿<MudCard Elevation="0">
+    @if (!string.IsNullOrEmpty(Header))
+    {
+        <MudCardHeader>
+            @Header
+        </MudCardHeader>
+    }
+    <MudCardContent Class="p-3 px-5 py-5">
+        @ChildContent
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public RenderFragment ChildContent { get; set; } = default!;
+
+    [Parameter]
+    public string? Header { get; set; }
+}

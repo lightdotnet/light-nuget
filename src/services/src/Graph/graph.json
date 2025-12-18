@@ -1,0 +1,7 @@
+{
+  "MicrosoftGraph": {
+    "TenantId": "guid",
+    "ClientId": "guid",
+    "ClientSecret": "P@ssword"
+  }
+}

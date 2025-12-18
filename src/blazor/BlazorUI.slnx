@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="../../.github/workflows/publish-blazor-to-nuget.yml" />
+    <File Path="Directory.Build.props" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Blazor.FluentBlazor.Extra/Blazor.FluentBlazor.Extra.csproj" />
+    <Project Path="src/Blazor.MudBlazor.Extra/Blazor.MudBlazor.Extra.csproj" />
+    <Project Path="src/Blazor/Blazor.csproj" />
+  </Folder>
+  <Project Path="sample/Blazor/BlazorServer/BlazorServer.csproj" />
+  <Project Path="sample/Blazor/Shared/Shared.csproj" />
+</Solution>

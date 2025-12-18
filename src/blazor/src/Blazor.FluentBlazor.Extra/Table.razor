@@ -1,0 +1,99 @@
+﻿@typeparam T where T : class
+
+<Card>
+
+    <div class="d-flex justify-content-between mb-3">
+        <div>
+            <IconActionButtons IconAction="@IconActionButtons.Action.Refresh" OnClick="ReloadAsync" />
+
+            @if (ButtonsContent?.HasSingleTarget is true)
+            {
+                @ButtonsContent
+            }
+        </div>
+
+        <FluentSearch Value="@searchValue" ValueChanged="OnLocalSearchAsync" Placeholder="search..." Class="mt-0" />
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            @if (HeadContent?.HasSingleTarget is true)
+            {
+                <thead>
+                    <tr>
+                        @HeadContent
+                    </tr>
+                </thead>
+            }
+
+            <tbody>
+                @if (RowTemplate?.HasSingleTarget is true)
+                {
+                    foreach (var record in records)
+                    {
+                        <tr>
+                            @RowTemplate(record)
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td>
+                            <i class="text-danger">View template not define...</i>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    </div>
+
+    @if (pagination is not null && pagination.TotalPages > 1)
+    {
+        <Pagination State=State.Pagination StateChanged="OnPagedChangedAsync" />
+    }
+
+    <Overlay IsProcessing="processing" />
+
+</Card>
+
+@code {
+    [Parameter]
+    public RenderFragment? ButtonsContent { get; set; }
+
+    [Parameter]
+    public RenderFragment? HeadContent { get; set; }
+
+    [Parameter]
+    public RenderFragment<T>? RowTemplate { get; set; }
+
+    [Parameter]
+    public DataTable<T> State { get; set; } = default!;
+
+    private IEnumerable<T> records => State.Records;
+
+    private Paged? pagination => State.Pagination;
+
+    private bool processing => State?.Processing ?? false;
+
+    private string? searchValue;
+
+    private async Task OnPagedChangedAsync(IPage? page)
+    {
+        if (pagination is not null)
+        {
+            await State.RunUpdateAsync(page);
+        }
+    }
+
+    private Task SearchAsync() => State.SearchAsync();
+
+    private Task ReloadAsync() => State.ReloadAsync();
+
+    private Task OnLocalSearchAsync(string? value)
+    {
+        searchValue = value;
+        return State.SearchAsync(searchValue);
+    }
+}

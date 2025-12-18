@@ -1,0 +1,31 @@
+﻿.go-to-page {
+    background-color: #FFFFFF;
+    background-image: none;
+    border: 1px solid #e5e6e7;
+    border-radius: 1px;
+    color: inherit;
+    width: 50px;
+    font-weight: bold;
+    background: transparent;
+}
+
+    .go-to-page::-webkit-inner-spin-button,
+    .go-to-page::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+
+.page-link {
+    box-shadow: unset !important;
+    background: transparent;
+    border: unset !important;
+}
+
+    .page-link:focus {
+        background-color: unset !important;
+    }
+
+    .active > .page-link, .page-link.active {
+        border-color: unset;
+    }

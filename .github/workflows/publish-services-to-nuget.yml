@@ -1,0 +1,34 @@
+name: '[NuGet.org] Publish Integration Services packages'
+
+on:
+  workflow_dispatch
+  
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    # must run in every workflows
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: ./.github/actions/dotnet-setup
+          
+    - name: Publish packages
+      uses: ./.github/actions/publish-nuget
+      with:
+        token: ${{ secrets.NUGET_API_KEY }}
+        projects: |
+          [
+            "src/ActiveDirectory/ActiveDirectory.csproj",
+            "src/Caching/Caching.csproj",
+            "src/Serilog/Serilog.csproj",
+            "src/FileGenerator/FileGenerator.csproj",
+            "src/Mail.Contracts/Mail.Contracts.csproj",
+            "src/SmtpMail/SmtpMail.csproj",
+            "src/Graph/Graph.csproj"
+          ]
+        working-dir: ./src/services

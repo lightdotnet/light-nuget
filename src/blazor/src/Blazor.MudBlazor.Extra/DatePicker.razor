@@ -1,0 +1,26 @@
+﻿<MudDatePicker
+    Date="Date"
+    DateChanged="DateChanged"
+    Placeholder="@PlaceHolder"
+    Editable="true"
+    Variant="Variant"
+    Margin="@Mud.Margin"
+    Mask="@(new DateMask(mask))"
+    HelperText="@mask"
+    DateFormat="@mask" />
+
+@code {
+    [Parameter]
+    public DateTime? Date { get; set; }
+
+    [Parameter]
+    public string? PlaceHolder { get; set; }
+
+    [Parameter]
+    public EventCallback<DateTime?> DateChanged { get; set; }
+
+    [Parameter]
+    public Variant Variant { get; set; } = Mud.Variant;
+
+    private string mask = "yyyy/MM/dd";
+}

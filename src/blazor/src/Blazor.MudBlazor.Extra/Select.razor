@@ -1,0 +1,37 @@
+﻿@typeparam T
+@typeparam TRecord
+
+@if (Values.Count() == 0)
+{
+    <br />
+    <MudProgressCircular Size="Size.Small" Color="Color.Default" Indeterminate="true" />
+}
+else
+{
+    <MudSelect Value="Value" ValueChanged="ValueChanged" Clearable="true" Variant="Mud.Variant" Margin="Mud.Margin" Placeholder="@PlaceHolder">
+        @foreach (var value in Values)
+        {
+            <MudSelectItem Value="@ValueFunc(value)">@ViewFunc(value)</MudSelectItem>
+        }
+    </MudSelect>
+}
+
+@code {
+    [Parameter]
+    public IEnumerable<TRecord> Values { get; set; } = null!;
+
+    [Parameter]
+    public Func<TRecord, T> ValueFunc { get; init; } = null!;
+
+    [Parameter]
+    public Func<TRecord, string> ViewFunc { get; init; } = null!;
+
+    [Parameter]
+    public T? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<T?> ValueChanged { get; set; }
+
+    [Parameter]
+    public string PlaceHolder { get; set; } = "search...";
+}

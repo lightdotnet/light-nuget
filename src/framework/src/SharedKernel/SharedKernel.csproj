@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	<RootNamespace>Light</RootNamespace>
+	<AssemblyName>Lightsoft.SharedKernel</AssemblyName>
+	<Title>Lightsoft.SharedKernel</Title>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<Authors>minhvu</Authors>
+	<Description>Package containing useful base interfaces, classes, enums, value objects.</Description>
+	<Summary>Package containing useful base interfaces, classes, enums, value objects.</Summary>
+	<Version>1.10.0.2</Version>
+	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
+	<PackageIcon>icon.png</PackageIcon>
+	<PackageReleaseNotes></PackageReleaseNotes>
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<PublishRepositoryUrl>true</PublishRepositoryUrl>
+	<EmbedUntrackedSources>true</EmbedUntrackedSources>
+	<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<PackageReference Include="Lightsoft.Mediator" Version="0.0.0.1" />
+	<PackageReference Include="Ulid" Version="1.4.1" />
+  </ItemGroup>
+
+</Project>

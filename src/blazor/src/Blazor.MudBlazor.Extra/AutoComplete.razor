@@ -1,0 +1,46 @@
+﻿@typeparam T where T : class
+
+<MudAutocomplete T="T"
+    Label="@Label"
+    Margin="Margin.Dense"
+    Variant="@Variant"
+    Placeholder="@PlaceHolder"
+    MaxItems="20"
+    Clearable="true"
+    ResetValueOnEmptyText="true"
+    ValueChanged="SelectedChanged"
+    SearchFunc="SearchAsync"
+    ToStringFunc="ToStringFunc" />
+
+@code {
+    [Parameter]
+    public IEnumerable<T> List { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<string> OnSearch { get; set; }
+
+    [Parameter]
+    public EventCallback<T> SelectedChanged { get; set; }
+
+    [Parameter]
+    public Variant Variant { get; set; } = Mud.Variant;
+
+    [Parameter]
+    public Func<T, string>? ToStringFunc { get; set; }
+
+    [Parameter]
+    public string? Label { get; set; }
+
+    [Parameter]
+    public string PlaceHolder { get; set; } = "search...";
+
+    private async Task<IEnumerable<T>> SearchAsync(string value, CancellationToken token)
+    {
+        if (!string.IsNullOrEmpty(value))
+        {
+            await OnSearch.InvokeAsync(value);
+        }
+
+        return List;
+    }
+}
