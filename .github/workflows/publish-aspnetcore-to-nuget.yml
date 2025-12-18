@@ -26,6 +26,6 @@ jobs:
             "src/Authorization/Authorization.csproj",
             "src/Modularity/Modularity.csproj",
             "src/Swagger/Swagger.csproj",
-            "src/WebHost/WebHost.csproj",
+            "src/WebHost/WebHost.csproj"
           ]
         working-dir: ./src/framework
