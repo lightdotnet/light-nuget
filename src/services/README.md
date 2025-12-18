@@ -1,6 +1,6 @@
-# .NET Extensions
+# Integration Services
 
-* Extensions
+
 * Active Directory
 * File Generator (CSV, Excel)
 * Graph (Microsoft Graph)
