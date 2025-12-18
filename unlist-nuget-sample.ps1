@@ -1,5 +1,9 @@
+<# Note:
+    Must run this script with "Run Selection (F8)" 
+#>
+
 $name = "Lightsoft"
-$packageFolders = Get-ChildItem -Path "src" -Directory | Select-Object -ExpandProperty Name
+$packageFolders = Get-ChildItem -Path "src\blazor\src" -Directory | Select-Object -ExpandProperty Name
 
 foreach ($folder in $packageFolders) {
 
@@ -9,6 +13,8 @@ foreach ($folder in $packageFolders) {
 
 }
 
+# Unlist-Package('Lightsoft.AspNetCore.Swagger')
+
 $apiKey = "<your_api_key_with_unlist_permission>"
 
 function Unlist-Package {
@@ -16,17 +22,46 @@ function Unlist-Package {
         [string]$PackageId
     )
 
-    $json = Invoke-WebRequest -Uri "https://api.nuget.org/v3-flatcontainer/$PackageId/index.json" | ConvertFrom-Json
+    # NuGet APIs REQUIRE lowercase IDs
+    $lowerId = $PackageId.ToLowerInvariant()
+    $url = "https://api.nuget.org/v3/registration5-gz-semver2/$lowerId/index.json"
 
-  if ($json.error -ne $null) {
-        Write-Host "Error when get $packageId : $json.code $json.message"
-        return;
+    try {
+        $registration = Invoke-RestMethod -Uri $url -Method Get
     }
-	
-  foreach($version in $json.versions) {
-	Write-Host "Unlisting $packageId, Ver $version"
-	dotnet nuget delete $packageId $version --source https://api.nuget.org/v3/index.json --non-interactive --api-key $apiKey
+    catch {
+        Write-Host "Failed to fetch registration data for $PackageId"
+        return
+    }
 
-    Start-Sleep -Seconds 1
-  }
+    foreach ($page in $registration.items) {
+
+        # Some pages inline items, some require an extra fetch
+        if ($page.items -eq $null -and $page.'@id') {
+            $page = Invoke-RestMethod -Uri $page.'@id'
+        }
+
+        foreach ($item in $page.items) {
+            $entry = $item.catalogEntry
+
+            Write-Host $entry.version : $entry.listed
+
+            if ($entry.listed -eq $true) {
+                $version = $entry.version
+
+                Write-Host "Unlisting $PackageId $version"
+
+                dotnet nuget delete `
+                    $PackageId `
+                    $version `
+                    --source https://api.nuget.org/v3/index.json `
+                    --api-key $apiKey `
+                    --non-interactive
+
+                Start-Sleep -Seconds 2
+            }  
+        }
+
+        
+    }
 }
