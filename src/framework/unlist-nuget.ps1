@@ -1,3 +1,7 @@
+<# Note:
+    Must run this script with "Run Selection (F8)" 
+#>
+
 $name = "Lightsoft"
 $packageFolders = Get-ChildItem -Path "src" -Directory | Select-Object -ExpandProperty Name
 
