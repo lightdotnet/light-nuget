@@ -14,7 +14,7 @@ public static class ClaimExtensions
         return claims;
     }
 
-    public static List<Claim> Get(this UserDto user)
+    public static List<Claim> BuildClaims(this UserDto user)
     {
         var claims = new List<Claim>()
         {

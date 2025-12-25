@@ -14,7 +14,8 @@ namespace Sample.AspNetCore
             _scheduler = new Scheduler(1)
             {
                 //StartHour = 20,
-                EndTime = new TimeSpan(21, 30, 00)
+                StartTime = new TimeSpan(16, 00, 00),
+                EndTime = new TimeSpan(22, 35, 00)
             };
         }
 
