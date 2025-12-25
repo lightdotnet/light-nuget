@@ -14,7 +14,7 @@
     <PackageReference Include="Mapster" Version="7.4.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="$(AspnetVersion)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(AspnetVersion)" />
-	<PackageReference Include="SoapCore" Version="1.2.1.11" />
+	<PackageReference Include="SoapCore" Version="1.2.1.12" />
   </ItemGroup>
 
   <ItemGroup>
