@@ -18,7 +18,7 @@
                     {
                         <tr>
                             <td>@claim.Type</td>
-                            <td>@claim.Value (@claim.ValueType)</td>
+                            <td>@claim.Value</td>
                         </tr>
                     }
                 </tbody>
@@ -60,7 +60,14 @@
                                 object childValue = childProp.Value;
 
                                 <td>
-                                    @childValue
+                                    @if (childValue is DateTimeOffset dateTimeOffset)
+                                    {
+                                        @dateTimeOffset.ToLocalTime();
+                                    }
+                                    else
+                                    {
+                                        @childValue
+                                    }
                                 </td>
                             }
                         </tr>
