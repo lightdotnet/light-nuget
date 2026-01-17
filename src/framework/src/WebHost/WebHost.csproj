@@ -19,7 +19,7 @@
 
   <ItemGroup>
 	<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.*" />
-	<PackageReference Include="Lightsoft.Result" Version="1.0.0.1" />
+	<PackageReference Include="Lightsoft.Result" Version="1.*" />
 	<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(AspnetVersion)" />
   </ItemGroup>
 
