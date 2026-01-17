@@ -10,7 +10,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Package contains EventBus implementation.</Description>
 	<Summary>Package contains EventBus implementation.</Summary>
-	<Version>0.0.1.2</Version>
+	<Version>0.0.1.3</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

@@ -12,8 +12,8 @@
   <ItemGroup>
     <PackageReference Include="Lightsoft.Extensions" Version="1.*" />
     <PackageReference Include="Mapster" Version="7.4.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.0.1" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.0.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.0" />
   </ItemGroup>
 
   <ItemGroup>
