@@ -20,9 +20,9 @@
 
   <ItemGroup>
 	<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.*" />
-	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
-	<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.0.1" />
-	<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.0.1" />
+	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.*" />
+	<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.*" />
+	<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.*" />
   </ItemGroup>
 
 </Project>

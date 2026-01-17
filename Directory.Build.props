@@ -3,7 +3,7 @@
 		<AspnetVersion>10.*</AspnetVersion>
 	</PropertyGroup>
 	<ItemGroup Condition="'$(ExcludeSourceLink)' != 'true'">
-		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.*" PrivateAssets="All" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.*" PrivateAssets="All" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Include="..\..\..\..\icon.png" Pack="true" Visible="false" PackagePath="\" />

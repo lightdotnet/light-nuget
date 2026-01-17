@@ -10,7 +10,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Mail package services using STMP, MailKit.</Description>
 	<Summary>Mail package services using STMP, MailKit.</Summary>
-	<Version>1.0.0.1</Version>
+	<Version>1.0.0.2</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

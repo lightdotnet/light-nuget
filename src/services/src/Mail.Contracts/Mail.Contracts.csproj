@@ -10,7 +10,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Package containing application common models, abstractions, etc.</Description>
 	<Summary>Package containing application common models, abstractions, etc.</Summary>
-	<Version>1.0.0.0</Version>
+	<Version>1.0.0.1</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<PackageReleaseNotes></PackageReleaseNotes>

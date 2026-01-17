@@ -8,7 +8,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Identity module provider that uses Entity Framework Core.</Description>
 	<Summary>Identity module provider that uses Entity Framework Core.</Summary>
-	<Version>10.0.1.1</Version>
+	<Version>10.0.1.2</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>

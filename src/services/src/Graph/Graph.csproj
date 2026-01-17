@@ -10,7 +10,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Package using Microsoft Graph.</Description>
 	<Summary>Package using Microsoft Graph.</Summary>
-	<Version>1.10.0.1</Version>
+	<Version>1.10.0.2</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

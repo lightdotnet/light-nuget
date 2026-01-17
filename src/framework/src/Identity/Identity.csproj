@@ -8,7 +8,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Identity module package.</Description>
 	<Summary>Identity module package.</Summary>
-	<Version>10.0.1.1</Version>
+	<Version>10.0.1.2</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -18,7 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-	<PackageReference Include="Lightsoft.Result" Version="1.0.0.1" />
+	<PackageReference Include="Lightsoft.Result" Version="1.*" />
   </ItemGroup>
 
 </Project>
