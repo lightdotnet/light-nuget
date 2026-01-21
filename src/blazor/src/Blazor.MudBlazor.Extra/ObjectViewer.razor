@@ -1,5 +1,4 @@
 ﻿@using System.Collections
-@typeparam T
 
 <Card>
 
@@ -142,13 +141,13 @@
 
 @code {
     [Parameter]
-    public T Model { get; set; } = default!;
+    public object Model { get; set; } = default!;
 
     private async Task ExportAsync()
     {
         if (Model != null && Model.IsList())
         {
-            var file = ExcelService.Export((IEnumerable<T>)Model);
+            var file = ExcelService.Export((IEnumerable<object>)Model);
 
             await JSRuntime.InvokeVoidAsync("downloadBase64String", "results.xlsx", file.ToBase64String());
         }
