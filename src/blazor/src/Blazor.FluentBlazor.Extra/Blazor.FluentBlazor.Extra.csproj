@@ -8,7 +8,7 @@
 	<Authors>minhvu</Authors>
 	<Description>FluentBlazor extra components.</Description>
 	<Summary>FluentBlazor extra components.</Summary>
-	<Version>0.0.0.2-beta2</Version>
+	<Version>0.0.0.2-beta3</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
