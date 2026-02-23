@@ -8,7 +8,7 @@
 	<Authors>minhvu</Authors>
 	<Description>FluentBlazor extra components.</Description>
 	<Summary>FluentBlazor extra components.</Summary>
-	<Version>0.0.0.2-beta3</Version>
+	<Version>4.0.0.0-beta1</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -23,9 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.*" />
-	<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.*" />
-	<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.*" />
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.14.0" />
+	<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.14.0" />
   </ItemGroup>
 
   <ItemGroup>

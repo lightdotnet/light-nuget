@@ -2,5 +2,5 @@
 
 public interface IDialogDisplay
 {
-    Task<bool> ShowConfirm(string confirmMessage);
+    Task<bool> ShowConfirmAsync(string confirmMessage);
 }

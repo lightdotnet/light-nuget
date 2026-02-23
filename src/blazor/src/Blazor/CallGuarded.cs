@@ -90,7 +90,7 @@ public abstract class CallGuarded(
 
     public virtual async Task ExecuteIfConfirmAsync(Func<Task<Result>> runFunc, string confirmMessage, string succeededMessage, Func<Task> runIfSuccess)
     {
-        bool? isConfirm = await dialog.ShowConfirm(confirmMessage);
+        bool? isConfirm = await dialog.ShowConfirmAsync(confirmMessage);
 
         if (isConfirm == true)
         {

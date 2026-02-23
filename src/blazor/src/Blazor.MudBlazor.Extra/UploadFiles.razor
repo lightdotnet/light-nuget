@@ -1,10 +1,6 @@
 ﻿<div class="mb-3">
     <MudButtonGroup Color="Color.Secondary" Variant="Mud.Variant">
-        <MudFileUpload T="IBrowserFile" Accept=".xlsx" FilesChanged="FilesChangedAsync">
-            <ActivatorContent>
-                <MudIconButton Icon="@Icon.Upload" />
-            </ActivatorContent>
-        </MudFileUpload>
+        <MudFileUpload T="IBrowserFile" Accept="@Accept" FilesChanged="FilesChangedAsync" />
         <MudButton Href="@TemplateUrl" Target="_blank">template</MudButton>
     </MudButtonGroup>
 
@@ -39,6 +35,9 @@
 
     [Parameter]
     public string TemplateUrl { get; set; } = null!;
+
+    [Parameter]
+    public string Accept { get; set; } = ".xlsx";
 
     private async Task FilesChangedAsync(IBrowserFile file)
     {

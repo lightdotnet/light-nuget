@@ -30,7 +30,7 @@ public class CallGuardedService(
 
     public async Task ExecuteIfConfirmAsync(Func<Task<IResult>> runFunc, string confirmMessage, string succeededMessage, Func<Task> runIfSuccess)
     {
-        bool? isConfirm = await Dialog.ShowConfirm(confirmMessage);
+        bool? isConfirm = await Dialog.ShowConfirmAsync(confirmMessage);
 
         if (isConfirm == true)
         {

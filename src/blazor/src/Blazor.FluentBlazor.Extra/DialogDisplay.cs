@@ -5,7 +5,7 @@ namespace Light.FluentBlazor;
 
 internal class DialogDisplay(IDialogService dialogService) : IDialogDisplay
 {
-    public async Task<bool> ShowConfirm(string message)
+    public async Task<bool> ShowConfirmAsync(string message)
     {
         var dialog = await dialogService.ShowWarningAsync(message);
 
