@@ -1,7 +1,7 @@
 ﻿<div class="mb-3">
 
     <div class="d-flex align-items-center">
-        <MudFileUpload T="IBrowserFile" Accept="@Accept" FilesChanged="FilesChangedAsync">
+        <MudFileUpload T="IBrowserFile" Accept="@Accept" FilesChanged="FilesChangedAsync" DragAndDrop="@DragAndDrop">
             <SelectedTemplate />
         </MudFileUpload>
 
@@ -42,6 +42,9 @@
 
     [Parameter]
     public string Accept { get; set; } = ".xlsx";
+
+    [Parameter]
+    public bool DragAndDrop { get; set; } = true;
 
     private Task FilesChangedAsync(IBrowserFile file)
     {
