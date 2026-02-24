@@ -16,6 +16,7 @@ public static class ModelBuilderExtensions
             .Where(e => e.BaseType is null && e.ClrType.GetInterface(typeof(TInterface).Name) is not null)
             .Select(e => e.ClrType);
 
+        /*
         foreach (var entity in entities)
         {
             var parameterType = Expression.Parameter(modelBuilder.Entity(entity).Metadata.ClrType);
@@ -32,6 +33,39 @@ public static class ModelBuilderExtensions
 
             // apply the new query filter
             modelBuilder.Entity(entity).HasQueryFilter(Expression.Lambda(filterBody, parameterType));
+        }
+        */
+        foreach (var entity in entities)
+        {
+            var entityBuilder = modelBuilder.Entity(entity);
+            var clrType = entityBuilder.Metadata.ClrType;
+
+            var parameterType = Expression.Parameter(clrType);
+
+            var filterBody = ReplacingExpressionVisitor.Replace(
+                filter.Parameters.Single(),
+                parameterType,
+                filter.Body);
+
+            // EF Core 10: returns IReadOnlyList<IQueryFilter>
+            var existingFilters = entityBuilder.Metadata.GetDeclaredQueryFilters();
+
+            foreach (var existingFilter in existingFilters)
+            {
+                var existingExpression = existingFilter.Expression;
+
+                if (existingExpression is not null)
+                {
+                    var existingFilterBody = ReplacingExpressionVisitor.Replace(
+                        existingExpression.Parameters.Single(),
+                        parameterType,
+                        existingExpression.Body);
+
+                    filterBody = Expression.AndAlso(existingFilterBody, filterBody);
+                }
+            }
+
+            entityBuilder.HasQueryFilter(Expression.Lambda(filterBody, parameterType));
         }
 
         return modelBuilder;
