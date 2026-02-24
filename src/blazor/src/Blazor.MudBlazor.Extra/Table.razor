@@ -8,7 +8,14 @@
     }
 
     <div class="d-flex justify-content-between mb-3">
-        <IconActionButtons IconAction="IconActionButtons.Action.Refresh" OnClick="ReloadAsync" />
+        <div>
+            <IconActionButtons IconAction="IconActionButtons.Action.Refresh" OnClick="ReloadAsync" />
+
+            @if (ButtonsContent?.HasSingleTarget is true)
+            {
+                @ButtonsContent
+            }
+        </div>
 
         @if (State.SearchFunc is not null)
         {
@@ -60,9 +67,6 @@
 </Card>
 
 @code {
-    [Parameter]
-    public RenderFragment? SearchContent { get; set; }
-
     [Parameter]
     public RenderFragment? ButtonsContent { get; set; }
 

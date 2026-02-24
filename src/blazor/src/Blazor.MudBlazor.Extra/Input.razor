@@ -8,7 +8,8 @@
     Adornment="Adornment.End"
     Class="@Class"
     Label="@Label"
-    Required="Required" ReadOnly="ReadOnly" AutoGrow="AutoGrow" />
+    Required="Required" ReadOnly="ReadOnly"
+    Sizing="@(AutoGrow is true ? InputSizing.Auto : InputSizing.Fixed)" />
 
 @code {
     #nullable disable
@@ -41,8 +42,8 @@
     public Variant Variant { get; set; } = Mud.Variant;
 
     [Parameter]
-    public bool AutoGrow { get; set; }
+    public string Label { get; set; }
 
     [Parameter]
-    public string Label { get; set; }
+    public bool AutoGrow { get; set; } = false;
 }

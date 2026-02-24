@@ -1,16 +1,16 @@
 ﻿<div class="mb-3">
-    <MudButtonGroup Color="Color.Secondary" Variant="Mud.Variant">
-        <MudFileUpload T="IBrowserFile" Accept=".xlsx" FilesChanged="FilesChangedAsync">
-            <ActivatorContent>
-                <MudIconButton Icon="@Icon.Upload" />
-            </ActivatorContent>
+
+    <div class="d-flex align-items-center">
+        <MudFileUpload T="IBrowserFile" Accept="@Accept" FilesChanged="FilesChangedAsync" DragAndDrop="@DragAndDrop">
+            <SelectedTemplate />
         </MudFileUpload>
-        <MudButton Href="@TemplateUrl" Target="_blank">template</MudButton>
-    </MudButtonGroup>
+
+        <u><a href="@TemplateUrl" target="_blank" class="ml-3">template</a></u>
+    </div>
 
     @if (Files.Count > 0)
     {
-        <MudText Typo="@Typo.h6">@Files.Count() File@(Files.Count() == 1 ? "" : "s"):</MudText>
+        @*<MudText Typo="@Typo.h6">@Files.Count() File@(Files.Count() == 1 ? "" : "s"):</MudText>*@
         <MudList T="string">
             @foreach (var file in Files)
             {
@@ -40,20 +40,26 @@
     [Parameter]
     public string TemplateUrl { get; set; } = null!;
 
-    private async Task FilesChangedAsync(IBrowserFile file)
+    [Parameter]
+    public string Accept { get; set; } = ".xlsx";
+
+    [Parameter]
+    public bool DragAndDrop { get; set; } = true;
+
+    private Task FilesChangedAsync(IBrowserFile file)
     {
         Files.Clear();
         Files.Add(file);
         //TODO upload the files to the server
 
-        await NotifyFilesChanged();
+        return NotifyFilesChanged();
     }
 
-    private async Task ClearAsync()
+    private Task ClearAsync()
     {
         Files.Clear();
 
-        await NotifyFilesChanged();
+        return NotifyFilesChanged();
     }
 
     private Task NotifyFilesChanged() => FilesChanged.InvokeAsync(Files);

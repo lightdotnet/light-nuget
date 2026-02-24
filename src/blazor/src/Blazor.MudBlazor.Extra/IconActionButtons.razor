@@ -5,7 +5,8 @@
     Size="size"
     Variant="variant"
     OnClick="OnClick"
-    Href="@Href" />
+    Href="@Href"
+    Class="@Class" />
 
 @code {
     [Parameter]
@@ -23,6 +24,9 @@
     [Parameter]
     public string? CustomIcon { get; set; }
 
+    [Parameter]
+    public string? Class { get; set; }
+
     public enum Action
     {
         View,
@@ -31,7 +35,8 @@
         Delete,
         Save,
         Refresh,
-        Cancel
+        Cancel,
+        Default
     }
 
     private Color color = Color.Primary;
@@ -82,6 +87,12 @@
             case Action.Cancel:
                 {
                     icon = Icon.Clear;
+                    color = Color.Default;
+                    break;
+                }
+            case Action.Default:
+                {
+                    icon = Icon.Edit;
                     color = Color.Default;
                     break;
                 }

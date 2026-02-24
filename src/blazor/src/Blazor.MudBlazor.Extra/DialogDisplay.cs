@@ -5,8 +5,8 @@ namespace Light.MudBlazor;
 
 internal class DialogDisplay(IDialogService dialogService) : IDialogDisplay
 {
-    public async Task<bool> ShowConfirm(string message) =>
-        await dialogService.ShowMessageBox("Warning", message, options: new DialogOptions
+    public async Task<bool> ShowConfirmAsync(string message) =>
+        await dialogService.ShowMessageBoxAsync("Warning", message, options: new DialogOptions
         {
             CloseButton = true,
         }) ?? false;

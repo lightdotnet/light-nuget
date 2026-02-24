@@ -8,7 +8,7 @@
 	<Authors>minhvu</Authors>
 	<Description>MudBlazor extra components.</Description>
 	<Summary>MudBlazor extra components.</Summary>
-	<Version>0.0.0.2-beta8</Version>
+	<Version>9.0.0.0-beta4</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MudBlazor" Version="8.*" />
+    <PackageReference Include="MudBlazor" Version="9.*" />
   </ItemGroup>
 
   <ItemGroup>
