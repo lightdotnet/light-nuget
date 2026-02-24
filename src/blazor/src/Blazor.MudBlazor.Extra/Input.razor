@@ -8,7 +8,8 @@
     Adornment="Adornment.End"
     Class="@Class"
     Label="@Label"
-    Required="Required" ReadOnly="ReadOnly" />
+    Required="Required" ReadOnly="ReadOnly"
+    Sizing="@(AutoGrow is true ? InputSizing.Auto : InputSizing.Fixed)" />
 
 @code {
     #nullable disable
@@ -42,4 +43,7 @@
 
     [Parameter]
     public string Label { get; set; }
+
+    [Parameter]
+    public bool AutoGrow { get; set; } = false;
 }
