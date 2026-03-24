@@ -2,7 +2,7 @@
 
 namespace Sample.AspNetCore.TestOption
 {
-    public class TestOptions
+    public sealed class TestOptions
     {
         public string Name { get; set; } = "Test";
         public string Description { get; set; } = "Test description";
