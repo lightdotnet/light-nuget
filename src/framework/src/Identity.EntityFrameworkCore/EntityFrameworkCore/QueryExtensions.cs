@@ -2,42 +2,32 @@
 
 public static class QueryExtensions
 {
-    public static async Task<bool> CheckUserHasClaimAsync(this IdentityContext context, string userId, string claimType, string claimValue)
+    public static Task<bool> CheckUserHasClaimAsync(this IdentityContext context, string userId, string claimType, string claimValue)
     {
-        var hasUserClaim = await context.UserClaims
-            .AnyAsync(x =>
-                x.UserId == userId
-                && x.ClaimType == claimType
-                && x.ClaimValue == claimValue);
+        return context.UserClaims
+            .Where(c => c.UserId == userId)
+            .Select(c => new { c.ClaimType, c.ClaimValue })
 
-        if (hasUserClaim)
-        {
-            return hasUserClaim;
-        }
+            .Concat(
+                from ur in context.UserRoles
+                where ur.UserId == userId
+                join rc in context.RoleClaims
+                    on ur.RoleId equals rc.RoleId
+                select new { rc.ClaimType, rc.ClaimValue }
+            )
 
-        var hasRoleClaim = await (
-            from user_roles in context.UserRoles.Where(x => x.UserId == userId)
-            join roles in context.Roles
-                on user_roles.RoleId equals roles.Id
-            join role_Claims in context.RoleClaims.Where(x => x.ClaimType == claimType && x.ClaimValue == claimValue)
-                on roles.Id equals role_Claims.RoleId
-            select new
-            {
-                user_roles.UserId,
-            })
-            .AnyAsync();
-
-        return hasRoleClaim;
+            .AnyAsync(c =>
+                c.ClaimType == claimType &&
+                c.ClaimValue == claimValue);
     }
 
-    public static IQueryable<RoleClaim> GetUserRoleClaimsAsync(this IdentityContext context, string userId)
+    public static IQueryable<RoleClaim> QueryUserRoleClaims(this IdentityContext context, string userId)
     {
         return
-            from user_roles in context.UserRoles.Where(x => x.UserId == userId)
-            join roles in context.Roles
-                on user_roles.RoleId equals roles.Id
-            join role_Claims in context.RoleClaims
-                on roles.Id equals role_Claims.RoleId
-            select role_Claims;
+            from ur in context.UserRoles
+            where ur.UserId == userId
+            join rc in context.RoleClaims
+                on ur.RoleId equals rc.RoleId
+            select rc;
     }
 }
