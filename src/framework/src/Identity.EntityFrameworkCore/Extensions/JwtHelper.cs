@@ -8,11 +8,11 @@ namespace Light.Identity.Extensions;
 
 public static class JwtHelper
 {
-    public static string GenerateToken(string issuer, IEnumerable<Claim> claims, DateTime expiresAt, string secretKey)
+    public static string GenerateToken(string issuer, IEnumerable<Claim> claims, DateTime expiresAt, string key)
     {
-        var secret = Encoding.UTF8.GetBytes(secretKey);
-
-        var signingCredentials = new SigningCredentials(new SymmetricSecurityKey(secret), SecurityAlgorithms.HmacSha256);
+        var signingCredentials = new SigningCredentials(
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+            SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
             issuer: issuer,

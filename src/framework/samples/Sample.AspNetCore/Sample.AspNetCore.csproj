@@ -10,8 +10,8 @@
 	<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
 	<PackageReference Include="FluentValidation" Version="12.1.1" />
 	<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
-	<PackageReference Include="Lightsoft.Serilog" Version="1.0.0.2" />
-    <PackageReference Include="Mapster" Version="7.4.0" />
+	<PackageReference Include="Lightsoft.Serilog" Version="1.0.0.3" />
+    <PackageReference Include="Mapster" Version="10.0.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="$(AspnetVersion)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(AspnetVersion)" />
 	<PackageReference Include="SoapCore" Version="1.2.1.12" />
