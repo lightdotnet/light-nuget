@@ -1,4 +1,4 @@
-﻿namespace Light.Identity.EntityFrameworkCore;
+﻿namespace Sample.AspNetCore.Identity;
 
 public abstract class Schemas
 {
