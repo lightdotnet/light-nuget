@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Sample.AspNetCore.Identity;
 
-public class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> options) : IdentityContext(options)
+public class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> options) : IdentityDbContext(options)
 {
     public override int SaveChanges()
     {
@@ -40,11 +40,6 @@ public class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> options
         builder.Entity<UserClaim>().ToTable(name: Tables.UserClaims, Schemas.Identity);
 
         builder.Entity<UserToken>().ToTable(name: Tables.UserTokens, Schemas.Identity);
-
-        builder.Entity<JwtToken>(e =>
-        {
-            e.ToTable(name: Tables.JwtTokens, Schemas.Identity);
-        });
     }
 
     public void AuditEntries(string? userId, DateTimeOffset auditTime, bool enableSoftDelete = false)

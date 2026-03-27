@@ -42,7 +42,7 @@ public static class Startup
         services.AddDefaultUserManager();
         services.AddDefaultRoleManager();
 
-        services.AddJwtTokenProvider();
+        //services.AddJwtTokenProvider();
 
         return services;
     }
