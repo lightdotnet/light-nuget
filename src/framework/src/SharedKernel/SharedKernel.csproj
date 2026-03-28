@@ -8,7 +8,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Package containing useful base interfaces, classes, enums, value objects.</Description>
 	<Summary>Package containing useful base interfaces, classes, enums, value objects.</Summary>
-	<Version>1.10.0.5</Version>
+	<Version>1.10.0.6</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<PackageReleaseNotes></PackageReleaseNotes>
@@ -19,6 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+	<PackageReference Include="Lightsoft.Mediator.Contracts" Version="0.0.0.2" />
 	<PackageReference Include="Ulid" Version="1.4.1" />
   </ItemGroup>
 
