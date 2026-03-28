@@ -10,7 +10,7 @@ public static class ServiceCollectionExtensions
     /// AddIdentityCore with DbContext Stores, Please AddAuthentication before this
     /// </summary>
     public static IdentityBuilder AddIdentity<TContext>(this IServiceCollection services)
-        where TContext : IdentityContext
+        where TContext : IdentityDbContext
     {
         return services
             .AddIdentity<TContext>(options =>
@@ -37,14 +37,12 @@ public static class ServiceCollectionExtensions
     /// AddIdentityCore with DbContext Stores, Please AddAuthentication before this
     /// </summary>
     public static IdentityBuilder AddIdentity<TContext>(this IServiceCollection services, Action<IdentityOptions> options)
-        where TContext : IdentityContext
+        where TContext : IdentityDbContext
     {
         var identityBuilder = services
             .AddIdentityCore<User>(options)
             .AddRoles<Role>()
             .AddEntityFrameworkStores<TContext>();
-
-        services.AddScoped<IIdentityContext>(provider => provider.GetRequiredService<TContext>());
 
         return identityBuilder;
     }
@@ -69,16 +67,6 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddDefaultRoleManager(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Scoped)
     {
         services.AddServiceLifetime(typeof(IRoleService), typeof(RoleService), lifetime);
-
-        return services;
-    }
-
-    /// <summary>
-    /// Register Jwt Token services
-    /// </summary>
-    public static IServiceCollection AddJwtTokenProvider(this IServiceCollection services)
-    {
-        services.AddScoped<JwtTokenMananger>();
 
         return services;
     }

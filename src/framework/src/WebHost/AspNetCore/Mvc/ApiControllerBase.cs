@@ -1,7 +1,5 @@
 ﻿using Light.Contracts;
-using Light.Mediator;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Light.AspNetCore.Mvc;
 
@@ -13,9 +11,6 @@ namespace Light.AspNetCore.Mvc;
 [Route("api/[controller]")]
 public abstract class ApiControllerBase : ControllerBase
 {
-    private IMediator? _mediator;
-    protected IMediator Mediator => _mediator ??= HttpContext.RequestServices.GetRequiredService<IMediator>();
-
     /// <summary>
     /// Default success response
     /// </summary>

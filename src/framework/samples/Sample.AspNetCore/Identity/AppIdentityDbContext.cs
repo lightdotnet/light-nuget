@@ -1,11 +1,12 @@
 ﻿using Light.Domain.Entities.Interfaces;
 using Light.Domain.ValueObjects;
 using Light.Identity.EntityFrameworkCore;
+using Light.Identity.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Sample.AspNetCore.Identity;
 
-public class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> options) : IdentityContext(options)
+public class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> options) : IdentityDbContext(options)
 {
     public override int SaveChanges()
     {
@@ -22,6 +23,23 @@ public class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> options
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<Role>().ToTable(name: Tables.Roles, Schemas.Identity);
+
+        builder.Entity<RoleClaim>().ToTable(name: Tables.RoleClaims, Schemas.Identity);
+
+        builder.Entity<User>(entity =>
+        {
+            entity.ToTable(name: Tables.Users, Schemas.Identity);
+        });
+
+        builder.Entity<UserRole>().ToTable(name: Tables.UserRoles, Schemas.Identity);
+
+        builder.Entity<UserLogin>().ToTable(name: Tables.UserLogins, Schemas.Identity);
+
+        builder.Entity<UserClaim>().ToTable(name: Tables.UserClaims, Schemas.Identity);
+
+        builder.Entity<UserToken>().ToTable(name: Tables.UserTokens, Schemas.Identity);
     }
 
     public void AuditEntries(string? userId, DateTimeOffset auditTime, bool enableSoftDelete = false)

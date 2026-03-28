@@ -3,6 +3,7 @@ using Light.Identity.EntityFrameworkCore;
 using Light.Identity.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Sample.AspNetCore.Identity;
 
 namespace Sample.AspNetCore.Identity.Controllers;
@@ -51,6 +52,13 @@ public class UserController(
     public async Task<IActionResult> DeleteAsync([FromRoute] string id)
     {
         return Ok(await userService.DeleteAsync(id));
+    }
+
+    [HttpGet("{id}/claims")]
+    public async Task<IActionResult> HasClaimAsync([FromRoute] string id)
+    {
+        var res = await context.QueryUserClaims(id).ToListAsync();
+        return Ok(res);
     }
 
     [HttpPut("force_password")]
