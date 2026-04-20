@@ -21,8 +21,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-	<PackageReference Include="MailKit" Version="4.*" />
-	<PackageReference Include="MimeKit" Version="4.*" />
+	<PackageReference Include="MailKit" Version="4.16.0" />
+	<PackageReference Include="MimeKit" Version="4.16.0" />
   </ItemGroup>
 
   <ItemGroup>
