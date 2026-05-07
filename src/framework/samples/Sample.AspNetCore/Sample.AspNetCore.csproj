@@ -12,10 +12,10 @@
 	<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
 	<PackageReference Include="Lightsoft.Mediator" Version="0.0.0.2" />
 	<PackageReference Include="Lightsoft.Serilog" Version="1.0.0.3" />
-    <PackageReference Include="Mapster" Version="10.0.6" />
+    <PackageReference Include="Mapster" Version="10.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="$(AspnetVersion)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(AspnetVersion)" />
-	<PackageReference Include="SoapCore" Version="1.2.1.12" />
+	<PackageReference Include="SoapCore" Version="1.2.1.13" />
   </ItemGroup>
 
   <ItemGroup>

@@ -17,7 +17,7 @@ namespace UnitTests.ExtensionsTests
 
     public class JsonUnixTimeTests
     {
-        [Fact]
+        [Test]
         public void Must_Convert_Correct_Time()
         {
             var time = new DateTimeOffset(new DateTime(2024, 01, 01, 00, 00, 00, DateTimeKind.Utc));

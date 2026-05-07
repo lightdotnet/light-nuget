@@ -2,7 +2,7 @@
 {
     public class RegexTests
     {
-        [Fact]
+        [Test]
         public void Should_Remove_Emoji()
         {
             var text = "Text";

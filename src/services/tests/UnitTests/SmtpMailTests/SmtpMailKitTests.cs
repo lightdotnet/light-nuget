@@ -1,5 +1,6 @@
 ﻿using Light.Mail;
 using Light.SmtpMail;
+using NUnit.Framework;
 
 namespace UnitTests.SmtpMailTests;
 
@@ -25,7 +26,7 @@ public class SmtpMailKitTests
         };
     }
 
-    [Fact]
+    [Test]
     public async Task Must_Send_Email_With_No_Exceptions()
     {
         var recipients = new List<string>

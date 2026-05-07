@@ -5,7 +5,7 @@ namespace UnitTests.ExtensionsTests
         private const string _test = "A1B2C_3D4E5_6F7G8";
         private const string _by = "_";
 
-        [Fact]
+        [Test]
         public void Should_Get_Characters_Correct()
         {
             var left4Chars = _test.Left(4);
@@ -15,7 +15,7 @@ namespace UnitTests.ExtensionsTests
             right4Chars.ShouldBe("F7G8");
         }
 
-        [Fact]
+        [Test]
         public void Should_Get_Characters_By_Correct()
         {
             var leftFrom = _test.Left(_by);

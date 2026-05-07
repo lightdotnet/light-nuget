@@ -2,7 +2,7 @@
 
 public class UriBuilderTests
 {
-    [Fact]
+    [Test]
     public void Should_Build_Correct_Values()
     {
         var query = new Dictionary<string, object>

@@ -2,7 +2,7 @@ namespace UnitTests.ExtensionsTests
 {
     public class ObjectTests
     {
-        [Fact]
+        [Test]
         public void Should_Check_ExactlyType()
         {
             var list = new List<object>();
