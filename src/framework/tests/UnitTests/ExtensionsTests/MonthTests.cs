@@ -2,11 +2,11 @@
 {
     public class MonthTests
     {
-        [Theory]
-        [InlineData(2, 2023, 28)]
-        [InlineData(2, 2024, 29)]
-        [InlineData(11, 2024, 30)]
-        [InlineData(12, 2024, 31)]
+        [Test]
+        [TestCase(2, 2023, 28)]
+        [TestCase(2, 2024, 29)]
+        [TestCase(11, 2024, 30)]
+        [TestCase(12, 2024, 31)]
         public void Should_Return_Correct_Month_Values(
             int monthTest,
             int yearTest,

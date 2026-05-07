@@ -2,7 +2,7 @@ namespace UnitTests.ExtensionsTests
 {
     public class EnumTests
     {
-        [Fact]
+        [Test]
         public void Should_Correct_Values()
         {
             var enumDesciption1 = TestEnum.Value1.GetDescription();
@@ -21,7 +21,7 @@ namespace UnitTests.ExtensionsTests
             enumDescriptionOfDisplay2.ShouldBe(null);
         }
 
-        [Fact]
+        [Test]
         public void Should_Correct_Options()
         {
             var enumOptions = EnumHelper.GetOptions<TestEnum>();

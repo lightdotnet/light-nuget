@@ -8,7 +8,7 @@ namespace UnitTests.ExtensionsTests
         private readonly string _strValue = "A|B|C|D|E";
         private readonly string[] _strArray = ["A", "B", "C", "D", "E"];
 
-        [Fact]
+        [Test]
         public void Should_Return_Array()
         {
             var intArray = _intValue.ToArray();
@@ -18,7 +18,7 @@ namespace UnitTests.ExtensionsTests
             LightAssert.ShouldBe(strArray, _strArray);
         }
 
-        [Fact]
+        [Test]
         public void Should_Return_String()
         {
             var intValue = _intArray.JoinToString();
@@ -28,7 +28,7 @@ namespace UnitTests.ExtensionsTests
             LightAssert.ShouldBe(strValue, _strValue);
         }
 
-        [Fact]
+        [Test]
         public void Should_Return_Correct_Values()
         {
             var model = new TestObject
@@ -39,19 +39,19 @@ namespace UnitTests.ExtensionsTests
 
             var values = model.GetValues();
 
-            values["Id"].ShouldBe(1);
-            values["Value"].ShouldBe("Name Of Id 1");
+            LightAssert.ShouldBe(values["Id"], 1);
+            LightAssert.ShouldBe(values["Value"], "Name Of Id 1");
         }
 
 
-        [Fact]
+        [Test]
         public void Check_Object_Is_A_List()
         {
             var single = new TestObject();
-            single.IsList().ShouldBe(false);
+            LightAssert.ShouldBe(single.IsList(), false);
 
             var list = new List<TestObject>();
-            list.IsList().ShouldBe(true);
+            LightAssert.ShouldBe(list.IsList(), true);
         }
     }
 }

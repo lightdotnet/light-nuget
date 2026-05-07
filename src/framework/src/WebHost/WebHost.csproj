@@ -8,7 +8,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Package containing useful AspNetCore extensions.</Description>
 	<Summary>Package containing useful AspNetCore extensions.</Summary>
-	<Version>10.0.5.3</Version>
+	<Version>10.0.6</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -18,7 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-	<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.*" />
+	<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.0.0" />
 	<PackageReference Include="Lightsoft.Result" Version="1.*" />
 	<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(AspnetVersion)" />
   </ItemGroup>

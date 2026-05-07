@@ -1,21 +1,17 @@
-﻿using System.Collections.Generic;
-using Xunit;
+﻿using NUnit.Framework;
 
 namespace UnitTests
 {
     internal static class LightAssert
     {
-        internal static void ShouldBe<T>(this T value, T expected) =>
-            Assert.Equal(expected, value);
+        internal static void ShouldBe<T>(this T value, T equalTo) =>
+            Assert.That(value, Is.EqualTo(equalTo));
 
         internal static void ShouldNotBeNullOrEmpty<T>(this IEnumerable<T> value)
         {
             Assert.NotNull(value);
-            Assert.NotEmpty(value);
+            Assert.IsNotEmpty(value);
         }
-
-        internal static void ShouldContains<T>(this IEnumerable<T> value, T expected) =>
-            Assert.Contains(expected, value);
 
         internal static void ShouldBeTrue(this bool value) =>
             Assert.True(value);

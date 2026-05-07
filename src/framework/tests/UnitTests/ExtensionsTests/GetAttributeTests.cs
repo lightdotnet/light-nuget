@@ -2,7 +2,7 @@ namespace UnitTests.ExtensionsTests
 {
     public class GetAttributeTests
     {
-        [Fact]
+        [Test]
         public void Should_Return_Correct_Attribute()
         {
             var type = typeof(TestObject);

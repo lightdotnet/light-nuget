@@ -1,10 +1,11 @@
+using NUnit.Framework;
 using System.Security.Claims;
 
 namespace UnitTests.ExtensionsTests;
 
 public class ClaimExtensionsTests
 {
-    [Fact]
+    [Test]
     public void Add_ShouldAddClaim_WhenValueIsNotNullOrEmpty()
     {
         // Arrange
@@ -16,12 +17,12 @@ public class ClaimExtensionsTests
         claims.Add(key, value);
 
         // Assert
-        Assert.Single(claims);
-        Assert.Equal(key, claims[0].Type);
-        Assert.Equal(value, claims[0].Value);
+        LightAssert.ShouldBe(claims.Count, 1);
+        LightAssert.ShouldBe(key, claims[0].Type);
+        LightAssert.ShouldBe(value, claims[0].Value);
     }
 
-    [Fact]
+    [Test]
     public void Add_ShouldNotAddClaim_WhenValueIsNullOrEmpty()
     {
         // Arrange
@@ -33,6 +34,6 @@ public class ClaimExtensionsTests
         claims.Add(key, value);
 
         // Assert
-        Assert.Empty(claims);
+        LightAssert.ShouldBe(claims.Count, 0);
     }
 }
