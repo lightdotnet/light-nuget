@@ -17,14 +17,14 @@ builder.Host.ConfigureSerilog();
 builder.Services.AddActiveDirectory(opt => opt.Name = "company.local");
 #pragma warning restore
 
-/*
+
 builder.Services.AddMicrosoftGraph(opt =>
 {
     opt.ClientSecret = "";
     opt.ClientId = "";
     opt.TenantId = "";
 });
-*/
+
 builder.Services.AddFileGenerator();
 
 var settings = builder.Configuration.GetSection("Caching").Get<CacheOptions>();
