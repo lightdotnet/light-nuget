@@ -30,8 +30,6 @@ try
 
     var executingAssembly = Assembly.GetExecutingAssembly();
 
-    builder.Services.AddLogger();
-
     builder.Services.AddTestOptions(builder.Configuration);
 
     // Overide by BindConfiguration
