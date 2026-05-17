@@ -10,7 +10,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Package using Microsoft Graph.</Description>
 	<Summary>Package using Microsoft Graph.</Summary>
-	<Version>1.10.0.3</Version>
+	<Version>1.10.0.4</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -21,10 +21,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-	<PackageReference Include="Azure.Identity" Version="1.21.0" />
+	<PackageReference Include="Azure.Identity" Version="1.*" />
 	<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="$(AspnetVersion)" />
-	<PackageReference Include="Microsoft.Graph" Version="5.*" />
-	<PackageReference Include="Microsoft.Kiota.Abstractions" Version="2.0.0" />
+	<PackageReference Include="Microsoft.Graph" Version="6.*" />
   </ItemGroup>
 
   <ItemGroup>
