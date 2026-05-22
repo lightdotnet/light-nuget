@@ -7,14 +7,9 @@ namespace Light.File.Excel
     public interface IExcelService
     {
         /// <summary>
-        /// Export a list data to file
-        /// </summary>
-        Stream Export<T>(IEnumerable<T> data, string? sheetName = null);
-
-        /// <summary>
         /// Export multi list data to file
         /// </summary>
-        Stream Export(params (string? SheetName, object Data)[] sheets);
+        Stream Export(params ExcelSheet[] sheets);
 
         /// <summary>
         /// Load excel file to DataTable

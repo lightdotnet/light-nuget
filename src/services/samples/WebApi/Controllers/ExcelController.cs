@@ -37,7 +37,7 @@ namespace WebApi.Controllers
                 }
             };
 
-            Stream stream = _excelService.Export(list);
+            Stream stream = _excelService.Export(new ExcelSheet(list));
             return File(stream, "application/octet-stream", "DataExport.xlsx"); // returns a FileStreamResult
         }
 
@@ -88,29 +88,20 @@ namespace WebApi.Controllers
                 new { Code = 4, Desc = "4", List = new List<string> {"3", "4" } }
             };
 
-            var sheets = new (string? SheetName, object Data)[]
+            var obj3 = new
             {
-                ("list_ids", list1),
-                ("list_codes", list2),
+                Pro = "Pro 1",
+                Detail = "Detail 1"
+            };
+
+            var sheets = new ExcelSheet[]
+            {
+                new (list1),
+                new (list2),
+                new (obj3),
             };
 
             Stream stream = _excelService.Export(sheets);
-            return File(stream, "application/octet-stream", "DataExport.xlsx"); // returns a FileStreamResult
-        }
-
-        [HttpGet("export_dt")]
-        public IActionResult ExportDatatable()
-        {
-            DataTable dt = new DataTable();
-            dt.Clear();
-            dt.Columns.Add("Id");
-            dt.Columns.Add("Name");
-            DataRow row = dt.NewRow();
-            row["Id"] = "1";
-            row["Name"] = "test";
-            dt.Rows.Add(row);
-
-            Stream stream = _excelService.Export(dt);
             return File(stream, "application/octet-stream", "DataExport.xlsx"); // returns a FileStreamResult
         }
 
@@ -126,7 +117,16 @@ namespace WebApi.Controllers
             row["Name"] = "test";
             dt.Rows.Add(row);
 
-            Stream stream = _excelService.Export((null, dt));
+            DataTable dt2 = new DataTable();
+            dt2.Clear();
+            dt2.Columns.Add("Id");
+            dt2.Columns.Add("Name");
+            DataRow row2 = dt.NewRow();
+            row2["Id"] = "1";
+            row2["Name"] = "test";
+            dt2.Rows.Add(row2);
+
+            Stream stream = _excelService.Export(new ExcelSheet(dt), new ExcelSheet(dt2));
             return File(stream, "application/octet-stream", "DataExport.xlsx"); // returns a FileStreamResult
         }
     }
