@@ -7,11 +7,6 @@ namespace Light.File.Excel
     public interface IExcelService
     {
         /// <summary>
-        /// Export a DataTable to file
-        /// </summary>
-        Stream Export(DataTable dataTable, string? sheetName = null);
-
-        /// <summary>
         /// Export a list data to file
         /// </summary>
         Stream Export<T>(IEnumerable<T> data, string? sheetName = null);
@@ -19,7 +14,7 @@ namespace Light.File.Excel
         /// <summary>
         /// Export multi list data to file
         /// </summary>
-        Stream Export(ExportExcelDataRequest[] request);
+        Stream Export(params (string? SheetName, object Data)[] sheets);
 
         /// <summary>
         /// Load excel file to DataTable

@@ -10,19 +10,6 @@ namespace Light.Infrastructure.Excel
 {
     public class ExcelService : IExcelService
     {
-        public Stream Export(DataTable dataTable, string? sheetName = null)
-        {
-            using var wb = new XLWorkbook();
-            wb.Worksheets.Add(dataTable, sheetName ?? "data");
-
-            foreach (var ws in wb.Worksheets)
-            {
-                ws.ColumnsUsed().AdjustToContents(); // fit columns width
-            }
-
-            return wb.AsStream();
-        }
-
         public Stream Export<T>(IEnumerable<T> data, string? sheetName = null)
         {
             using var wb = new XLWorkbook();
@@ -36,19 +23,22 @@ namespace Light.Infrastructure.Excel
             return wb.AsStream();
         }
 
-        public Stream Export(ExportExcelDataRequest[] request)
+        public Stream Export(params (string? SheetName, object Data)[] sheets)
         {
             using var wb = new XLWorkbook();
 
-            foreach (var obj in request)
+            for (int i = 0; i < sheets.Length; i++)
             {
-                wb.Worksheets.Add(obj.Rows, obj.SheetName);
+                var (sheetName, data) = sheets[i];
+
+                wb.Worksheets
+                    .Add(sheetName ?? $"sheet{i + 1}")
+                    .FirstCell()
+                    .InsertTable((dynamic)data, true);
             }
 
             foreach (var ws in wb.Worksheets)
-            {
-                ws.ColumnsUsed().AdjustToContents(); // fit columns width
-            }
+                ws.ColumnsUsed().AdjustToContents();
 
             return wb.AsStream();
         }
