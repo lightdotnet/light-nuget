@@ -1,6 +1,7 @@
 ﻿using ClosedXML.Excel;
 using Light.File.Excel;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -10,83 +11,49 @@ namespace Light.Infrastructure.Excel
 {
     public class ExcelService : IExcelService
     {
-        public Stream Export<T>(IEnumerable<T> data, string? sheetName = null)
-        {
-            using var wb = new XLWorkbook();
-            wb.Worksheets.Add(sheetName ?? "data").FirstCell().InsertTable(data, true);
-
-            foreach (var ws in wb.Worksheets)
-            {
-                ws.ColumnsUsed().AdjustToContents(); // fit columns width
-            }
-
-            return wb.AsStream();
-        }
-
-        public Stream Export(params (string? SheetName, object Data)[] sheets)
+        public Stream Export(params ExcelSheet[] sheets)
         {
             using var wb = new XLWorkbook();
 
             for (int i = 0; i < sheets.Length; i++)
             {
-                var (sheetName, data) = sheets[i];
+                var dataSheet = sheets[i].Data is IEnumerable
+                    ? sheets[i].Data
+                    : new[] { sheets[i].Data };
 
                 wb.Worksheets
-                    .Add(sheetName ?? $"sheet{i + 1}")
+                    .Add(sheets[i].SheetName ?? $"sheet{i + 1}")
                     .FirstCell()
-                    .InsertTable((dynamic)data, true);
+                    .InsertTable((dynamic)dataSheet, true);
             }
 
             foreach (var ws in wb.Worksheets)
-                ws.ColumnsUsed().AdjustToContents();
+                ws.ColumnsUsed().AdjustToContents(); // fit columns width
 
             return wb.AsStream();
         }
 
         public DataTable ReadAsDataTable(Stream streamData, string? sheetName = null)
         {
-            using IXLWorkbook workbook = new XLWorkbook(streamData);
+            using var workbook = new XLWorkbook(streamData);
 
             // set worksheet
-            var worksheet = !string.IsNullOrEmpty(sheetName)
-                ? workbook.Worksheet(sheetName)
-                : workbook.Worksheet(1);
+            var worksheet = Extensions.GetWorksheet(workbook, sheetName);
 
-            // read rows with index
-            var rowsWithIndex = worksheet.Rows().Select((data, i) => new { i, data });
+            // header column texts
+            var headers = Extensions.GetHeaders(worksheet);
 
-            // Create a new DataTable.
+            // Create a new DataTable
             var dt = new DataTable();
-            int columnsCount = 0;
+            headers.ForEach(h => dt.Columns.Add(h));
 
-            // Loop through the Worksheet rows.
-            foreach (var row in rowsWithIndex) // Skip first row which is used for column header texts
+            // Loop through the Worksheet rows, skip first row which is used for column header texts
+            foreach (var row in worksheet.RowsUsed().Skip(1))
             {
-                IXLRow rowData = row.data;
-                int rowIndex = row.i;
-
-                // Use the first row to add columns to DataTable.
-                if (rowIndex == 0)
-                {
-                    foreach (IXLCell cell in rowData.Cells())
-                    {
-                        dt.Columns.Add(cell.Value.ToString());
-                    }
-
-                    columnsCount = dt.Columns.Count;
-                }
-                else
-                {
-                    // Add rows to DataTable.
-                    dt.Rows.Add();
-
-                    for (var i = 0; i < columnsCount; i++)
-                    {
-                        var cell = rowData.Cell(i + 1); // because ClosedXML start with 1
-
-                        dt.Rows[^1][i] = cell.Value.ToString();
-                    }
-                }
+                var newRow = dt.NewRow();
+                for (int i = 0; i < headers.Count; i++)
+                    newRow[i] = row.Cell(i + 1).Value.ToString();
+                dt.Rows.Add(newRow);
             }
 
             return dt;
@@ -94,138 +61,74 @@ namespace Light.Infrastructure.Excel
 
         public IEnumerable<T> ReadAs<T>(Stream streamData, string? sheetName = null, ColumnOptions<T>? options = null)
         {
-            var list = new List<T>();
+            using var workbook = new XLWorkbook(streamData);
 
-            Type typeOfObject = typeof(T);
+            // check sheet exists
+            if (!string.IsNullOrEmpty(sheetName) && !workbook.Worksheets.Contains(sheetName))
+                return Enumerable.Empty<T>();
 
-            using (IXLWorkbook workbook = new XLWorkbook(streamData))
+            // get first sheet if not specify sheet name
+            var worksheet = Extensions.GetWorksheet(workbook, sheetName);
+
+            // header column texts, indexing of ClosedXml is 1 not 0
+            var headers = Extensions.GetHeaders(worksheet)
+                .Select((name, i) => new { Name = name, Index = i + 1 })
+                .ToList();
+
+            var props = typeof(T).GetProperties();
+
+            // skip first row which is used for column header texts
+            return worksheet.RowsUsed().Skip(1).Select(row =>
             {
-                // check sheet exists
-                if (!string.IsNullOrEmpty(sheetName) && !workbook.Worksheets.Contains(sheetName))
+                var obj = (T)Activator.CreateInstance(typeof(T))!;
+
+                foreach (var prop in props)
                 {
-                    return list;
+                    // find column has same prop name of class
+                    var propName = options?.ColumnNames.GetValueOrDefault(prop.Name) ?? prop.Name;
+                    var column = headers.SingleOrDefault(c => c.Name == propName);
+                    if (column is null) continue;
+
+                    var val = row.Cell(column.Index).GetString(); // must .GetString() to fix error "object must implement IConvertible"
+                    prop.SetValue(obj, Extensions.ConvertValue(val, prop.PropertyType));
                 }
 
-                // get first sheet if not specify sheet name
-                var worksheet = !string.IsNullOrEmpty(sheetName)
-                    ? workbook.Worksheet(sheetName)
-                    : workbook.Worksheet(1);
-
-                var properties = typeOfObject.GetProperties();
-
-                // header column texts
-                var columns = worksheet.FirstRow().Cells().Select((v, i) =>
-                    new { v.Value, Index = i + 1 }); // indexing of ClosedXml is 1 not 0
-
-                foreach (IXLRow row in worksheet.RowsUsed().Skip(1))// Skip first row which is used for column header texts
-                {
-                    T obj = (T)Activator.CreateInstance(typeOfObject)!;
-
-                    foreach (var prop in properties)
-                    {
-                        // find column has same prop name of class
-                        var propName = prop.Name.ToString();
-                        if (options != null && options.ColumnNames.ContainsKey(propName))
-                        {
-                            propName = options.ColumnNames[propName];
-                        }
-
-                        var columnHasName = columns.SingleOrDefault(c => c.Value.ToString() == propName);
-                        if (columnHasName != null)
-                        {
-                            int colIndex = columnHasName.Index;
-                            var type = prop.PropertyType;
-                            var val = row.Cell(colIndex).GetString(); // must .ToString() to fix error "object must implement Iconvertible"
-                            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
-                            {
-                                if (string.IsNullOrEmpty(val))
-                                    prop.SetValue(obj, null);
-                                else
-                                    prop.SetValue(obj, Convert.ChangeType(val, type.GetGenericArguments()[0]));
-                            }
-                            else if (prop.PropertyType.IsEnum)
-                            {
-                                var enumValue = Enum.Parse(prop.PropertyType, val);
-
-                                prop.SetValue(obj, enumValue);
-                            }
-                            else
-                            {
-                                prop.SetValue(obj, Convert.ChangeType(val, type));
-                            }
-                        }
-                    }
-
-                    list.Add(obj);
-                }
-            }
-
-            return list;
+                return obj;
+            }).ToList();
         }
 
         public List<Dictionary<string, object>> ReadAsObjects(Stream streamData, string? sheetName = null)
         {
-            using IXLWorkbook workbook = new XLWorkbook(streamData);
+            using var workbook = new XLWorkbook(streamData);
 
             // set worksheet
-            var worksheet = !string.IsNullOrEmpty(sheetName)
-                ? workbook.Worksheet(sheetName)
-                : workbook.Worksheet(1);
-
-            // read rows with index
-            var rowsWithIndex = worksheet.Rows().Select((data, i) => new { i, data });
-
-            // new objects list with prop name is dictionary key and prop value is dictionary value
-            var objects = new List<Dictionary<string, object>>();
+            var worksheet = Extensions.GetWorksheet(workbook, sheetName);
 
             // hold columns name in excel file for define prop names
-            var propNamesInObject = new List<string>();
+            var headers = Extensions.GetHeaders(worksheet);
 
-            // Loop through the Worksheet rows.
-            foreach (var row in rowsWithIndex) // Skip first row which is used for column header texts
+            // new objects list with prop name is dictionary key and prop value is dictionary value
+            // skip first row which is used for column header texts
+            return worksheet.RowsUsed().Skip(1).Select(row =>
             {
-                IXLRow rowData = row.data;
-                int rowIndex = row.i;
+                var dict = new Dictionary<string, object>();
 
-                // Use first row for define prop names in object.
-                if (rowIndex == 0)
+                for (int i = 0; i < headers.Count; i++)
                 {
-                    propNamesInObject = rowData.Cells().Select(s => s.Value.ToString()).ToList();
-                }
-                else
-                {
-                    var obj = new Dictionary<string, object>();
+                    var cell = row.Cell(i + 1); // because ClosedXML start with 1
 
-                    for (var i = 0; i < propNamesInObject.Count; i++)
+                    // convert prop value to correct type
+                    dict[headers[i]] = cell.Value switch
                     {
-                        var cell = rowData.Cell(i + 1);
-                        var propName = propNamesInObject[i];
-                        var propValue = cell.Value.ToString();
-
-                        // convert prop value to correct type
-                        if (cell.Value.IsNumber)
-                        {
-                            obj[propName] = Convert.ToInt64(propValue);
-                        }
-                        else if (cell.Value.IsDateTime)
-                        {
-                            obj[propName] = Convert.ToDateTime(propValue);
-                        }
-                        else if (cell.Value.IsBoolean)
-                        {
-                            obj[propName] = Convert.ToBoolean(propValue);
-                        }
-                        else
-                        {
-                            obj[propName] = propValue;
-                        }
-                    }
-
-                    objects.Add(obj);
+                        { IsNumber: true } => Convert.ToInt64(cell.Value.ToString()),
+                        { IsDateTime: true } => Convert.ToDateTime(cell.Value.ToString()),
+                        { IsBoolean: true } => Convert.ToBoolean(cell.Value.ToString()),
+                        _ => cell.Value.ToString()
+                    };
                 }
-            }
 
-            return objects;
+                return dict;
+            }).ToList();
         }
     }
 }
