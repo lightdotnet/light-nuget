@@ -1,8 +1,8 @@
 ﻿namespace Light.File.Excel
 {
-    public class ExcelSheet
+    public class Worksheet
     {
-        public ExcelSheet(object data, string? sheetName = null)
+        public Worksheet(object data, string? sheetName = null)
         {
             Data = data;
             SheetName = sheetName;

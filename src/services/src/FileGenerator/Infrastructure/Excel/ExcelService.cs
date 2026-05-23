@@ -11,7 +11,7 @@ namespace Light.Infrastructure.Excel
 {
     public class ExcelService : IExcelService
     {
-        public Stream Export(params (object Data, string? SheetName)[] sheets)
+        public Stream Export(params Worksheet[] sheets)
         {
             using var wb = new XLWorkbook();
 
