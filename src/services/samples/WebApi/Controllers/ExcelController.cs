@@ -37,7 +37,7 @@ namespace WebApi.Controllers
                 }
             };
 
-            Stream stream = _excelService.Export(new ExcelSheet(list));
+            Stream stream = _excelService.Export((list, null));
             return File(stream, "application/octet-stream", "DataExport.xlsx"); // returns a FileStreamResult
         }
 
@@ -94,11 +94,11 @@ namespace WebApi.Controllers
                 Detail = "Detail 1"
             };
 
-            var sheets = new ExcelSheet[]
+            var sheets = new (object Data, string? Name)[]
             {
-                new (list1),
-                new (list2),
-                new (obj3),
+                new (list1, null),
+                new (list2, null),
+                new (obj3, null),
             };
 
             Stream stream = _excelService.Export(sheets);
@@ -126,7 +126,7 @@ namespace WebApi.Controllers
             row2["Name"] = "test";
             dt2.Rows.Add(row2);
 
-            Stream stream = _excelService.Export(new ExcelSheet(dt), new ExcelSheet(dt2));
+            Stream stream = _excelService.Export((dt, null), (dt2, null));
             return File(stream, "application/octet-stream", "DataExport.xlsx"); // returns a FileStreamResult
         }
     }
