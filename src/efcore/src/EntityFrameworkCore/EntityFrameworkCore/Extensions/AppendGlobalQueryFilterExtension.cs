@@ -1,4 +1,3 @@
-using Light.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore.Query;
 using System.Linq.Expressions;
 
@@ -7,39 +6,19 @@ namespace Light.EntityFrameworkCore.Extensions;
 public static class ModelBuilderExtensions
 {
     /// <summary>
-    /// Default apply query filter by interface 
+    /// Default apply query filter by interface
     /// </summary>
     public static ModelBuilder AppendGlobalQueryFilter<TInterface>(this ModelBuilder modelBuilder, Expression<Func<TInterface, bool>> filter)
     {
         // get a list of entities without a baseType that implement the interface TInterface
         var entities = modelBuilder.Model.GetEntityTypes()
-            .Where(e => e.BaseType is null && e.ClrType.GetInterface(typeof(TInterface).Name) is not null)
+            .Where(e => e.BaseType is null && typeof(TInterface).IsAssignableFrom(e.ClrType))
             .Select(e => e.ClrType);
 
-        /*
-        foreach (var entity in entities)
-        {
-            var parameterType = Expression.Parameter(modelBuilder.Entity(entity).Metadata.ClrType);
-            var filterBody = ReplacingExpressionVisitor.Replace(filter.Parameters.Single(), parameterType, filter.Body);
-
-            // get the existing query filter
-            if (modelBuilder.Entity(entity).Metadata.GetQueryFilter() is { } existingFilter)
-            {
-                var existingFilterBody = ReplacingExpressionVisitor.Replace(existingFilter.Parameters.Single(), parameterType, existingFilter.Body);
-
-                // combine the existing query filter with the new query filter
-                filterBody = Expression.AndAlso(existingFilterBody, filterBody);
-            }
-
-            // apply the new query filter
-            modelBuilder.Entity(entity).HasQueryFilter(Expression.Lambda(filterBody, parameterType));
-        }
-        */
         foreach (var entity in entities)
         {
             var entityBuilder = modelBuilder.Entity(entity);
             var clrType = entityBuilder.Metadata.ClrType;
-
             var parameterType = Expression.Parameter(clrType);
 
             var filterBody = ReplacingExpressionVisitor.Replace(
@@ -53,14 +32,12 @@ public static class ModelBuilderExtensions
             foreach (var existingFilter in existingFilters)
             {
                 var existingExpression = existingFilter.Expression;
-
                 if (existingExpression is not null)
                 {
                     var existingFilterBody = ReplacingExpressionVisitor.Replace(
                         existingExpression.Parameters.Single(),
                         parameterType,
                         existingExpression.Body);
-
                     filterBody = Expression.AndAlso(existingFilterBody, filterBody);
                 }
             }
@@ -80,7 +57,6 @@ public static class ModelBuilderExtensions
         {
             modelBuilder.AppendGlobalQueryFilter(filter);
         }
-
         return modelBuilder;
     }
 }

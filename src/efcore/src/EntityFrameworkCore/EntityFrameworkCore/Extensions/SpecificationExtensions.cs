@@ -1,24 +1,21 @@
-﻿using Light.EntityFrameworkCore.Extensions;
 using Light.Specification;
 
 namespace Light.EntityFrameworkCore.Extensions;
 
 public static class SpecificationExtensions
 {
-    #region[DbSet]
+    #region [DbSet]
 
     /// <summary>
-    ///     build a queryable filter by specification & tracking behaviour
+    /// Build a queryable filter by specification &amp; tracking behaviour
     /// </summary>
     private static IQueryable<T> Where<T>(this DbSet<T> dbSet,
         ISpecification<T> specification,
         bool tracking = true)
         where T : class
     {
-        // filter by specification
         var query = dbSet.AsQueryable().Where(specification);
 
-        // check Tracking
         if (tracking is false)
         {
             query = query.AsNoTracking();
@@ -28,7 +25,7 @@ public static class SpecificationExtensions
     }
 
     /// <summary>
-    ///     Get list instances of T by specification
+    /// Get list instances of T by specification
     /// </summary>
     public static Task<List<T>> ToListAsync<T>(this DbSet<T> dbSet,
         ISpecification<T> specification,
@@ -37,7 +34,7 @@ public static class SpecificationExtensions
         => dbSet.Where(specification, true).ToListAsync(cancellationToken);
 
     /// <summary>
-    ///     Get list instances of T by specification with tracking or no-tracking
+    /// Get list instances of T by specification with tracking or no-tracking
     /// </summary>
     public static Task<List<T>> ToListAsync<T>(this DbSet<T> dbSet,
         ISpecification<T> specification,
@@ -47,7 +44,7 @@ public static class SpecificationExtensions
         => dbSet.Where(specification, tracking).ToListAsync(cancellationToken);
 
     /// <summary>
-    ///     Get single instance of T by specification
+    /// Get single instance of T by specification
     /// </summary>
     public static Task<T> SingleAsync<T>(this DbSet<T> dbSet,
         ISpecification<T> specification,
@@ -56,7 +53,7 @@ public static class SpecificationExtensions
         => dbSet.Where(specification, true).SingleAsync(cancellationToken);
 
     /// <summary>
-    ///     Get single instance of T by specification with tracking or no-tracking
+    /// Get single instance of T by specification with tracking or no-tracking
     /// </summary>
     public static Task<T> SingleAsync<T>(this DbSet<T> dbSet,
         ISpecification<T> specification,
@@ -66,7 +63,7 @@ public static class SpecificationExtensions
         => dbSet.Where(specification, tracking).SingleAsync(cancellationToken);
 
     /// <summary>
-    ///     Get single instance of T or default by specification
+    /// Get single instance of T or default by specification
     /// </summary>
     public static Task<T?> SingleOrDefaultAsync<T>(this DbSet<T> dbSet,
         ISpecification<T> specification,
@@ -75,7 +72,7 @@ public static class SpecificationExtensions
         => dbSet.Where(specification, true).SingleOrDefaultAsync(cancellationToken);
 
     /// <summary>
-    ///     Get single instance of T or default by specification with tracking or no-tracking
+    /// Get single instance of T or default by specification with tracking or no-tracking
     /// </summary>
     public static Task<T?> SingleOrDefaultAsync<T>(this DbSet<T> dbSet,
         ISpecification<T> specification,
@@ -85,7 +82,7 @@ public static class SpecificationExtensions
         => dbSet.Where(specification, tracking).SingleOrDefaultAsync(cancellationToken);
 
     /// <summary>
-    ///     Get first instance of T by specification
+    /// Get first instance of T by specification
     /// </summary>
     public static Task<T> FirstAsync<T>(this DbSet<T> dbSet,
         ISpecification<T> specification,
@@ -94,7 +91,7 @@ public static class SpecificationExtensions
         => dbSet.Where(specification, true).FirstAsync(cancellationToken);
 
     /// <summary>
-    ///     Get first instance of T by specification with tracking or no-tracking
+    /// Get first instance of T by specification with tracking or no-tracking
     /// </summary>
     public static Task<T> FirstAsync<T>(this DbSet<T> dbSet,
         ISpecification<T> specification,
@@ -104,7 +101,7 @@ public static class SpecificationExtensions
         => dbSet.Where(specification, tracking).FirstAsync(cancellationToken);
 
     /// <summary>
-    ///     Get first instance of T or default by specification
+    /// Get first instance of T or default by specification
     /// </summary>
     public static Task<T?> FirstOrDefaultAsync<T>(this DbSet<T> dbSet,
         ISpecification<T> specification,
@@ -113,7 +110,7 @@ public static class SpecificationExtensions
         => dbSet.Where(specification, true).FirstOrDefaultAsync(cancellationToken);
 
     /// <summary>
-    ///     Get first instance of T or default by specification with tracking or no-tracking
+    /// Get first instance of T or default by specification with tracking or no-tracking
     /// </summary>
     public static Task<T?> FirstOrDefaultAsync<T>(this DbSet<T> dbSet,
         ISpecification<T> specification,
@@ -122,12 +119,30 @@ public static class SpecificationExtensions
         where T : class
         => dbSet.Where(specification, tracking).FirstOrDefaultAsync(cancellationToken);
 
-    #endregion
-
-    #region[DbContext]
+    /// <summary>
+    /// Check if any instance of T exists by specification
+    /// </summary>
+    public static Task<bool> AnyAsync<T>(this DbSet<T> dbSet,
+        ISpecification<T> specification,
+        CancellationToken cancellationToken = default)
+        where T : class
+        => dbSet.Where(specification, false).AnyAsync(cancellationToken);
 
     /// <summary>
-    ///     build a queryable filter by specification & tracking behaviour
+    /// Count instances of T by specification
+    /// </summary>
+    public static Task<int> CountAsync<T>(this DbSet<T> dbSet,
+        ISpecification<T> specification,
+        CancellationToken cancellationToken = default)
+        where T : class
+        => dbSet.Where(specification, false).CountAsync(cancellationToken);
+
+    #endregion
+
+    #region [DbContext]
+
+    /// <summary>
+    /// Build a queryable filter by specification &amp; tracking behaviour
     /// </summary>
     public static IQueryable<T> Where<T>(this DbContext context,
         ISpecification<T> specification,
@@ -136,99 +151,117 @@ public static class SpecificationExtensions
         => context.Set<T>().Where(specification, tracking);
 
     /// <summary>
-    ///     Get list instances of T by specification
+    /// Get list instances of T by specification
     /// </summary>
     public static Task<List<T>> ToListAsync<T>(this DbContext context,
         ISpecification<T> specification,
         CancellationToken cancellationToken = default)
         where T : class
-        => context.Where(specification, true).ToListAsync(cancellationToken);
+        => context.Set<T>().ToListAsync(specification, cancellationToken);
 
     /// <summary>
-    ///     Get list instances of T by specification with tracking or no-tracking
+    /// Get list instances of T by specification with tracking or no-tracking
     /// </summary>
     public static Task<List<T>> ToListAsync<T>(this DbContext context,
         ISpecification<T> specification,
         bool tracking,
         CancellationToken cancellationToken = default)
         where T : class
-        => context.Where(specification, tracking).ToListAsync(cancellationToken);
+        => context.Set<T>().ToListAsync(specification, tracking, cancellationToken);
 
     /// <summary>
-    ///     Get single instance of T by specification
+    /// Get single instance of T by specification
     /// </summary>
     public static Task<T> SingleAsync<T>(this DbContext context,
         ISpecification<T> specification,
         CancellationToken cancellationToken = default)
         where T : class
-        => context.Where(specification, true).SingleAsync(cancellationToken);
+        => context.Set<T>().SingleAsync(specification, cancellationToken);
 
     /// <summary>
-    ///     Get single instance of T by specification with tracking or no-tracking
+    /// Get single instance of T by specification with tracking or no-tracking
     /// </summary>
     public static Task<T> SingleAsync<T>(this DbContext context,
         ISpecification<T> specification,
         bool tracking,
         CancellationToken cancellationToken = default)
         where T : class
-        => context.Where(specification, tracking).SingleAsync(cancellationToken);
+        => context.Set<T>().SingleAsync(specification, tracking, cancellationToken);
 
     /// <summary>
-    ///     Get single instance of T or default by specification
+    /// Get single instance of T or default by specification
     /// </summary>
     public static Task<T?> SingleOrDefaultAsync<T>(this DbContext context,
         ISpecification<T> specification,
         CancellationToken cancellationToken = default)
         where T : class
-        => context.Where(specification, true).SingleOrDefaultAsync(cancellationToken);
+        => context.Set<T>().SingleOrDefaultAsync(specification, cancellationToken);
 
     /// <summary>
-    ///     Get single instance of T or default by specification with tracking or no-tracking
+    /// Get single instance of T or default by specification with tracking or no-tracking
     /// </summary>
     public static Task<T?> SingleOrDefaultAsync<T>(this DbContext context,
         ISpecification<T> specification,
         bool tracking,
         CancellationToken cancellationToken = default)
         where T : class
-        => context.Where(specification, tracking).SingleOrDefaultAsync(cancellationToken);
+        => context.Set<T>().SingleOrDefaultAsync(specification, tracking, cancellationToken);
 
     /// <summary>
-    ///     Get first instance of T by specification
+    /// Get first instance of T by specification
     /// </summary>
     public static Task<T> FirstAsync<T>(this DbContext context,
         ISpecification<T> specification,
         CancellationToken cancellationToken = default)
         where T : class
-        => context.Where(specification, true).FirstAsync(cancellationToken);
+        => context.Set<T>().FirstAsync(specification, cancellationToken);
 
     /// <summary>
-    ///     Get first instance of T by specification with tracking or no-tracking
+    /// Get first instance of T by specification with tracking or no-tracking
     /// </summary>
     public static Task<T> FirstAsync<T>(this DbContext context,
         ISpecification<T> specification,
         bool tracking,
         CancellationToken cancellationToken = default)
         where T : class
-        => context.Where(specification, tracking).FirstAsync(cancellationToken);
+        => context.Set<T>().FirstAsync(specification, tracking, cancellationToken);
 
     /// <summary>
-    ///     Get first instance of T or default by specification
+    /// Get first instance of T or default by specification
     /// </summary>
     public static Task<T?> FirstOrDefaultAsync<T>(this DbContext context,
         ISpecification<T> specification,
         CancellationToken cancellationToken = default)
         where T : class
-        => context.Where(specification, true).FirstOrDefaultAsync(cancellationToken);
+        => context.Set<T>().FirstOrDefaultAsync(specification, cancellationToken);
 
     /// <summary>
-    ///     Get first instance of T or default by specification with tracking or no-tracking
+    /// Get first instance of T or default by specification with tracking or no-tracking
     /// </summary>
     public static Task<T?> FirstOrDefaultAsync<T>(this DbContext context,
         ISpecification<T> specification,
         bool tracking,
         CancellationToken cancellationToken = default)
         where T : class
-        => context.Where(specification, tracking).FirstOrDefaultAsync(cancellationToken);
+        => context.Set<T>().FirstOrDefaultAsync(specification, tracking, cancellationToken);
+
+    /// <summary>
+    /// Check if any instance of T exists by specification
+    /// </summary>
+    public static Task<bool> AnyAsync<T>(this DbContext context,
+        ISpecification<T> specification,
+        CancellationToken cancellationToken = default)
+        where T : class
+        => context.Set<T>().AnyAsync(specification, cancellationToken);
+
+    /// <summary>
+    /// Count instances of T by specification
+    /// </summary>
+    public static Task<int> CountAsync<T>(this DbContext context,
+        ISpecification<T> specification,
+        CancellationToken cancellationToken = default)
+        where T : class
+        => context.Set<T>().CountAsync(specification, cancellationToken);
 
     #endregion
 }
