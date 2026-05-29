@@ -1,4 +1,4 @@
-﻿namespace Specification.Tests;
+namespace Specification.Tests;
 
 public class Product
 {

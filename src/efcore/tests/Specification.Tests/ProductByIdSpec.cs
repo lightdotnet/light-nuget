@@ -1,4 +1,4 @@
-﻿using Light.Specification;
+using Light.Specification;
 
 namespace Specification.Tests
 {

@@ -1,4 +1,4 @@
-﻿namespace Specification.Tests
+namespace Specification.Tests
 {
     internal static class LightAssert
     {
@@ -14,5 +14,17 @@
         internal static void ShouldBeTrue(this bool value) => value.ShouldBe(true);
 
         internal static void ShouldBeFalse(this bool value) => value.ShouldBe(false);
+
+        internal static void ShouldBeNull<T>(this T value) =>
+            Assert.That(value, Is.Null);
+
+        internal static void ShouldNotBeNull<T>(this T value) =>
+            Assert.That(value, Is.Not.Null);
+
+        internal static void ShouldBeGreaterThan(this int value, int compareTo) =>
+            Assert.That(value, Is.GreaterThan(compareTo));
+
+        internal static void ShouldHaveCount<T>(this IEnumerable<T> value, int expectedCount) =>
+            Assert.That(value.Count(), Is.EqualTo(expectedCount));
     }
 }
