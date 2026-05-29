@@ -8,6 +8,7 @@
     <Project Path="src/Specification/Specification.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/EntityFrameworkCore.Tests/EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/Specification.Tests/Specification.Tests.csproj" />
   </Folder>
 </Solution>

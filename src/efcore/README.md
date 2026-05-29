@@ -1,256 +1,341 @@
 # Light.Specification & Light.EntityFrameworkCore
 
-[![NuGet](https://img.shields.io/nuget/v/Lightsoft.Specification?label=Lightsoft.Specification)](https://www.nuget.org/packages/Lightsoft.Specification)
-[![NuGet](https://img.shields.io/nuget/v/Lightsoft.EntityFrameworkCore?label=Lightsoft.EntityFrameworkCore)](https://www.nuget.org/packages/Lightsoft.EntityFrameworkCore)
+[![NuGet](https://img.shields.io/nuget/v/Lightsoft.Specification?label=Light.Specification)](https://www.nuget.org/packages/Lightsoft.Specification)
+[![NuGet](https://img.shields.io/nuget/v/Lightsoft.EntityFrameworkCore?label=Light.EntityFrameworkCore)](https://www.nuget.org/packages/Lightsoft.EntityFrameworkCore)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A lightweight **Specification Pattern** implementation with **Repository & Unit of Work** for Entity Framework Core.
+A lightweight **Specification Pattern** library with **Repository + Unit of Work** for .NET — minimal, composable, and EF Core–friendly.
 
-## Features
+---
 
-- ✅ **Specification Pattern** — Type-safe, composable query filters
-- ✅ **Repository & Unit of Work** — Clean data access abstraction
-- ✅ **EF Core Extensions** — Specification-based queries on `DbSet<T>` and `DbContext`
-- ✅ **Dapper Integration** — Raw SQL queries alongside EF Core
-- ✅ **Global Query Filters** — Interface-based automatic filtering
-- ✅ **NoLock Extensions** — Read Uncommitted isolation for read-heavy scenarios
-- ✅ **ConfigureAwait(false)** — Library-safe async throughout
-- ✅ **Thread-safe** — `ConcurrentDictionary` for repository caching
+## ✨ Features
 
-## Solution Structure
+| Feature | Package |
+|---------|---------|
+| `ISpecification<T>` — expression-based specification interface | `Light.Specification` |
+| `Specification<T>` — base class with `Where`, `WhereIf`, `OrderBy`, `Paging` | `Light.Specification` |
+| `IsSatisfiedBy(entity)` — in-memory evaluation | `Light.Specification` |
+| `And` / `Or` / `Not` combinators | `Light.Specification` |
+| `IQueryable<T>.Apply(spec)` — filter + order + page pipeline | `Light.Specification` |
+| `IEnumerable<T>.Where(spec)` — in-memory filtering with cached compiled expression | `Light.Specification` |
+| `IRepository<T>` / `IUnitOfWork` — repository & unit of work interfaces | `Light.Specification` |
+| `Repository<T>` / `UnitOfWork` — EF Core implementations | `Light.EntityFrameworkCore` |
+| `DbSet<T>.ToListAsync(spec)`, `SingleAsync`, `FirstAsync`, etc. | `Light.EntityFrameworkCore` |
+| `DbSet<T>.AnyAsync(spec)`, `CountAsync(spec)` | `Light.EntityFrameworkCore` |
+| `NOLOCK` query extensions | `Light.EntityFrameworkCore` |
+| Dapper integration via `DbContext` | `Light.EntityFrameworkCore` |
+| Append global query filters dynamically | `Light.EntityFrameworkCore` |
 
-```
-Solution 'EFCore' (3 projects)
-├── 📁 src
-│   ├── ✅ Specification (netstandard2.1)
-│   │   ├── 📂 Repositories
-│   │   │   ├── IQueryRepository.cs
-│   │   │   ├── IRepository.cs
-│   │   │   ├── ISaveChanges.cs
-│   │   │   └── IUnitOfWork.cs
-│   │   └── 📂 Specification
-│   │       ├── ISpecification.cs
-│   │       ├── Specification.cs
-│   │       ├── CollectionExtensions.cs
-│   │       └── QueryableExtensions.cs
-│   │
-│   └── ✅ EntityFrameworkCore (.NET 10)
-│       ├── 📂 EntityFrameworkCore
-│       │   ├── 📂 Extensions
-│       │   │   ├── AppendGlobalQueryFilterExtension.cs
-│       │   │   ├── DapperExtensions.cs
-│       │   │   ├── QueryableWithNoLockExtensions.cs
-│       │   │   └── SpecificationExtensions.cs
-│       │   ├── 📂 Repositories
-│       │   │   ├── Repository.cs
-│       │   │   └── UnitOfWork.cs
-│       │   ├── IDbContext.cs
-│       │   └── IDbSet.cs
-│       └── 📂 Extensions/DependencyInjection
-│           └── RepositoryServiceCollectionExtensions.cs
-│
-└── 🧪 Specification.Tests (NUnit)
-```
+---
 
-## Installation
+## 📦 Installation
 
 ```bash
+# Specification + Repository interfaces (netstandard2.0)
 dotnet add package Lightsoft.Specification
+
+# EF Core implementations (.NET 10)
 dotnet add package Lightsoft.EntityFrameworkCore
 ```
 
-## Quick Start
+---
+
+## 🚀 Quick Start
 
 ### 1. Define a Specification
 
 ```csharp
 using Light.Specification;
 
-public class ProductByIdSpec : Specification<Product>
+public class ActiveProductSpec : Specification<Product>
 {
-    public ProductByIdSpec(int id)
+    public ActiveProductSpec()
     {
-        Where(x => x.Id == id);
+        Where(x => x.IsActive);
     }
 }
 
-// Conditional filtering with WhereIf
-public class ProductFilterSpec : Specification<Product>
+public class ProductByPriceRangeSpec : Specification<Product>
 {
-    public ProductFilterSpec(int? minId = null, string? name = null)
+    public ProductByPriceRangeSpec(decimal min, decimal max)
     {
-        WhereIf(minId.HasValue, x => x.Id > minId!.Value);
-        WhereIf(name != null, x => x.ProductName == name);
+        Where(x => x.Price >= min);
+        Where(x => x.Price <= max);       // AND combined automatically
+        OrderBy(x => (object)x.Price);     // ascending
+        ApplyPaging(skip: 0, take: 20);    // pagination
     }
 }
 ```
 
-### 2. Use with IQueryable / IEnumerable
-
-```csharp
-using Light.Specification;
-
-var spec = new ProductByIdSpec(1);
-
-// IQueryable (EF Core / LINQ to SQL)
-var product = dbContext.Products.AsQueryable().Where(spec).First();
-
-// IEnumerable (in-memory)
-var filtered = products.Where(spec).ToList();
-
-// Conditional WhereIf
-var results = dbContext.Products.AsQueryable()
-    .WhereIf(searchById, new ProductByIdSpec(id))
-    .WhereIf(hasNameFilter, x => x.ProductName.Contains(name))
-    .ToList();
-```
-
-### 3. Use with DbSet / DbContext Extensions
-
-```csharp
-using Light.EntityFrameworkCore.Extensions;
-
-var spec = new ProductByIdSpec(1);
-
-// Direct on DbSet
-var product = await dbContext.Products.FirstOrDefaultAsync(spec);
-var list = await dbContext.Products.ToListAsync(spec, tracking: false);
-var exists = await dbContext.Products.AnyAsync(spec);
-var count = await dbContext.Products.CountAsync(spec);
-
-// Direct on DbContext
-var product = await dbContext.FirstOrDefaultAsync<Product>(spec);
-```
-
-### 4. Repository & Unit of Work
+### 2. Use with EF Core
 
 ```csharp
 // Register in DI
+services.AddDbContext<AppDbContext>(o => o.UseSqlServer(connectionString));
 services.AddUnitOfWork<AppDbContext>();
 
 // Use in service
-public class ProductService(IUnitOfWork unitOfWork)
+public class ProductService(IUnitOfWork uow)
 {
-    public async Task<Product?> GetByIdAsync(int id)
+    public async Task<IReadOnlyList<Product>> GetActiveProducts()
     {
-        var repo = unitOfWork.Set<Product>();
-        var spec = new ProductByIdSpec(id);
-        return await repo.Where(spec).FirstOrDefaultAsync();
-    }
-
-    public async Task CreateAsync(Product product)
-    {
-        var repo = unitOfWork.Set<Product>();
-        await repo.AddAsync(product);
-        await unitOfWork.SaveChangesAsync();
-    }
-
-    public async Task TransactionalUpdateAsync(Product product)
-    {
-        await unitOfWork.BeginTransactionAsync();
-        try
-        {
-            unitOfWork.Set<Product>().Update(product);
-            await unitOfWork.SaveChangesAsync();
-            await unitOfWork.CommitAsync();
-        }
-        catch
-        {
-            await unitOfWork.RollbackAsync();
-            throw;
-        }
+        var repo = uow.Set<Product>();
+        var spec = new ActiveProductSpec();
+        return await repo.Where(spec).ToListAsync();
     }
 }
 ```
 
-### 5. Global Query Filters
+---
+
+## 📐 Specification Pattern
+
+### Basic Where / WhereIf
 
 ```csharp
-// In DbContext.OnModelCreating
-protected override void OnModelCreating(ModelBuilder modelBuilder)
+public class ProductSearchSpec : Specification<Product>
 {
-    // Auto-apply soft delete filter to all entities implementing ISoftDelete
-    modelBuilder.AppendGlobalQueryFilter<ISoftDelete>(e => !e.IsDeleted);
-
-    // Conditional filter
-    modelBuilder.AppendGlobalQueryFilterIf<ITenant>(
-        _tenantId != null,
-        e => e.TenantId == _tenantId);
+    public ProductSearchSpec(string? name = null, bool? isActive = null)
+    {
+        WhereIf(!string.IsNullOrEmpty(name), x => x.Name.Contains(name!));
+        WhereIf(isActive.HasValue, x => x.IsActive == isActive!.Value);
+    }
 }
 ```
 
-### 6. Dapper Integration
+### IsSatisfiedBy — In-Memory Evaluation
 
 ```csharp
-using Light.EntityFrameworkCore.Extensions;
+var spec = new ActiveProductSpec();
 
-// With Dapper parameters
-var products = await dbContext.QueryAsync<Product>(
-    "SELECT * FROM Products WHERE Id > @Id",
-    new { Id = 5 });
-
-// With custom reader
-var products = await dbContext.QueryAsync(
-    "SELECT Id, ProductName FROM Products",
-    reader => new Product
-    {
-        Id = reader.GetInt32(0),
-        ProductName = reader.GetString(1)
-    });
+if (spec.IsSatisfiedBy(product))
+{
+    Console.WriteLine("Product is active");
+}
 ```
 
-### 7. NoLock Extensions
+### OrderBy + Paging
 
 ```csharp
-using Light.EntityFrameworkCore.Extensions;
+public class LatestProductsSpec : Specification<Product>
+{
+    public LatestProductsSpec(int page, int pageSize)
+    {
+        Where(x => x.IsActive);
+        OrderByDescending(x => x.CreatedAt);
+        ApplyPaging(skip: (page - 1) * pageSize, take: pageSize);
+    }
+}
 
-var products = await dbContext.Products
+// Apply: filter → order → page in one call
+var result = dbContext.Set<Product>()
+    .AsQueryable()
+    .Apply(spec)
+    .ToList();
+```
+
+### Combinators — And / Or / Not
+
+```csharp
+ISpecification<Product> active = new ActiveProductSpec();
+ISpecification<Product> premium = new PremiumProductSpec();
+
+// Combine dynamically
+var activeAndPremium = active.And(premium);
+var activeOrPremium  = active.Or(premium);
+var inactive         = active.Not();
+
+// Use anywhere
+var results = products.AsQueryable().Where(activeAndPremium).ToList();
+```
+
+> **Note:** Combinators have **no `where T : class` constraint** — they work with any `T`.
+
+### Collection Filtering (IEnumerable)
+
+```csharp
+var spec = new ActiveProductSpec();
+
+// Uses cached CompiledExpression for performance
+var filtered = products.Where(spec).ToList();
+var maybe    = products.WhereIf(applyFilter, spec).ToList();
+```
+
+### Queryable Extensions (IQueryable)
+
+```csharp
+// Filter only (no ordering/paging)
+var query = dbContext.Products.Where(spec);
+var query = dbContext.Products.WhereIf(condition, spec);
+
+// Full pipeline: filter + ordering + paging
+var query = dbContext.Products.Apply(spec);
+```
+
+---
+
+## 🗂️ Repository & Unit of Work
+
+### Interfaces
+
+```
+IQueryRepository<T>
+  ├── Include, Where, WhereIf
+  ├── ToListAsync, FindAsync
+  └── CountAsync, AnyAsync          ← NEW
+
+IRepository<T> : IQueryRepository<T>
+  ├── Add, AddRange, AddAsync, AddRangeAsync
+  ├── Update, UpdateRange
+  └── Remove, RemoveRange
+
+IUnitOfWork : ISaveChanges, IDisposable, IAsyncDisposable
+  ├── Set<T>()                       → resolves custom or default repo
+  ├── BeginTransactionAsync
+  ├── CommitAsync
+  └── RollbackAsync
+```
+
+### Registration
+
+```csharp
+// Basic — auto-creates Repository<T> for any entity
+services.AddUnitOfWork<AppDbContext>();
+
+// Custom UnitOfWork implementation
+services.AddUnitOfWork<IAppUnitOfWork, AppUnitOfWork>();
+```
+
+### Custom Repository via DI
+
+```csharp
+// Register a custom repository
+services.AddScoped<IRepository<Product>, ProductRepository>();
+
+// UnitOfWork.Set<Product>() will resolve ProductRepository from DI
+var repo = uow.Set<Product>(); // → ProductRepository instance
+```
+
+### Usage
+
+```csharp
+public class OrderService(IUnitOfWork uow)
+{
+    public async Task CreateOrder(Order order)
+    {
+        await uow.BeginTransactionAsync();
+
+        uow.Set<Order>().Add(order);
+        uow.Set<OrderItem>().AddRange(order.Items);
+
+        await uow.SaveChangesAsync();
+        await uow.CommitAsync();
+    }
+}
+```
+
+---
+
+## ⚡ EF Core Extensions
+
+### SpecificationExtensions — DbSet / DbContext
+
+```csharp
+var spec = new ActiveProductSpec();
+
+// DbSet extensions
+var list   = await dbContext.Set<Product>().ToListAsync(spec);
+var list   = await dbContext.Set<Product>().ToListAsync(spec, tracking: false);
+var single = await dbContext.Set<Product>().SingleAsync(spec);
+var first  = await dbContext.Set<Product>().FirstOrDefaultAsync(spec);
+var exists = await dbContext.Set<Product>().AnyAsync(spec);
+var count  = await dbContext.Set<Product>().CountAsync(spec);
+
+// DbContext shorthand
+var list   = await dbContext.ToListAsync(spec);
+var count  = await dbContext.CountAsync(spec);
+```
+
+> **Data methods** (`ToList`, `Single`, `First`) use `Apply()` — filter + order + page.
+> **Aggregate methods** (`Any`, `Count`) use `Where()` — filter only (no order/page).
+
+### NOLOCK Query Extensions
+
+```csharp
+var result = await dbContext.Products
+    .WithNoLock()
     .Where(x => x.IsActive)
     .ToListWithNoLockAsync();
-
-var first = await dbContext.Products
-    .Where(spec)
-    .FirstOrDefaultWithNoLockAsync();
-
-var count = await dbContext.Products
-    .Where(spec)
-    .CountWithNoLockAsync();
 ```
 
-## API Reference
+### Dapper Extensions
 
-### Specification Project (`netstandard2.1`)
+```csharp
+var products = await dbContext.QueryAsync<Product>(
+    "SELECT * FROM Products WHERE Price > @Price",
+    new { Price = 100m });
+```
 
-| Class / Interface | Description |
-|---|---|
-| `ISpecification<T>` | Core interface with `Expression<Func<T, bool>>` |
-| `Specification<T>` | Abstract base — `Where()`, `WhereIf()`, `CompiledExpression` |
-| `QueryableExtensions` | `IQueryable<T>.Where(spec)`, `.WhereIf(condition, spec)` |
-| `CollectionExtensions` | `IEnumerable<T>.Where(spec)`, `.WhereIf(condition, spec)` |
-| `IQueryRepository<T>` | Query interface — `Include`, `Where`, `WhereIf`, `ToListAsync`, `FindAsync` |
-| `IRepository<T>` | CRUD interface — `Add`, `Update`, `Remove`, `AddAsync`, `AddRangeAsync` |
-| `ISaveChanges` | `SaveChanges()`, `SaveChangesAsync()` |
-| `IUnitOfWork` | `Set<T>()`, `BeginTransactionAsync`, `CommitAsync`, `RollbackAsync` |
+### Global Query Filter
 
-### EntityFrameworkCore Project (`.NET 10`)
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    // Append soft-delete filter to all entities implementing ISoftDelete
+    modelBuilder.AppendGlobalQueryFilter<ISoftDelete>(x => !x.IsDeleted);
+}
+```
 
-| Class | Description |
-|---|---|
-| `Repository<TEntity>` | Default `IRepository<T>` implementation |
-| `UnitOfWork` | Default `IUnitOfWork` with `ConcurrentDictionary` caching |
-| `SpecificationExtensions` | `DbSet<T>` / `DbContext` extensions — `ToListAsync`, `SingleAsync`, `FirstAsync`, `FirstOrDefaultAsync`, `SingleOrDefaultAsync`, `AnyAsync`, `CountAsync` |
-| `DapperExtensions` | Raw SQL via Dapper with connection lifecycle management |
-| `QueryableWithNoLockExtensions` | `ReadUncommitted` isolation — `ToListWithNoLockAsync`, `FirstWithNoLockAsync`, etc. |
-| `ModelBuilderExtensions` | `AppendGlobalQueryFilter<TInterface>()`, `AppendGlobalQueryFilterIf<TInterface>()` |
-| `RepositoryServiceCollectionExtensions` | `AddUnitOfWork()`, `AddUnitOfWork<TContext>()` |
+---
 
-## Target Frameworks
+## 📋 API Reference
 
-| Project | Framework | C# Version |
-|---|---|---|
-| Specification | `netstandard2.1` | C# 8.0 |
-| EntityFrameworkCore | `.NET 10` | C# 12+ |
-| Tests | `.NET 10` | C# 12+ |
+### Light.Specification
 
-## License
+| Type | Members |
+|------|---------|
+| `ISpecification<T>` | `Expression` |
+| `Specification<T>` | `Where`, `WhereIf`, `OrderBy`, `OrderByDescending`, `ApplyPaging`, `IsSatisfiedBy`, `CompiledExpression`, `OrderByExpressions`, `Skip`, `Take` |
+| `OrderByExpression<T>` | `KeySelector`, `IsDescending` |
+| `SpecificationCombinators` | `And<T>`, `Or<T>`, `Not<T>` |
+| `CollectionExtensions` | `Where<T>(ISpecification)`, `WhereIf<T>` |
+| `QueryableExtensions` | `Where<T>(ISpecification)`, `WhereIf<T>`, `Apply<T>` |
 
-MIT
+### Light.Repositories (interfaces)
+
+| Type | Members |
+|------|---------|
+| `ISaveChanges` | `SaveChanges`, `SaveChangesAsync` |
+| `IQueryRepository<T>` | `Include`, `Where`, `WhereIf`, `ToListAsync`, `FindAsync`, `CountAsync`, `AnyAsync` |
+| `IRepository<T>` | Inherits `IQueryRepository<T>` + `Add`, `AddRange`, `Update`, `UpdateRange`, `Remove`, `RemoveRange`, `AddAsync`, `AddRangeAsync` |
+| `IUnitOfWork` | Inherits `ISaveChanges` + `Set<T>`, `BeginTransactionAsync`, `CommitAsync`, `RollbackAsync` |
+
+### Light.EntityFrameworkCore
+
+| Type | Members |
+|------|---------|
+| `Repository<TEntity>` | Implements `IRepository<T>` with `ConfigureAwait(false)` |
+| `UnitOfWork` | Implements `IUnitOfWork`, resolves custom repos via `IServiceProvider` |
+| `SpecificationExtensions` | `ToListAsync`, `SingleAsync`, `SingleOrDefaultAsync`, `FirstAsync`, `FirstOrDefaultAsync`, `AnyAsync`, `CountAsync` — on both `DbSet<T>` and `DbContext` |
+| `DapperExtensions` | `QueryAsync<T>` on `DbContext` |
+| `QueryableWithNoLockExtensions` | `WithNoLock`, `ToListWithNoLockAsync`, `CountWithNoLockAsync`, etc. |
+| `AppendGlobalQueryFilterExtension` | `AppendGlobalQueryFilter<TInterface>` on `ModelBuilder` |
+| `RepositoryServiceCollectionExtensions` | `AddUnitOfWork`, `AddUnitOfWork<TContext>`, `AddUnitOfWork<TInterface, TImplement>` |
+
+---
+
+## 🧪 Tests
+
+| Project | Tests |
+|---------|-------|
+| `Specification.Tests` | 38 |
+| `EntityFrameworkCore.Tests` — RepositoryTests | 22 |
+| `EntityFrameworkCore.Tests` — SpecificationExtensionsTests | 21 |
+| `EntityFrameworkCore.Tests` — UnitOfWorkTests | 6 |
+| **Total** | **87** |
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).

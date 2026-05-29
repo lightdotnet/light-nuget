@@ -5,7 +5,7 @@ namespace Specification.Tests
     /// <summary>
     /// Tests WhereIf conditional filtering
     /// </summary>
-    internal class ProductConditionalSpec : Specification<Product>
+    public class ProductConditionalSpec : Specification<Product>
     {
         public ProductConditionalSpec(int? minId = null, string? name = null)
         {

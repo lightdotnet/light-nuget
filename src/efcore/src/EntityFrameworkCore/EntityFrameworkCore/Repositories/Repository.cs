@@ -67,6 +67,14 @@ public class Repository<TEntity>(DbContext context) : IRepository<TEntity>
     /// <inheritdoc/>
     public virtual async Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
         => await _dbSet.AddRangeAsync(entities, cancellationToken).ConfigureAwait(false);
+
+    /// <inheritdoc/>
+    public virtual async Task<int> CountAsync(CancellationToken cancellationToken = default)
+        => await _dbSet.CountAsync(cancellationToken).ConfigureAwait(false);
+
+    /// <inheritdoc/>
+    public virtual async Task<bool> AnyAsync(Expression<Func<TEntity, bool>> expression, CancellationToken cancellationToken = default)
+        => await _dbSet.AnyAsync(expression, cancellationToken).ConfigureAwait(false);
 }
 
 /// <inheritdoc/>

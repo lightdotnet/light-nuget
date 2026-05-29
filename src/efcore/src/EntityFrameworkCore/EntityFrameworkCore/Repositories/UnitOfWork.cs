@@ -1,11 +1,10 @@
 using Light.Repositories;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.Collections.Concurrent;
 
 namespace Light.EntityFrameworkCore.Repositories;
 
 /// <inheritdoc/>
-public class UnitOfWork(DbContext context) : IUnitOfWork
+public class UnitOfWork(DbContext context, IServiceProvider? serviceProvider = null) : IUnitOfWork
 {
     private readonly ConcurrentDictionary<Type, object> _repositories = new();
 
@@ -15,10 +14,9 @@ public class UnitOfWork(DbContext context) : IUnitOfWork
     {
         return (IRepository<T>)_repositories.GetOrAdd(typeof(T), _ =>
         {
-            // Try to resolve custom repository from DI first
-            var customRepository = context.GetService<IRepository<T>>();
-            if (customRepository is not null)
-                return customRepository;
+            // Try to resolve custom repository from application DI
+            if (serviceProvider?.GetService(typeof(IRepository<T>)) is IRepository<T> custom)
+                return custom;
 
             // Fallback to default repository
             return new Repository<T>(context);
@@ -58,5 +56,6 @@ public class UnitOfWork(DbContext context) : IUnitOfWork
 }
 
 /// <inheritdoc/>
-public class UnitOfWork<TContext>(TContext context) : UnitOfWork(context), IUnitOfWork<TContext>
+public class UnitOfWork<TContext>(TContext context, IServiceProvider? serviceProvider = null)
+    : UnitOfWork(context, serviceProvider), IUnitOfWork<TContext>
     where TContext : DbContext;

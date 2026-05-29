@@ -1,4 +1,4 @@
-﻿namespace Light.EntityFrameworkCore;
+namespace Light.EntityFrameworkCore;
 
 /// <summary>
 ///     Dynamic set entity

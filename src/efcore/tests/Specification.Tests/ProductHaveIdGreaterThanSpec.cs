@@ -1,12 +1,11 @@
 using Light.Specification;
 
-namespace Specification.Tests
+namespace Specification.Tests;
+
+public class ProductHaveIdGreaterThanSpec : Specification<Product>
 {
-    internal class ProductHaveIdGreaterThanSpec : Specification<Product>
+    public ProductHaveIdGreaterThanSpec(int id)
     {
-        public ProductHaveIdGreaterThanSpec(int id)
-        {
-            Where(x => x.Id > id);
-        }
+        Where(x => x.Id > id);
     }
 }
