@@ -147,7 +147,7 @@
     {
         if (Model != null && Model.IsList())
         {
-            var file = ExcelService.Export((IEnumerable<object>)Model);
+            var file = ExcelService.Export(new Worksheet(Model));
 
             await JSRuntime.InvokeVoidAsync("downloadBase64String", "results.xlsx", file.ToBase64String());
         }

@@ -17,13 +17,13 @@ else
 }
 
 @code {
-    [Parameter]
+    [Parameter, EditorRequired]
     public IEnumerable<TRecord> Values { get; set; } = null!;
 
-    [Parameter]
+    [Parameter, EditorRequired]
     public Func<TRecord, T> ValueFunc { get; init; } = null!;
 
-    [Parameter]
+    [Parameter, EditorRequired]
     public Func<TRecord, string> ViewFunc { get; init; } = null!;
 
     [Parameter]
