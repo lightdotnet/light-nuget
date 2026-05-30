@@ -27,7 +27,7 @@ public abstract class ApiControllerBase : ControllerBase
     [ApiExplorerSettings(IgnoreApi = true)]
     public virtual IActionResult Ok<T>(T data)
     {
-        var result = data as Result ?? Result<T>.Success(data);
+        var result = data as ResultBase ?? Result<T>.Success(data);
         result.RequestId = HttpContext.TraceIdentifier;
         return result.ToActionResult();
     }
