@@ -26,7 +26,7 @@ public class RemoteTable<TResult, TLookup>(Func<TLookup, Task<PagedResult<TResul
         {
             var getData = await _queryFunc(Lookup);
 
-            if (getData.Succeeded)
+            if (getData.IsSuccess)
             {
                 Pagination = getData.Data;
                 Records = getData.Data.Records;
@@ -57,7 +57,7 @@ public class RemoteTable<TResult, TLookup>(Func<TLookup, Task<PagedResult<TResul
     {
         if (update != null)
         {
-            Lookup.Page = update.Page;
+            Lookup.PageNumber = update.PageNumber;
             Lookup.PageSize = update.PageSize;
         }
 
@@ -66,7 +66,7 @@ public class RemoteTable<TResult, TLookup>(Func<TLookup, Task<PagedResult<TResul
 
     public Task SearchAsync()
     {
-        Lookup.Page = 1;
+        Lookup.PageNumber = 1;
 
         return ReloadAsync();
     }

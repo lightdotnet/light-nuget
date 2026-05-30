@@ -104,7 +104,7 @@
     int pagesOnRight => PagesOnRight > 0 ? PagesOnRight : 3;
 
     // paged info
-    int currentPage => State.Page;
+    int currentPage => State.PageNumber;
     int totalPages => State.TotalPages;
     int totalRecords => State.TotalRecords;
 
@@ -113,7 +113,7 @@
         if (page == currentPage || page < 1 || page > totalPages)
             return;
 
-        State.Page = page;
+        State.PageNumber = page;
 
         await StateChanged.InvokeAsync(State);
     }

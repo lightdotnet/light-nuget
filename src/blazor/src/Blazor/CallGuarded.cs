@@ -36,7 +36,7 @@ public abstract class CallGuarded(
         {
             result = await call();
 
-            if (result.Succeeded)
+            if (result.IsSuccess)
             {
                 if (!string.IsNullOrEmpty(successMessage))
                 {
@@ -68,7 +68,7 @@ public abstract class CallGuarded(
     {
         var result = await ExecuteAsync(call, successMessage);
 
-        if (result.Succeeded)
+        if (result.IsSuccess)
         {
             await runIfSuccess();
         }
@@ -80,7 +80,7 @@ public abstract class CallGuarded(
     {
         var result = await ExecuteAsync(call, successMessage);
 
-        if (result.Succeeded)
+        if (result.IsSuccess)
         {
             await runIfSuccess();
         }

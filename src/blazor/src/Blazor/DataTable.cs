@@ -47,7 +47,7 @@ public class DataTable<T>
             {
                 var getData = await _resultFunc();
 
-                if (getData.Succeeded)
+                if (getData.IsSuccess)
                 {
                     _records = getData.Data;
                     ErrorMessage = null;
@@ -84,7 +84,7 @@ public class DataTable<T>
     {
         if (update != null)
         {
-            Pagination.Page = update.Page;
+            Pagination.PageNumber = update.PageNumber;
             Pagination.PageSize = update.PageSize;
         }
 
@@ -95,7 +95,7 @@ public class DataTable<T>
 
     public Task SearchAsync(string? value = null)
     {
-        Pagination.Page = 1;
+        Pagination.PageNumber = 1;
 
         if (string.IsNullOrEmpty(value) || SearchFunc is null)
         {
@@ -120,7 +120,7 @@ public class DataTable<T>
             data = data.Where(_searchFunc);
         }
 
-        var pagedData = data.ToPaged(Pagination.Page, PageSize);
+        var pagedData = data.ToPaged(Pagination.PageNumber, PageSize);
 
         Pagination = pagedData;
         Records = pagedData.Records;

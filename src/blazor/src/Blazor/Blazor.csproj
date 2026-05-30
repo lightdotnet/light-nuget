@@ -8,7 +8,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Blazor extra components.</Description>
 	<Summary>Blazor extra components.</Summary>
-	<Version>1.0.0.0-beta1</Version>
+	<Version>1.0.0.0-beta2</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -23,8 +23,8 @@
 
   <ItemGroup>
 	<PackageReference Include="Lightsoft.Extensions" Version="1.*" />
-	<PackageReference Include="Lightsoft.FileGenerator" Version="1.*" />
-	<PackageReference Include="Lightsoft.Result" Version="1.*" />
+	<PackageReference Include="Lightsoft.FileGenerator" Version="1.13.0-preview3" />
+	<PackageReference Include="Lightsoft.Result" Version="2.0.0-beta2" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.*" />
   </ItemGroup>
 
