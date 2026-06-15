@@ -8,7 +8,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Blazor extra components.</Description>
 	<Summary>Blazor extra components.</Summary>
-	<Version>1.0.0.0-beta6</Version>
+	<Version>1.0.0.0-beta7</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
