@@ -2,6 +2,7 @@ using Light.ActiveDirectory;
 using Light.Caching.Infrastructure;
 using Light.Extensions.DependencyInjection;
 using Light.Serilog;
+using Microsoft.OpenApi;
 using System.Reflection;
 using WebApi;
 
@@ -36,9 +37,15 @@ builder.Services.AddCache(opt =>
     opt.RedisPassword = settings.RedisPassword;
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.ModelBinderProviders.Insert(0, new ByteArrayModelBinderProvider());
+});
 
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.OperationFilter<RawByteArrayBodyFilter>();
+});
 
 var app = builder.Build();
 

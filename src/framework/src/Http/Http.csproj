@@ -1,16 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<TargetFramework>netstandard2.1</TargetFramework>
-	<Nullable>enable</Nullable>
 	<RootNamespace>Light</RootNamespace>
-	<AssemblyName>Lightsoft.Specification</AssemblyName>
-	<Title>Lightsoft.Specification</Title>
+	<AssemblyName>Lightsoft.Http</AssemblyName>
+	<Title>Lightsoft.Http</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<Authors>minhvu</Authors>
-	<Description>A simple package with a base Specification class.</Description>
-	<Summary>A simple package with a base Specification class.</Summary>
-	<Version>1.2</Version>
+	<Description>HttpClient package.</Description>
+	<Summary>HttpClient package.</Summary>
+	<Version>10.0.0-beta</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -18,5 +16,14 @@
 	<EmbedUntrackedSources>true</EmbedUntrackedSources>
 	<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
+
+  <ItemGroup>
+	<PackageReference Include="Lightsoft.Result" Version="2.*" />
+	<PackageReference Include="Microsoft.Extensions.Http" Version="10.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="NewFolder\" />
+  </ItemGroup>
 
 </Project>
