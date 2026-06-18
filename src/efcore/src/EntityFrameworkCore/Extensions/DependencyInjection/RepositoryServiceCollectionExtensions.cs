@@ -1,4 +1,4 @@
-﻿using Light.EntityFrameworkCore.Repositories;
+using Light.EntityFrameworkCore.Repositories;
 using Light.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -7,37 +7,38 @@ namespace Light.Extensions.DependencyInjection;
 public static class RepositoryServiceCollectionExtensions
 {
     /// <summary>
-    /// Use default Repositories & Unit Of Work
-    ///     Entities & DbContext will inject manually
+    /// Add UnitOfWork with default Repository
     /// </summary>
     public static IServiceCollection AddUnitOfWork(this IServiceCollection services)
     {
         services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
         services.AddScoped(typeof(IUnitOfWork<>), typeof(UnitOfWork<>));
-
         return services;
     }
 
     /// <summary>
-    /// Only use Unit Of Work, repository will auto inject with default
+    /// Add UnitOfWork with specific DbContext
     /// </summary>
     public static IServiceCollection AddUnitOfWork<TContext>(this IServiceCollection services)
         where TContext : DbContext
     {
-        services.AddScoped<IUnitOfWork, UnitOfWork<TContext>>();
-
+        services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+        services.AddScoped<IUnitOfWork>(sp =>
+            new UnitOfWork<TContext>(sp.GetRequiredService<TContext>(), sp));
+        services.AddScoped<IUnitOfWork<TContext>>(sp =>
+            new UnitOfWork<TContext>(sp.GetRequiredService<TContext>(), sp));
         return services;
     }
 
     /// <summary>
-    /// Use custom Unit Of Work implement from base UOW abstractions
+    /// Add UnitOfWork with custom implementation
     /// </summary>
     public static IServiceCollection AddUnitOfWork<TInterface, TImplement>(this IServiceCollection services)
-        where TInterface : IUnitOfWork
+        where TInterface : class, IUnitOfWork
         where TImplement : class, TInterface
     {
-        services.AddScoped(typeof(TInterface), typeof(TImplement));
-
+        services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+        services.AddScoped<TInterface, TImplement>();
         return services;
     }
 }

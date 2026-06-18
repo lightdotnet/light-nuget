@@ -1,0 +1,56 @@
+﻿@typeparam T where T : struct, System.Enum
+
+@if (Required)
+{
+    <MudSelect T="T"
+               Value="@((T)Value!)"
+               ValueChanged="@(v => ValueChanged.InvokeAsync(v))"
+               Clearable="false"
+               Variant="Mud.Variant"
+               Margin="Mud.Margin"
+               Placeholder="@($"-- {PlaceHolder} --")">
+        @foreach (var item in _enumList)
+        {
+            <MudSelectItem T="T" Value="@item">
+                @(ViewFunc != null ? ViewFunc(item) : item.ToString())
+            </MudSelectItem>
+        }
+    </MudSelect>
+}
+else
+{
+    <MudSelect T="T?"
+               Value="Value"
+               ValueChanged="ValueChanged"
+               Clearable="true"
+               Variant="Mud.Variant"
+               Margin="Mud.Margin"
+               Placeholder="@($"-- {PlaceHolder} --")">
+        @foreach (var item in _enumList)
+        {
+            <MudSelectItem T="T?" Value="@((T?)item)">
+                @(ViewFunc != null ? ViewFunc(item) : item.ToString())
+            </MudSelectItem>
+        }
+    </MudSelect>
+}
+
+@code {
+    [Parameter]
+    public T? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<T?> ValueChanged { get; set; }
+
+    [Parameter]
+    public bool Required { get; init; }
+
+    [Parameter]
+    public string? PlaceHolder { get; init; } = typeof(T).Name.ToLower();
+
+    [Parameter]
+    public Func<T, string>? ViewFunc { get; init; }
+
+    private static readonly IEnumerable<T> _enumList = EnumHelper.GetAll<T>();
+
+}

@@ -20,13 +20,13 @@ namespace Light.Infrastructure.Csv
             MissingFieldFound = null, // Skips missing *fields* in rows
         };
 
+        // ─── Read ────────────────────────────────────────────────────────────────
+
         public string[]? ReadHeaders(StreamReader streamReader)
         {
             using var csv = new CsvReader(streamReader, _config);
-
             csv.Read();
             csv.ReadHeader();
-
             return csv.HeaderRecord;
         }
 
@@ -39,13 +39,8 @@ namespace Light.Infrastructure.Csv
         public IEnumerable<T> ReadAs<T>(StreamReader streamReader)
         {
             using var csv = new CsvReader(streamReader, _config);
-
             csv.Context.TypeConverterCache.AddConverter<object>(new ObjectConverter());
-
-            foreach (var csvRecord in csv.GetRecords<T>())
-            {
-                yield return csvRecord;
-            }
+            return csv.GetRecords<T>().ToList(); // ToList() để enumerate trước khi dispose
         }
 
         public IEnumerable<T> ReadAs<T>(Stream stream)
@@ -57,16 +52,12 @@ namespace Light.Infrastructure.Csv
         public CsvData<T>? Read<T>(StreamReader streamReader)
         {
             using var csv = new CsvReader(streamReader, _config);
-
             csv.Context.TypeConverterCache.AddConverter<object>(new ObjectConverter());
 
             var records = csv.GetRecords<T>().ToList();
             var headers = csv.HeaderRecord;
 
-            if (headers is null)
-            {
-                return null;
-            }
+            if (headers is null) return null;
 
             return new CsvData<T>
             {
@@ -84,30 +75,22 @@ namespace Light.Infrastructure.Csv
         public DictionaryData? Read(StreamReader streamReader)
         {
             using var csv = new CsvReader(streamReader, _config);
-
             csv.Context.TypeConverterCache.AddConverter<object>(new ObjectConverter());
 
-            csv.Read();         // Read the first row to get the headers
-            csv.ReadHeader();   // Read headers
+            // Read the first row to get the headers
+            csv.Read();
+            csv.ReadHeader();
 
-            var headers = csv.HeaderRecord; // Get header names
-
-            if (headers is null)
-            {
-                return null;
-            }
+            var headers = csv.HeaderRecord;
+            if (headers is null) return null;
 
             var rows = new List<IDictionary<string, object?>>();
 
-            while (csv.Read()) // Read each row
+            while (csv.Read())
             {
                 var row = new Dictionary<string, object?>();
-
                 foreach (var header in headers)
-                {
-                    row[header] = csv.GetField(header); // Get value by column name
-                }
-
+                    row[header] = csv.GetField(header);
                 rows.Add(row);
             }
 
@@ -124,15 +107,16 @@ namespace Light.Infrastructure.Csv
             return Read(reader);
         }
 
+        // ─── Write ───────────────────────────────────────────────────────────────
+
         public async Task<Stream> WriteAsync<T>(IEnumerable<T> records, bool excludeHeader = false)
         {
             var memoryStream = new MemoryStream();
 
-            var writer = new StreamWriter(memoryStream, Encoding.UTF8);
+            await using var writer = new StreamWriter(memoryStream, Encoding.UTF8, bufferSize: 1024, leaveOpen: true);
+            await using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
 
-            var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
-
-            if (excludeHeader is false)
+            if (!excludeHeader)
             {
                 csv.WriteHeader<T>();
                 await csv.NextRecordAsync();
@@ -146,7 +130,7 @@ namespace Light.Infrastructure.Csv
 
             await writer.FlushAsync(); // Ensure all data is written to the stream
 
-            memoryStream.Seek(0, SeekOrigin.Begin); // Alternative to memoryStream.Position = 0, Reset stream position for reading
+            memoryStream.Seek(0, SeekOrigin.Begin); // Reset stream position for reading
 
             return memoryStream;
         }
@@ -155,32 +139,28 @@ namespace Light.Infrastructure.Csv
         {
             var memoryStream = new MemoryStream();
 
-            var writer = new StreamWriter(memoryStream, Encoding.UTF8);
-            var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+            await using var writer = new StreamWriter(memoryStream, Encoding.UTF8, bufferSize: 1024, leaveOpen: true);
+            await using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
 
             if (!excludeHeader)
             {
                 foreach (DataColumn column in table.Columns)
-                {
                     csv.WriteField(column.ColumnName);
-                }
 
-                await csv.NextRecordAsync(); // <-- IMPORTANT: moves to a *new line*
+                await csv.NextRecordAsync(); // moves to a new line
             }
 
             foreach (DataRow row in table.Rows)
             {
                 foreach (var item in row.ItemArray)
-                {
                     csv.WriteField(item);
-                }
 
-                await csv.NextRecordAsync(); // <-- without this, all data stays in the same row
+                await csv.NextRecordAsync(); // without this, all data stays in the same row
             }
 
-            await writer.FlushAsync(); // Ensure all data is written to the stream'
+            await writer.FlushAsync(); // Ensure all data is written to the stream
 
-            memoryStream.Seek(0, SeekOrigin.Begin); // Alternative to memoryStream.Position = 0, Reset stream position for reading
+            memoryStream.Seek(0, SeekOrigin.Begin); // Reset stream position for reading
 
             return memoryStream;
         }

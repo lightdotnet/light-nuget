@@ -1,12 +1,11 @@
-﻿using Light.Specification;
+using Light.Specification;
 
-namespace Specification.Tests
+namespace Specification.Tests;
+
+public class ProductByIdSpec : Specification<Product>
 {
-    internal class ProductByIdSpec : Specification<Product>
+    public ProductByIdSpec(int id)
     {
-        public ProductByIdSpec(int id)
-        {
-            Where(x => x.Id == id);
-        }
+        Where(x => x.Id == id);
     }
 }

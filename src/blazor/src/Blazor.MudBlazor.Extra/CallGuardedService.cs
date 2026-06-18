@@ -20,7 +20,7 @@ public class CallGuardedService(
     {
         var result = await ExecuteAsync(call, successMessage);
 
-        if (result.Succeeded)
+        if (result.IsSuccess)
         {
             dialog.Close(DialogResult.Ok(result));
         }

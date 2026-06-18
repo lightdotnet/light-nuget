@@ -9,7 +9,7 @@ namespace Light.File.Excel
         /// <summary>
         /// Export multi list data to file
         /// </summary>
-        Stream Export(params Worksheet[] sheets);
+        Stream Export(params (object Data, string? SheetName)[] sheets);
 
         /// <summary>
         /// Load excel file to DataTable

@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Light.EntityFrameworkCore.Extensions;
 using System.Data;
 using System.Data.Common;

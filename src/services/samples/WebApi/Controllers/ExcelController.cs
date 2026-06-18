@@ -58,6 +58,18 @@ namespace WebApi.Controllers
             return Ok(obj);
         }
 
+        [HttpPost("upload")]
+        public IActionResult Import([FromBody] byte[] bytes)
+        {
+            Stream stream = new MemoryStream(bytes);
+
+            var dt = _excelService.ReadAsDataTable(stream);
+
+            var obj = DataTableHelper.ConvertToObjects(dt);
+
+            return Ok(obj);
+        }
+
         [HttpGet("test")]
         public IActionResult Test()
         {

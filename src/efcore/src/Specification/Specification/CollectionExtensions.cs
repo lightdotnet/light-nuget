@@ -1,5 +1,3 @@
-﻿using Light.Specification;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,32 +5,20 @@ namespace Light.Specification
 {
     public static class CollectionExtensions
     {
-        /// <summary>
-        ///     Filter a collection by specification
-        /// </summary>
         public static IEnumerable<T> Where<T>(this IEnumerable<T> source, ISpecification<T> specification)
+            where T : class
         {
-            if (specification?.Expression != null)
-            {
-                Func<T, bool> func = specification.Expression.Compile();
-                return source.Where(func);
-            }
-
-            return source;
+            if (specification?.Expression == null) return source;
+            var compiled = (specification as Specification<T>)?.CompiledExpression ?? specification.Expression.Compile();
+            return source.Where(compiled);
         }
 
-        /// <summary>
-        ///     Only filter a collection by specification when condition is true
-        /// </summary>
         public static IEnumerable<T> WhereIf<T>(this IEnumerable<T> source, bool condition, ISpecification<T> specification)
+            where T : class
         {
-            if (specification?.Expression != null && condition)
-            {
-                Func<T, bool> func = specification.Expression.Compile();
-                return source.Where(func);
-            }
-
-            return source;
+            if (!condition || specification?.Expression == null) return source;
+            var compiled = (specification as Specification<T>)?.CompiledExpression ?? specification.Expression.Compile();
+            return source.Where(compiled);
         }
     }
 }

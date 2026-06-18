@@ -11,20 +11,28 @@ namespace Light.Infrastructure.Excel
 {
     public class ExcelService : IExcelService
     {
-        public Stream Export(params Worksheet[] sheets)
+        public Stream Export(params (object Data, string? SheetName)[] sheets)
         {
             using var wb = new XLWorkbook();
 
             for (int i = 0; i < sheets.Length; i++)
             {
-                var dataSheet = sheets[i].Data is IEnumerable
-                    ? sheets[i].Data
-                    : new[] { sheets[i].Data };
+                var (data, sheetName) = sheets[i];
 
-                wb.Worksheets
-                    .Add(sheets[i].SheetName ?? $"sheet{i + 1}")
-                    .FirstCell()
-                    .InsertTable((dynamic)dataSheet, true);
+                var ws = wb.Worksheets.Add(sheetName ?? $"sheet{i + 1}");
+
+                if (data is DataTable dt)
+                {
+                    ws.FirstCell().InsertTable(dt, true);
+                }
+                else
+                {
+                    var enumerable = data is IEnumerable
+                        ? data
+                        : new object[] { data };
+
+                    ws.FirstCell().InsertTable((dynamic)enumerable, true);
+                }
             }
 
             foreach (var ws in wb.Worksheets)

@@ -1,4 +1,4 @@
-﻿using Light.EntityFrameworkCore.Extensions;
+using Light.EntityFrameworkCore.Extensions;
 using System.Linq.Expressions;
 using System.Transactions;
 

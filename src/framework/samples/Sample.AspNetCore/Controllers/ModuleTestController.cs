@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Light.Contracts;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Sample.AspNetCore.Modules;
 
 namespace Sample.AspNetCore.Controllers;
@@ -27,5 +29,12 @@ public class ModuleTestController(
     {
         productModuleService.AddProduct(productId);
         return Ok(productModuleService.Products);
+    }
+
+    [HttpGet("test_result")]
+    public IActionResult GetTest()
+    {
+        var res = new PagedResult<int>([1, 2, 3], 1, 20, 3);
+        return Ok(res);
     }
 }

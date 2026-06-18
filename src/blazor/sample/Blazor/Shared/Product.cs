@@ -6,7 +6,7 @@ namespace Shared
 
     public record Search() : IPage
     {
-        public int Page { get; set; }
+        public int PageNumber { get; set; }
         public int PageSize { get; set; }
     }
 
@@ -50,7 +50,7 @@ namespace Shared
 
         public async Task<PagedResult<Product>> Search(Search search)
         {
-            var result = _products.ToPagedResult(search.Page, search.PageSize);
+            var result = _products.ToPagedResult(search.PageNumber, search.PageSize);
 
             await Task.Delay(500);
 

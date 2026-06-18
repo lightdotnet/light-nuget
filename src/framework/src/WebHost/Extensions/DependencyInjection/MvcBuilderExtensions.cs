@@ -75,14 +75,14 @@ public static class MvcBuilderExtensions
 
                 var apiError = new Result
                 {
-                    Code = ResultCode.bad_request.ToString(),
+                    Code = ResultCode.BadRequest,
                     // convert errors to Model_Erorr1|Model_Error2|....
                     Message = string.Join("|", errors)
                 };
 
                 var result = new ObjectResult(apiError)
                 {
-                    StatusCode = (int)apiError.MapHttpStatusCode()
+                    StatusCode = (int)apiError.ToHttpStatusCode()
                 };
                 result.ContentTypes.Add(MediaTypeNames.Application.Json);
 

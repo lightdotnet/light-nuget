@@ -22,7 +22,7 @@ public class CallGuardedService(
     {
         var result = await base.ExecuteAsync(call, successMessage);
 
-        if (result.Succeeded)
+        if (result.IsSuccess)
         {
             await fluentDialog.CloseAsync(result);
         }
@@ -36,7 +36,7 @@ public class CallGuardedService(
         {
             var result = await runFunc();
 
-            if (result.Succeeded)
+            if (result.IsSuccess)
             {
                 Toast.ShowSuccess(succeededMessage);
                 await runIfSuccess();

@@ -18,7 +18,7 @@ public static class ActionResultExtensions
     {
         return new ObjectResult(result)
         {
-            StatusCode = (int)result.MapHttpStatusCode()
+            StatusCode = (int)result.ToHttpStatusCode()
         };
     }
 }

@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-	<PackageReference Include="Lightsoft.Result" Version="1.*" />
+	<PackageReference Include="Lightsoft.Result" Version="2.0.0" />
   </ItemGroup>
 
 </Project>
