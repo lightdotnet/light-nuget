@@ -5,9 +5,9 @@
     Editable="true"
     Variant="Variant"
     Margin="@Mud.Margin"
-    Mask="@(new DateMask(mask))"
-    HelperText="@mask"
-    DateFormat="@mask" />
+    Mask="@(new DateMask(Mask))"
+    HelperText="@Mask"
+    DateFormat="@Mask" />
 
 @code {
     [Parameter]
@@ -22,5 +22,6 @@
     [Parameter]
     public Variant Variant { get; set; } = Mud.Variant;
 
-    private string mask = "yyyy/MM/dd";
+    [Parameter]
+    public string Mask { get; set; } = "yyyy/MM/dd";
 }

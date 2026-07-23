@@ -42,12 +42,24 @@
     </div>
 </div>
 
+<div class="card mt-3">
+    <div class="card-header">
+        Input
+    </div>
+    <div class="card-body">
+        <input @bind-value="selectedDate" type="datetime-local" />
+        <Input_Date @bind-Value="selectedDate" DateTime="true"  />
+    </div>
+</div>
+
 @code {
     private IEnumerable<Product> products = [];
 
     private IEnumerable<Product> viewProducts = [];
 
     private Product? selectedProduct;
+
+    private DateTime? selectedDate;
 
     IList<IBrowserFile> _files = new List<IBrowserFile>();
 

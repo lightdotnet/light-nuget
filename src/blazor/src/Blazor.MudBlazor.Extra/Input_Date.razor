@@ -1,7 +1,7 @@
 ﻿@typeparam T
 
 <MudTextField T="T"
-    Value=Value ValueChanged=ValueChanged
+    Value=Value ValueChanged=HandleValueChanged
     Placeholder="PlaceHolder"
     Format="@format"
     InputType="type"
@@ -19,6 +19,9 @@
     public EventCallback<T> ValueChanged { get; set; }
 
     [Parameter]
+    public EventCallback OnChange { get; set; }
+
+    [Parameter]
     public string PlaceHolder { get; set; }
 
     [Parameter]
@@ -31,4 +34,11 @@
 
     private InputType type =>
         DateTime ? InputType.DateTimeLocal : InputType.Date;
+
+    private async Task HandleValueChanged(T value)
+    {
+        Value = value;
+        await ValueChanged.InvokeAsync(value);
+        await OnChange.InvokeAsync();
+    }
 }
