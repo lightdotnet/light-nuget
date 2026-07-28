@@ -88,5 +88,25 @@ public class UnitOfWorkTests : TestFixtureBase
         Assert.DoesNotThrowAsync(async () => await uow.DisposeAsync());
     }
 
+    [Test]
+    public void Dispose_With_OwnsContext_False_Should_Not_Dispose_Context()
+    {
+        var uow = new UnitOfWork(Context, ownsContext: false);
+
+        uow.Dispose();
+
+        Assert.DoesNotThrow(() => Context.Products.Find(1));
+    }
+
+    [Test]
+    public async Task DisposeAsync_With_OwnsContext_False_Should_Not_Dispose_Context()
+    {
+        var uow = new UnitOfWork(Context, ownsContext: false);
+
+        await uow.DisposeAsync();
+
+        Assert.DoesNotThrow(() => Context.Products.Find(1));
+    }
+
     #endregion
 }

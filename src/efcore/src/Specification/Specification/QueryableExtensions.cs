@@ -29,7 +29,7 @@ namespace Light.Specification
         public static IQueryable<T> Apply<T>(this IQueryable<T> source, ISpecification<T> specification) where T : class
         {
             if (specification?.Expression != null) source = source.Where(specification.Expression);
-            if (specification is Specification<T> spec)
+            if (specification is IOrderedSpecification<T> spec)
             {
                 IOrderedQueryable<T>? ordered = null;
                 foreach (var ob in spec.OrderByExpressions)

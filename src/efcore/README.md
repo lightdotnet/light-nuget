@@ -149,7 +149,10 @@ var inactive         = active.Not();
 var results = products.AsQueryable().Where(activeAndPremium).ToList();
 ```
 
-> **Note:** Combinators have **no `where T : class` constraint** — they work with any `T`.
+> **Note:** Combinators require `T : class` (matching `Specification<T>`) and preserve ordering/paging from
+> whichever operand carries it (left-biased for `And`/`Or`; `Not` preserves its source spec's ordering/paging).
+> The underlying `ISpecification<T>` interface itself has no such constraint, so custom specifications for
+> value types can still be authored outside the combinator/`Apply` pipeline.
 
 ### Collection Filtering (IEnumerable)
 
@@ -205,6 +208,10 @@ services.AddUnitOfWork<AppDbContext>();
 // Custom UnitOfWork implementation
 services.AddUnitOfWork<IAppUnitOfWork, AppUnitOfWork>();
 ```
+
+> **Note:** `UnitOfWork` never disposes a `DbContext` it doesn't own when resolved through `AddUnitOfWork()`/`AddUnitOfWork<TContext>()` — those registrations resolve a scoped, container-owned context, so disposing the `IUnitOfWork` early is safe and won't break other scoped services sharing that context. If you construct `UnitOfWork` directly (`new UnitOfWork(context)`), it owns and disposes the context by default; pass `ownsContext: false` to opt out.
+>
+> `BeginTransactionAsync`/`CommitAsync`/`RollbackAsync` run inside `Database.CreateExecutionStrategy().ExecuteAsync(...)`, so they work correctly with retry-enabled providers (e.g. `EnableRetryOnFailure()`).
 
 ### Custom Repository via DI
 
@@ -268,6 +275,13 @@ var result = await dbContext.Products
     .ToListWithNoLockAsync();
 ```
 
+> **Caveats:** these extensions use `TransactionScope(IsolationLevel.ReadUncommitted)` under the hood.
+> `ReadUncommitted` only affects connections opened *after* the scope begins — if the `DbContext`'s connection is
+> already open, the isolation level silently does not apply. If a second physical connection gets enlisted while
+> the scope is active, `TransactionScope` will attempt to promote to a distributed transaction coordinated by
+> MSDTC, which is Windows-only and will fail on Linux (a common `net10.0` container target) — avoid nesting NOLOCK
+> calls or other database calls inside the same scope.
+
 ### Dapper Extensions
 
 ```csharp
@@ -285,6 +299,13 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
     modelBuilder.AppendGlobalQueryFilter<ISoftDelete>(x => !x.IsDeleted);
 }
 ```
+
+> **Note:** the filter is registered under a stable, per-interface key (`$"Global_{typeof(TInterface).FullName}"`),
+> so filters for *different* interfaces on the same entity compose automatically via AND (EF Core 10 combines all
+> named/default filters natively). Calling `AppendGlobalQueryFilter<TInterface>` more than once for the *same*
+> interface **replaces** the previously registered filter for that key rather than AND-ing the two calls together.
+> The filter is applied once per entity hierarchy, at the point where `TInterface` is first implemented — EF Core
+> propagates it to derived types automatically.
 
 ---
 
@@ -328,11 +349,29 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 
 | Project | Tests |
 |---------|-------|
-| `Specification.Tests` | 38 |
+| `Specification.Tests` | 42 |
 | `EntityFrameworkCore.Tests` — RepositoryTests | 22 |
 | `EntityFrameworkCore.Tests` — SpecificationExtensionsTests | 21 |
-| `EntityFrameworkCore.Tests` — UnitOfWorkTests | 6 |
-| **Total** | **87** |
+| `EntityFrameworkCore.Tests` — UnitOfWorkTests | 8 |
+| `EntityFrameworkCore.Tests` — QueryableWithNoLockExtensionsTests | 2 |
+| `EntityFrameworkCore.Tests` — UnitOfWorkDependencyInjectionTests | 1 |
+| `EntityFrameworkCore.Tests` — SpecificationSqliteTests | 1 |
+| **Total** | **97** |
+
+`EntityFrameworkCore.Tests` runs against the EF Core InMemory provider by default; `SpecificationSqliteTests` uses
+an in-memory Sqlite database instead, specifically to verify real SQL translation for boxed value-type `OrderBy`
+key selectors (e.g. `x => (object)x.Price`), which InMemory skips entirely.
+
+---
+
+## ⚠️ Known Limitations
+
+- **`UnitOfWork.Set<T>()`** caches repositories in a `ConcurrentDictionary`; under concurrent first access for the
+  same `T`, the repository-construction factory can run more than once (only one result is kept). Harmless for the
+  default `Repository<T>`, but worth knowing if a custom DI-registered repository has non-trivial constructor side
+  effects.
+- See the caveats inline above for **NOLOCK extensions** (MSDTC/Linux, stale open connections) and
+  **`AppendGlobalQueryFilter`** (same-interface repeat-call replaces rather than ANDs).
 
 ---
 

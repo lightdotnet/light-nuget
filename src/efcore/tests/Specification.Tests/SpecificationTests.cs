@@ -385,6 +385,75 @@ public class SpecificationTests
 
     #endregion
 
+    #region [Combinators — Ordering/Paging Preservation]
+
+    [Test]
+    public void And_Should_Preserve_OrderBy_From_Left_When_Left_Has_Ordering()
+    {
+        ISpecification<Product> left = new ProductActiveOrderedByIdDescSpec();
+        ISpecification<Product> right = new ProductHaveIdGreaterThanSpec(1);
+        var combined = left.And(right);
+        var result = Products.AsQueryable().Apply(combined).ToList();
+        result.Count.ShouldBe(3); // Id 2, 3, 4
+        result[0].Id.ShouldBe(4);
+        result[2].Id.ShouldBe(2);
+    }
+
+    [Test]
+    public void And_Should_Preserve_OrderBy_From_Right_When_Left_Has_No_Ordering()
+    {
+        ISpecification<Product> left = new ProductHaveIdGreaterThanSpec(1);
+        ISpecification<Product> right = new ProductActiveOrderedByIdDescSpec();
+        var combined = left.And(right);
+        var result = Products.AsQueryable().Apply(combined).ToList();
+        result.Count.ShouldBe(3); // Id 2, 3, 4
+        result[0].Id.ShouldBe(4);
+        result[2].Id.ShouldBe(2);
+    }
+
+    [Test]
+    public void Or_Should_Preserve_Paging_From_Left()
+    {
+        ISpecification<Product> left = new ProductActivePagedByIdSpec(0, 2);
+        ISpecification<Product> right = new ProductByIdSpec(4);
+        var combined = left.Or(right);
+        var result = Products.AsQueryable().Apply(combined).ToList();
+        result.Count.ShouldBe(2); // paging (skip 0, take 2) still applied
+        result[0].Id.ShouldBe(1);
+        result[1].Id.ShouldBe(2);
+    }
+
+    [Test]
+    public void Not_Should_Preserve_OrderBy_From_Source_Spec()
+    {
+        ISpecification<Product> spec = new ProductActiveOrderedByIdDescSpec();
+        var negated = spec.Not();
+        var result = Products.AsQueryable().Apply(negated).ToList();
+        result.Count.ShouldBe(0); // Id > 0 is always true, so Not() matches nothing
+    }
+
+    #endregion
+
     // Helper empty spec for tests
     private class EmptyProductSpec : Specification<Product> { }
+
+    // Helper specs carrying both a filter and ordering/paging, used to verify combinators preserve them
+    private class ProductActiveOrderedByIdDescSpec : Specification<Product>
+    {
+        public ProductActiveOrderedByIdDescSpec()
+        {
+            Where(x => x.Id > 0);
+            OrderByDescending(x => (object)x.Id);
+        }
+    }
+
+    private class ProductActivePagedByIdSpec : Specification<Product>
+    {
+        public ProductActivePagedByIdSpec(int skip, int take)
+        {
+            Where(x => x.Id > 0);
+            OrderBy(x => (object)x.Id);
+            ApplyPaging(skip, take);
+        }
+    }
 }

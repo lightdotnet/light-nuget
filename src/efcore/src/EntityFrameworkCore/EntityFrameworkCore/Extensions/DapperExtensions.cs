@@ -14,22 +14,27 @@ public static class DapperExtensions
         string query, Func<DbDataReader, T> map,
         CancellationToken cancellationToken = default)
     {
-        // await RawSqlQuery(query, x => new T { Prop0 = (string)x[0], Prop1 = (string)x[1] });
         using var command = context.Database.GetDbConnection().CreateCommand();
         command.CommandText = query;
         command.CommandType = CommandType.Text;
 
-        await context.Database.OpenConnectionAsync(cancellationToken);
-
-        using var result = await command.ExecuteReaderAsync(cancellationToken);
-        var entities = new List<T>();
-
-        while (result.Read())
+        await context.Database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            entities.Add(map(result));
-        }
+            using var result = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            var entities = new List<T>();
 
-        return entities;
+            while (await result.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                entities.Add(map(result));
+            }
+
+            return entities;
+        }
+        finally
+        {
+            await context.Database.CloseConnectionAsync().ConfigureAwait(false);
+        }
     }
 
     public static async Task<IEnumerable<T>> QueryAsync<T>(this DbContext context,
@@ -37,9 +42,9 @@ public static class DapperExtensions
     {
         if (param is not null)
             return await context.Database.GetDbConnection().QueryAsync<T>(query, param,
-                commandType: commandType);
+                commandType: commandType).ConfigureAwait(false);
         else
             return await context.Database.GetDbConnection().QueryAsync<T>(query,
-                commandType: commandType);
+                commandType: commandType).ConfigureAwait(false);
     }
 }

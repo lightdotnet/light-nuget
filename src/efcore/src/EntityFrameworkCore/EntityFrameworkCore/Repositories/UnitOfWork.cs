@@ -4,7 +4,13 @@ using System.Collections.Concurrent;
 namespace Light.EntityFrameworkCore.Repositories;
 
 /// <inheritdoc/>
-public class UnitOfWork(DbContext context, IServiceProvider? serviceProvider = null) : IUnitOfWork
+/// <param name="context">The DbContext used by this unit of work.</param>
+/// <param name="serviceProvider">Optional service provider used to resolve custom repositories.</param>
+/// <param name="ownsContext">
+///     Whether this instance owns <paramref name="context"/> and should dispose it.
+///     Set to <c>false</c> when the context's lifetime is managed elsewhere (e.g. by the DI container).
+/// </param>
+public class UnitOfWork(DbContext context, IServiceProvider? serviceProvider = null, bool ownsContext = true) : IUnitOfWork
 {
     private readonly ConcurrentDictionary<Type, object> _repositories = new();
 
@@ -32,30 +38,36 @@ public class UnitOfWork(DbContext context, IServiceProvider? serviceProvider = n
 
     /// <inheritdoc/>
     public virtual async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
-        => await context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        => await context.Database.CreateExecutionStrategy()
+            .ExecuteAsync(cancellationToken, ct => context.Database.BeginTransactionAsync(ct))
+            .ConfigureAwait(false);
 
     /// <inheritdoc/>
     public virtual async Task CommitAsync(CancellationToken cancellationToken = default)
-        => await context.Database.CommitTransactionAsync(cancellationToken).ConfigureAwait(false);
+        => await context.Database.CreateExecutionStrategy()
+            .ExecuteAsync(cancellationToken, ct => context.Database.CommitTransactionAsync(ct))
+            .ConfigureAwait(false);
 
     /// <inheritdoc/>
     public virtual async Task RollbackAsync(CancellationToken cancellationToken = default)
-        => await context.Database.RollbackTransactionAsync(cancellationToken).ConfigureAwait(false);
+        => await context.Database.CreateExecutionStrategy()
+            .ExecuteAsync(cancellationToken, ct => context.Database.RollbackTransactionAsync(ct))
+            .ConfigureAwait(false);
 
     public void Dispose()
     {
-        context.Dispose();
+        if (ownsContext) context.Dispose();
         GC.SuppressFinalize(this);
     }
 
     public async ValueTask DisposeAsync()
     {
-        await context.DisposeAsync().ConfigureAwait(false);
+        if (ownsContext) await context.DisposeAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }
 }
 
 /// <inheritdoc/>
-public class UnitOfWork<TContext>(TContext context, IServiceProvider? serviceProvider = null)
-    : UnitOfWork(context, serviceProvider), IUnitOfWork<TContext>
+public class UnitOfWork<TContext>(TContext context, IServiceProvider? serviceProvider = null, bool ownsContext = true)
+    : UnitOfWork(context, serviceProvider, ownsContext), IUnitOfWork<TContext>
     where TContext : DbContext;

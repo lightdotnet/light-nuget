@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 
 namespace Light.Specification
 {
-    public abstract class Specification<T> : ISpecification<T>
+    public abstract class Specification<T> : IOrderedSpecification<T>
         where T : class
     {
         public Expression<Func<T, bool>>? Expression { get; private set; }

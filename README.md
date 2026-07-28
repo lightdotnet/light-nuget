@@ -5,3 +5,7 @@
 
 ## About
 This solution contains Light .NET projects publish to NuGet.org
+
+## Packages
+
+- [Light.Specification & Light.EntityFrameworkCore](src/efcore/README.md) — Specification Pattern + Repository/Unit of Work for EF Core
