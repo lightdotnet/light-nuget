@@ -1,32 +1,29 @@
-﻿namespace Light.Extensions.DynamicObject;
+﻿using System.Collections.Concurrent;
+using System.Reflection;
+
+namespace Light.Extensions.DynamicObject;
 
 public class DynamicMapper
 {
+    private static readonly ConcurrentDictionary<Type, Dictionary<string, PropertyInfo>> PropertyCache = new();
+
     public static T MapToObject<T, TEntity>(List<TEntity> columns)
         where T : new()
         where TEntity : DynamicEntity
     {
         var obj = new T();
-        var type = typeof(T);
+        var properties = PropertyCache.GetOrAdd(typeof(T), static type =>
+            type.GetProperties().ToDictionary(p => p.Name, p => p));
 
         foreach (var col in columns)
         {
-            var prop = type.GetProperty(col.PropName!);
-            if (prop != null && prop.CanWrite)
+            if (col.PropValue == null || !properties.TryGetValue(col.PropName, out var prop) || !prop.CanWrite)
             {
-                try
-                {
-                    if (col.PropValue != null)
-                    {
-                        object value = ConvertToType(col.PropValue, prop.PropertyType);
-                        prop.SetValue(obj, value);
-                    }
-                }
-                catch
-                {
-                    // Optional: log or handle conversion errors
-                }
+                continue;
             }
+
+            var value = ConvertToType(col.PropValue, prop.PropertyType);
+            prop.SetValue(obj, value);
         }
 
         return obj;

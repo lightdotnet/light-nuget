@@ -1,6 +1,6 @@
 ﻿namespace Light.Domain;
 
-public struct LightId
+public static class LightId
 {
     public static string NewId() => Ulid.NewUlid().ToString();
 }
