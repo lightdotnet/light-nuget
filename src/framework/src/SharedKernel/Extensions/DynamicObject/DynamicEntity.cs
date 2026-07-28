@@ -1,4 +1,4 @@
-﻿using Light.Domain.Entities.Default;
+﻿using Light.Domain.Entities;
 using Light.Domain.Entities.Interfaces;
 
 namespace Light.Extensions.DynamicObject;

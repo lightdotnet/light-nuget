@@ -4,7 +4,7 @@ namespace Light.Domain.Entities;
 ///     A base type for domain events. Depends on MediatR INotification.
 ///     Includes DateOccurred which is set on creation.
 /// </summary>
-public abstract record DomainEvent
+public abstract record BaseEvent
 {
     public virtual DateTimeOffset TriggeredOn { get; protected set; } = DateTimeOffset.UtcNow;
 }
