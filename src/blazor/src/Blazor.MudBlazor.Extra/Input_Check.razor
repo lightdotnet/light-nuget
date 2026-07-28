@@ -1,7 +1,8 @@
 ﻿<MudCheckBox
+    T="bool"
     Value="Value"
     Label="@Label"
-    ValueChanged="ValueChanged"
+    ValueChanged="HandleValueChanged"
     Dense="Mud.Dense"
     Style="@Style"
     Size="Size.Small"  />
@@ -17,5 +18,15 @@
     public EventCallback<bool> ValueChanged { get; set; }
 
     [Parameter]
+    public EventCallback OnChange { get; set; }
+
+    [Parameter]
     public string? Style { get; set; }
+
+    private async Task HandleValueChanged(bool value)
+    {
+        Value = value;
+        await ValueChanged.InvokeAsync(value);
+        await OnChange.InvokeAsync();
+    }
 }

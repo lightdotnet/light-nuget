@@ -1,6 +1,6 @@
 ﻿@typeparam T
 
-<MudTextField T="T" Value=Value ValueChanged=ValueChanged
+<MudTextField T="T" Value=Value ValueChanged=HandleValueChanged
     Variant="Variant" Margin="@Mud.Margin"
     Placeholder="@PlaceHolder"
     Lines="Lines"
@@ -20,6 +20,9 @@
 
     [Parameter]
     public EventCallback<T> ValueChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnChange { get; set; }
 
     [Parameter]
     public bool Required { get; set; }
@@ -50,4 +53,11 @@
 
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object> AdditionalAttributes { get; set; }
+
+    private async Task HandleValueChanged(T value)
+    {
+        Value = value;
+        await ValueChanged.InvokeAsync(value);
+        await OnChange.InvokeAsync();
+    }
 }

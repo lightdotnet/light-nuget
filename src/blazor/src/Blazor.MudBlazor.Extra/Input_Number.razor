@@ -20,6 +20,16 @@
 
     [Parameter]
     public EventCallback<T> ValueChanged { get; set; }
-    
+
+    [Parameter]
+    public EventCallback OnChange { get; set; }
+
     private CultureInfo _en = CultureInfo.GetCultureInfo("en-US");
+
+    private async Task HandleValueChanged(T value)
+    {
+        Value = value;
+        await ValueChanged.InvokeAsync(value);
+        await OnChange.InvokeAsync();
+    }
 }
