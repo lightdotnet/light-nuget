@@ -1,26 +1,10 @@
-﻿using Light.Domain.Entities.Interfaces;
-
-namespace Light.Domain.Entities;
+﻿namespace Light.Domain.Entities;
 
 /// <summary>
-///     A base class for DDD Auditable Entities. Includes support for domain events dispatched post-persistence.
+///     Default audit entity using a string-based <see cref="LightId"/> as primary key.
+///     Use this unless the entity requires a non-string key type.
 /// </summary>
-public abstract class AuditableEntity : Entity, IAuditable
+public abstract class AuditableEntity : BaseAuditableEntity<string>
 {
-    public virtual DateTimeOffset Created { get; set; }
-
-    public virtual string? CreatedBy { get; set; }
-
-    public virtual DateTimeOffset? LastModified { get; set; }
-
-    public virtual string? LastModifiedBy { get; set; }
-}
-
-/// <summary>
-///     A base class for DDD Auditable Entities. Includes support for domain events dispatched post-persistence.
-///     support both GUID and int IDs, change to EntityBase and use TId as the type for Id.
-/// </summary>
-public abstract class AuditableEntity<TId> : AuditableEntity, IEntity<TId>
-{
-    public virtual TId Id { get; set; } = default!;
+    protected AuditableEntity() => Id = LightId.NewId();
 }
