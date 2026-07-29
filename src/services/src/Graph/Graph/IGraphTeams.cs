@@ -1,9 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using Microsoft.Graph.Models;
+using System.Threading.Tasks;
 
 namespace Light.Graph
 {
     public interface IGraphTeams
     {
-        Task<object?> GetByAsync(string user);
+        Task<ChatCollectionResponse?> GetChatsAsync(string user);
     }
 }

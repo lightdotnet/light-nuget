@@ -31,6 +31,22 @@ public class ActiveDirectoryService(DomainOptions settings) : IActiveDirectorySe
         return Task.FromResult(false);
     }
 
+    public bool ChangePassword(string userName, string newPassword)
+    {
+        using var adContext = new PrincipalContext(ContextType.Domain, settings.Name);
+        using var user = UserPrincipal.FindByIdentity(adContext, userName);
+
+        if (user is null)
+        {
+            return false;
+        }
+
+        user.SetPassword(newPassword);
+        user.Save();
+
+        return true;
+    }
+
     public Task<DomainUserDto?> GetByUserNameAsync(string userName)
     {
         using var adContext = new PrincipalContext(ContextType.Domain, settings.Name);

@@ -29,7 +29,7 @@ namespace WebApi.Controllers
         [HttpGet]
         public async Task<IActionResult> Get(string user)
         {
-            var res = await graphTeams.GetByAsync(user);
+            var res = await graphTeams.GetChatsAsync(user);
 
             return Ok(res);
         }

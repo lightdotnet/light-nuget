@@ -7,6 +7,12 @@ namespace Light.ActiveDirectory;
 
 public static class DependencyInjection
 {
+    /// <summary>
+    /// Registers <see cref="FakeActiveDirectoryService"/> — a no-op stand-in that always reports
+    /// unconfigured/unauthenticated. For a real Active Directory backend use
+    /// <see cref="AddActiveDirectory(IServiceCollection, Action{DomainOptions})"/> or
+    /// <see cref="AddLdapActiveDirectory(IServiceCollection, Action{LdapOptions})"/> instead.
+    /// </summary>
     public static IServiceCollection AddActiveDirectory(this IServiceCollection services)
     {
         services.AddTransient<IActiveDirectoryService, FakeActiveDirectoryService>();
@@ -17,8 +23,6 @@ public static class DependencyInjection
     [SupportedOSPlatform("windows")]
     public static IServiceCollection AddActiveDirectory(this IServiceCollection services, Action<DomainOptions> action)
     {
-        //services.Configure(action);
-
         var options = new DomainOptions();
         action.Invoke(options);
 
@@ -33,11 +37,11 @@ public static class DependencyInjection
     [SupportedOSPlatform("windows")]
     public static IServiceCollection AddLdapActiveDirectory(this IServiceCollection services, Action<LdapOptions> action)
     {
-        services.Configure(action);
+        var options = new LdapOptions();
+        action.Invoke(options);
 
         services.AddTransient<IActiveDirectoryService>(sp =>
         {
-            var options = sp.GetRequiredService<LdapOptions>();
             return new LDAPService(options);
         });
 

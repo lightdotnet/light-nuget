@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Light.SmtpMail
 {
-    public class SmtpMailKit : SmtpConnection
+    public class SmtpMailKit : SmtpConnection, ISmtpMailSender
     {
         public string UserName { get; protected set; }
 
@@ -72,7 +72,6 @@ namespace Light.SmtpMail
             await smtpClient.AuthenticateAsync(UserName, Password, cancellationToken);
             await smtpClient.SendAsync(email, cancellationToken);
             await smtpClient.DisconnectAsync(true, cancellationToken);
-            smtpClient.Dispose();
         }
     }
 }

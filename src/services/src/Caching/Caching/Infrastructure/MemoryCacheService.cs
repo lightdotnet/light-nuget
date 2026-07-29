@@ -101,7 +101,7 @@ namespace Light.Caching.Infrastructure
             }
             catch (Exception ex)
             {
-                _logger.LogError("Cache {key} GET error: {error}", key, ex.Message);
+                _logger.LogError("Cache {key} SET error: {error}", key, ex.Message);
             }
         }
 
@@ -121,7 +121,7 @@ namespace Light.Caching.Infrastructure
             }
             catch (Exception ex)
             {
-                _logger.LogError("Cache {key} GET error: {error}", key, ex.Message);
+                _logger.LogError("Cache {key} SET error: {error}", key, ex.Message);
             }
         }
 

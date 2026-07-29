@@ -24,33 +24,33 @@ architecture, and code-quality pass on 2026-07-29 — see `README.md` for user-f
 
 ## Maintainability
 
-- [ ] **`Caching/Caching/Infrastructure/MemoryCacheService.cs` `TrySetAsync` (both overloads) logs `"Cache {key} GET error"` for a Set path.**
-  Misleading diagnostics, likely copy-pasted from the Get path.
-- [ ] **`ActiveDirectory/DependencyInjection.cs` has a dead commented-out line and two inconsistent options-registration patterns.**
-  One overload manually invokes the `action` delegate; the sibling `AddLdapActiveDirectory` correctly uses `services.Configure(action)`. Pick one pattern.
-- [ ] **`Caching/Extensions/DependencyInjection/ServiceCollectionExtensions.cs`: private `AddDistributedCache` is never called.**
-  Dead code — remove or wire it in.
-- [ ] **`LDAPService.ChangePasswordAsync` is public but missing from `IActiveDirectoryService`, so it's unreachable through the DI-registered abstraction — and isn't actually asynchronous despite the `Async` suffix.**
-  Either add it to the interface or rename to drop the misleading suffix.
-- [ ] **`LDAPService.GetByUserNameAsync` throws `NotImplementedException`, silently breaking the `IActiveDirectoryService` contract for LDAP-based registration.**
-  Document the limitation explicitly (or implement it).
-- [ ] **`SmtpMail.cs` / `SmtpMailKit.cs`: explicit `smtpClient.Dispose()` immediately before the end of a `using var` scope.**
-  Redundant — remove the manual call.
-- [ ] **No shared interface for `SmtpMail`/`SmtpMailKit`, and their `SendAsync` signatures differ (one is missing `CancellationToken`).**
-  Makes the two providers non-interchangeable for consumers, unlike `IGraphMailService`/`ICsvService`/`ICacheService`.
+- [x] **`Caching/Caching/Infrastructure/MemoryCacheService.cs` `TrySetAsync` (both overloads) logs `"Cache {key} GET error"` for a Set path.**
+  Fixed: both now log `"SET error"`.
+- [x] **`ActiveDirectory/DependencyInjection.cs` has a dead commented-out line and two inconsistent options-registration patterns.**
+  Fixed: removed the dead comment; both `AddActiveDirectory(Action<DomainOptions>)` and `AddLdapActiveDirectory` now consistently build the options instance manually and close over it, instead of one of them registering `IOptions<T>` via `services.Configure`. This also fixed a real bug: `AddLdapActiveDirectory` previously resolved `sp.GetRequiredService<LdapOptions>()`, but `services.Configure<T>` only registers `IOptions<T>` — that resolution would have thrown `InvalidOperationException` at runtime the first time `AddLdapActiveDirectory` was used.
+- [x] **`Caching/Extensions/DependencyInjection/ServiceCollectionExtensions.cs`: private `AddDistributedCache` is never called.**
+  Fixed: removed (dead code).
+- [x] **`LDAPService.ChangePasswordAsync` is public but missing from `IActiveDirectoryService`, so it's unreachable through the DI-registered abstraction — and isn't actually asynchronous despite the `Async` suffix.**
+  Fixed (breaking change): added `bool ChangePassword(string userName, string newPassword)` to `IActiveDirectoryService`; renamed `LDAPService.ChangePasswordAsync` → `ChangePassword`; implemented it on `ActiveDirectoryService` (via `UserPrincipal.SetPassword`/`Save`) and `FakeActiveDirectoryService` (returns `false`).
+- [x] **`LDAPService.GetByUserNameAsync` throws `NotImplementedException`, silently breaking the `IActiveDirectoryService` contract for LDAP-based registration.**
+  Fixed: documented the limitation with an XML `<remarks>` on the interface member.
+- [x] **`SmtpMail.cs` / `SmtpMailKit.cs`: explicit `smtpClient.Dispose()` immediately before the end of a `using var` scope.**
+  Fixed: removed the redundant manual `Dispose()` call in both.
+- [x] **No shared interface for `SmtpMail`/`SmtpMailKit`, and their `SendAsync` signatures differ (one is missing `CancellationToken`).**
+  Fixed (breaking change): added `ISmtpMailSender.SendAsync(MailFrom, MailMessage, CancellationToken = default)`, implemented by both `SmtpNetMailSender` (see rename below) and `SmtpMailKit`. `SmtpNetMailSender` now accepts a `CancellationToken` and wires it to `SmtpClient.SendAsyncCancel()` for cooperative cancellation (the legacy `System.Net.Mail.SmtpClient` has no token-accepting send overload on `netstandard2.1`).
 
 ## Naming
 
-- [ ] **`Light.SmtpMail.SmtpMail` duplicates its namespace name and reads oddly next to `SmtpMailKit`.**
-  Consider a name like `SmtpNetMailSender`.
-- [ ] **`IGraphTeams.GetByAsync(string user)` returns untyped `Task<object?>`.**
-  Unclear contract, forces caller casts. Rename (e.g. `GetChatsAsync`) and return a concrete/strongly-typed model.
-- [ ] **`FakeActiveDirectoryService`: unnecessary `await Task.Delay(1)` before returning `null`.**
-  Simplify to `Task.FromResult<DomainUserDto?>(null)` and drop `async`.
-- [ ] **`Serilog/Startup.cs`: the `IHostBuilder` extension class is named `Startup`.**
-  Confusing name for a library helper (reads like an app entry point). Rename to something like `SerilogHostBuilderExtensions`.
-- [ ] **`ActiveDirectory`'s parameterless `AddActiveDirectory()` silently wires the Fake implementation with no signal to the consumer.**
-  Risk of the fake service ending up in production by accident. Consider requiring an explicit choice (e.g. `AddFakeActiveDirectory()` vs `AddLdapActiveDirectory()`), no unqualified default.
+- [x] **`Light.SmtpMail.SmtpMail` duplicates its namespace name and reads oddly next to `SmtpMailKit`.**
+  Fixed (breaking change): renamed class and file to `SmtpNetMailSender`. Updated the one call site (`tests/UnitTests/SmtpMailTests/SmtpMailTests.cs`).
+- [x] **`IGraphTeams.GetByAsync(string user)` returns untyped `Task<object?>`.**
+  Fixed (breaking change): renamed to `GetChatsAsync`, now returns `Task<Microsoft.Graph.Models.ChatCollectionResponse?>`. Updated `GraphTeamsService` and the sample `GraphController`.
+- [x] **`FakeActiveDirectoryService`: unnecessary `await Task.Delay(1)` before returning `null`.**
+  Fixed: now `Task.FromResult<DomainUserDto?>(default)`, no longer `async`.
+- [x] **`Serilog/Startup.cs`: the `IHostBuilder` extension class is named `Startup`.**
+  Fixed (breaking change): renamed class and file to `SerilogHostBuilderExtensions`. The one call site (`samples/WebApi/Program.cs`) uses extension-method syntax (`builder.Host.ConfigureSerilog()`) and needed no change.
+- [x] **`ActiveDirectory`'s parameterless `AddActiveDirectory()` silently wires the Fake implementation with no signal to the consumer.**
+  Partially addressed, non-breaking: added an XML doc comment on the overload explaining it registers the fake service and pointing to `AddActiveDirectory(Action<DomainOptions>)`/`AddLdapActiveDirectory` for a real backend. Did not rename/remove the overload or add `[Obsolete]`, to avoid forcing a call-site change for this specific item.
 
 ## Architecture & consistency (cross-cutting)
 

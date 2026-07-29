@@ -1,4 +1,5 @@
 ﻿using Microsoft.Graph;
+using Microsoft.Graph.Models;
 using System.Threading.Tasks;
 
 namespace Light.Graph.Infrastructure
@@ -12,11 +13,10 @@ namespace Light.Graph.Infrastructure
             _graphServiceClient = graphServiceClient;
         }
 
-        public async Task<object?> GetByAsync(string user)
+        public async Task<ChatCollectionResponse?> GetChatsAsync(string user)
         {
             // Get the list of teams
-            var teams = await _graphServiceClient.Users[user].Chats.GetAsync();
-            return teams;
+            return await _graphServiceClient.Users[user].Chats.GetAsync();
         }
     }
 }

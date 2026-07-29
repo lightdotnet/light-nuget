@@ -3,7 +3,7 @@ using Serilog;
 
 namespace Light.Serilog
 {
-    public static class Startup
+    public static class SerilogHostBuilderExtensions
     {
         public static IHostBuilder ConfigureSerilog(this IHostBuilder host)
         {

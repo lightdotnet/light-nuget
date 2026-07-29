@@ -1,19 +1,20 @@
 ﻿using Light.Mail;
 using System.IO;
 using System.Net.Mail;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Light.SmtpMail
 {
-    public class SmtpMail : SmtpConnection
+    public class SmtpNetMailSender : SmtpConnection, ISmtpMailSender
     {
-        public SmtpMail(string host, int port = 25)
+        public SmtpNetMailSender(string host, int port = 25)
         {
             Host = host;
             Port = port;
         }
 
-        public async Task SendAsync(MailFrom from, Mail.MailMessage mail)
+        public async Task SendAsync(MailFrom from, Mail.MailMessage mail, CancellationToken cancellationToken = default)
         {
             var message = new System.Net.Mail.MailMessage
             {
@@ -61,6 +62,8 @@ namespace Light.SmtpMail
                 DeliveryMethod = SmtpDeliveryMethod.Network,
                 EnableSsl = UseSsl
             };
+
+            using var cancellationRegistration = cancellationToken.Register(smtpClient.SendAsyncCancel);
 
             await smtpClient.SendMailAsync(message);
         }

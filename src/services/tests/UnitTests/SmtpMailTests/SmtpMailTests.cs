@@ -6,7 +6,7 @@ namespace UnitTests.SmtpMailTests;
 
 public class SmtpMailTests
 {
-    private readonly SmtpMail _smtpMail;
+    private readonly SmtpNetMailSender _smtpMail;
     private readonly string _fromMail;
 
     public SmtpMailTests()
@@ -15,7 +15,7 @@ public class SmtpMailTests
 
         var host = "smtp.freesmtpservers.com";
 
-        _smtpMail = new SmtpMail(host)
+        _smtpMail = new SmtpNetMailSender(host)
         {
             UseSsl = false, // Set to true if your SMTP server requires SSL
         };

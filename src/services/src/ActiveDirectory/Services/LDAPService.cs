@@ -30,7 +30,7 @@ public class LDAPService(LdapOptions settings) : IActiveDirectoryService
         return true;
     }
 
-    public bool ChangePasswordAsync(string userName, string newPassword)
+    public bool ChangePassword(string userName, string newPassword)
     {
         var sPath = settings.Connection; // This is if your domain was my.domain.com
         using var de = new DirectoryEntry(sPath, settings.UserName, settings.Password, AuthenticationTypes.Secure);

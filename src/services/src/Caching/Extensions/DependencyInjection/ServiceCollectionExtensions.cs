@@ -54,13 +54,5 @@ namespace Light.Extensions.DependencyInjection
 
             return services;
         }
-
-        private static IServiceCollection AddDistributedCache(this IServiceCollection services)
-        {
-            services.AddDistributedMemoryCache();
-            services.AddTransient<ICacheService, DistributedCacheService>();
-
-            return services;
-        }
     }
 }

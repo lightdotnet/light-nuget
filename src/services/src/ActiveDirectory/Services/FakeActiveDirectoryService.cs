@@ -12,9 +12,10 @@ public class FakeActiveDirectoryService : IActiveDirectoryService
         return Task.FromResult(false);
     }
 
-    public async Task<DomainUserDto?> GetByUserNameAsync(string userName)
+    public bool ChangePassword(string userName, string newPassword) => false;
+
+    public Task<DomainUserDto?> GetByUserNameAsync(string userName)
     {
-        await Task.Delay(1);
-        return default;
+        return Task.FromResult<DomainUserDto?>(default);
     }
 }
