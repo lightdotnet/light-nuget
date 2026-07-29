@@ -9,7 +9,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Contracts package for EventBus.</Description>
 	<Summary>Contracts package for EventBus.</Summary>
-	<Version>0.0.1.4</Version>
+	<Version>0.2.1</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
