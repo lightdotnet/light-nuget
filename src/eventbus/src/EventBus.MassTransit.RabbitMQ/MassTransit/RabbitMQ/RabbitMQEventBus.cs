@@ -1,4 +1,4 @@
-﻿using Light.EventBus.Abstractions;
+using Light.EventBus.Abstractions;
 using Light.EventBus.Events;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace Light.MassTransit.RabbitMQ
 {
-    public class MessageQueueService : IEventBus
+    public class RabbitMQEventBus : IEventBus
     {
         private readonly IPublishEndpoint _publishEndpoint;
-        private readonly ILogger<MessageQueueService> _logger;
+        private readonly ILogger<RabbitMQEventBus> _logger;
 
-        public MessageQueueService(
+        public RabbitMQEventBus(
             IPublishEndpoint publishEndpoint,
-            ILogger<MessageQueueService> logger)
+            ILogger<RabbitMQEventBus> logger)
         {
             _publishEndpoint = publishEndpoint;
             _logger = logger;

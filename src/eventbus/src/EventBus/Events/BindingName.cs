@@ -7,11 +7,9 @@ namespace Light.EventBus.Events
     {
         public BindingNameAttribute(string bindingName)
         {
-            BindingNameValue = bindingName;
+            BindingName = bindingName;
         }
 
-        public virtual string BindingName => BindingNameValue;
-
-        protected string BindingNameValue { get; }
+        public string BindingName { get; }
     }
 }
