@@ -1,4 +1,3 @@
-using Light.ActiveDirectory;
 using Light.Caching.Infrastructure;
 using Light.Extensions.DependencyInjection;
 using Light.Serilog;

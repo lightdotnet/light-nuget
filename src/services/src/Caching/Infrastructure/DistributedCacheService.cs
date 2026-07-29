@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Light.Caching.Infrastructure
 {
-    public class DistributedCacheService : Extensions.Caching.IDistributedCache
+    public class DistributedCacheService : Interfaces.IDistributedCache
     {
         private readonly IDistributedCache _cache;
         private readonly ILogger<DistributedCacheService> _logger;

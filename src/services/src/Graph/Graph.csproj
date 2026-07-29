@@ -3,7 +3,7 @@
   <PropertyGroup>
 	<TargetFramework>netstandard2.1</TargetFramework>
 	<Nullable>enable</Nullable>
-	<RootNamespace>Light</RootNamespace>
+	<RootNamespace>Light.Graph</RootNamespace>
 	<AssemblyName>Lightsoft.Graph</AssemblyName>
 	<Title>Lightsoft.Graph</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -22,7 +22,6 @@
 
   <ItemGroup>
 	<PackageReference Include="Azure.Identity" Version="1.*" />
-	<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="$(AspnetVersion)" />
 	<PackageReference Include="Microsoft.Graph" Version="6.*" />
   </ItemGroup>
 

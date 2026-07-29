@@ -18,6 +18,9 @@
 		<PrivateAssets>all</PrivateAssets>
 		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	</PackageReference>
+	<PackageReference Include="Microsoft.Extensions.Configuration" Version="$(AspnetVersion)" />
+	<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="$(AspnetVersion)" />
+	<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="$(AspnetVersion)" />
 	<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
 	<PackageReference Include="NUnit" Version="4.6.1" />
 	<PackageReference Include="NUnit.Analyzers" Version="4.14.0">
@@ -28,6 +31,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\ActiveDirectory\ActiveDirectory.csproj" />
+    <ProjectReference Include="..\..\src\Caching\Caching.csproj" />
+    <ProjectReference Include="..\..\src\FileGenerator\FileGenerator.csproj" />
+    <ProjectReference Include="..\..\src\Graph\Graph.csproj" />
+    <ProjectReference Include="..\..\src\Mail.Contracts\Mail.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Serilog\Serilog.csproj" />
     <ProjectReference Include="..\..\src\SmtpMail\SmtpMail.csproj" />
   </ItemGroup>
 

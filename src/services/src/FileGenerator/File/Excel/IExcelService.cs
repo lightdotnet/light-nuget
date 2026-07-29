@@ -2,7 +2,7 @@
 using System.Data;
 using System.IO;
 
-namespace Light.File.Excel
+namespace Light.FileGenerator.File.Excel
 {
     public interface IExcelService
     {

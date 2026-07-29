@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Light.Caching.Infrastructure
 {
-    public class MemoryCacheService : Extensions.Caching.IMemoryCache
+    public class MemoryCacheService : Interfaces.IMemoryCache
     {
         private readonly IMemoryCache _cache;
         private readonly ILogger<MemoryCacheService> _logger;

@@ -3,7 +3,7 @@ using System.Data;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Light.File.Csv
+namespace Light.FileGenerator.File.Csv
 {
     public interface ICsvService
     {

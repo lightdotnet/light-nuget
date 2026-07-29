@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
-namespace Light.File.Excel
+namespace Light.FileGenerator.File.Excel
 {
     public class ColumnOptions<T>
     {

@@ -1,11 +1,12 @@
-﻿using Light.ActiveDirectory.Interfaces;
+﻿using Light.ActiveDirectory;
+using Light.ActiveDirectory.Interfaces;
 using Light.ActiveDirectory.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System.Runtime.Versioning;
 
-namespace Light.ActiveDirectory;
+namespace Light.Extensions.DependencyInjection;
 
-public static class DependencyInjection
+public static class ServiceCollectionExtensions
 {
     /// <summary>
     /// Registers <see cref="FakeActiveDirectoryService"/> — a no-op stand-in that always reports

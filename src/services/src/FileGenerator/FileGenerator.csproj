@@ -3,7 +3,7 @@
   <PropertyGroup>
 	<TargetFramework>netstandard2.1</TargetFramework>
 	<Nullable>enable</Nullable>
-	<RootNamespace>Light</RootNamespace>
+	<RootNamespace>Light.FileGenerator</RootNamespace>
 	<AssemblyName>Lightsoft.FileGenerator</AssemblyName>
 	<Title>Lightsoft.FileGenerator</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>

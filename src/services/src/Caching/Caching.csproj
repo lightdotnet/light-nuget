@@ -4,7 +4,7 @@
 	<TargetFramework>net10.0</TargetFramework>
 	<ImplicitUsings>enable</ImplicitUsings>
 	<Nullable>disable</Nullable>
-    <RootNamespace>Light</RootNamespace>
+    <RootNamespace>Light.Caching</RootNamespace>
 	<AssemblyName>Lightsoft.Caching</AssemblyName>
 	<Title>Lightsoft.Caching</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>

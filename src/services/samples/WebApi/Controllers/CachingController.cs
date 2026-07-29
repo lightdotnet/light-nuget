@@ -1,4 +1,4 @@
-using Light.Extensions.Caching;
+using Light.Caching.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers

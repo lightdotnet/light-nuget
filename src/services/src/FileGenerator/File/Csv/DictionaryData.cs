@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Light.File.Csv
+namespace Light.FileGenerator.File.Csv
 {
     public class DictionaryData : CsvData<IDictionary<string, object?>>
     {

@@ -23,6 +23,7 @@
   <ItemGroup>
 	<PackageReference Include="MailKit" Version="4.17.0" />
 	<PackageReference Include="MimeKit" Version="4.17.0" />
+	<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(AspnetVersion)" />
   </ItemGroup>
 
   <ItemGroup>
