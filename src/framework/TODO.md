@@ -1,9 +1,11 @@
 # TODO — Framework
 
-Open follow-ups from a full review of the `Framework` solution (`Framework.slnx`), covering all 9 `src/` projects
-(Authorization, Extensions, Identity, Identity.EntityFrameworkCore, Modularity, OpenApi, SharedKernel, Swagger,
-WebHost) plus the samples and tests. Findings came from a dependency-graph pass, a code-quality pass, and a
-performance pass. Nothing below has been fixed yet — this is a tracking list for later implementation.
+Open follow-ups from a full review of the `Framework` solution (`Framework.slnx`), originally covering 9 `src/`
+projects (Authorization, Extensions, Identity, Identity.EntityFrameworkCore, Modularity, OpenApi, SharedKernel,
+Swagger, WebHost) plus the samples and tests. `src/Http` and `src/OpenApi` have since been removed from the repo;
+see the **Removed projects** note below. Findings came from a dependency-graph pass, a code-quality pass, and a
+performance pass. Nothing below has been fixed yet except SharedKernel — this is a tracking list for later
+implementation.
 
 ---
 
@@ -19,16 +21,12 @@ performance pass. Nothing below has been fixed yet — this is a tracking list f
   solution fails as-is. `README.md` also still lists Identity as a package. Fix: remove the stale entries/reference
   and update `README.md`, or restore the projects if removal was unintentional.
 
-- [ ] **`Sample.OpenApi.csproj` references a path that never existed and isn't in the solution.**
+- [ ] **`Sample.OpenApi.csproj` still references the now fully-deleted `OpenApi` project family.**
   `samples/Sample.OpenApi/Sample.OpenApi.csproj`
-  References `../../src/AspNetCore.OpenApi/AspNetCore.OpenApi.csproj` — the actual folder is `src/OpenApi`
-  (assembly `Lightsoft.AspNetCore.OpenApi`). The project also isn't included in `Framework.slnx` at all. Confirm
-  intent and either fix the reference + add to the solution, or remove the sample.
-
-- [ ] **`src/Http/Http.csproj` exists on disk but isn't wired into `Framework.slnx`.**
-  `src/Http/Http.csproj`
-  Package `Lightsoft.Http`, depends on `Lightsoft.Result` + `Microsoft.Extensions.Http`. Currently has no `.cs`
-  files. Confirm whether it should be added to the solution or is intentionally excluded/in-progress.
+  Was already broken before the removal (pointed at `../../src/AspNetCore.OpenApi/AspNetCore.OpenApi.csproj`, a
+  path that never existed — the real folder was `src/OpenApi`). Now that `src/OpenApi` has been deleted entirely,
+  there is nothing left to point this at. The project also still isn't included in `Framework.slnx`. Recommend
+  deleting `samples/Sample.OpenApi/` outright unless a replacement OpenApi sample is planned.
 
 ### Correctness bugs
 
@@ -61,11 +59,10 @@ performance pass. Nothing below has been fixed yet — this is a tracking list f
   host.LoadConfigurationFrom(p); return host;`.
 
 - [ ] **`??=` inside a redundant null-or-empty check never fires for empty (non-null) input.**
-  `src/Modularity/Extensions/AsemblyTypeExtensions.cs:9-13`; `src/Extensions/ArgumentChecker.cs:54-57`
+  `src/Extensions/ArgumentChecker.cs:54-57`
   Pattern is `if (x == null || x.IsEmpty) { x ??= fallback; }` — `??=` only assigns on null, so a non-null empty
-  array/string skips the fallback silently. In `AsemblyTypeExtensions` this is reachable from the public
-  `ModuleBuilderExtensions.UseModules(builder, Assembly[])` when called with `[]`. Fix: use a plain assignment
-  inside the `if`, not `??=`.
+  string skips the fallback silently. Fix: use a plain assignment inside the `if`, not `??=`. (The equivalent bug
+  in `src/Modularity/Extensions/AssemblyTypeExtensions.cs` has been fixed — see Modularity section below.)
 
 - [ ] **`ClaimExtensions.FindFirstValue` is dead code — shadowed by the BCL's own method.**
   `src/Extensions/ClaimExtensions.cs:19-22`
@@ -124,12 +121,6 @@ performance pass. Nothing below has been fixed yet — this is a tracking list f
   `.Any()` then `string.Join` over the same `Select(...)` projection. Use `.Count > 0` (it's a dictionary) and
   materialize the projection once.
 
-- [ ] **`AutoAddServiceExtensions` scans all assemblies 3 times instead of once.**
-  `src/Modularity/Extensions/DependencyInjection/AutoAddServiceExtensions.cs:16-21`
-  `AddServices` runs a full `AppDomain.CurrentDomain.GetAssemblies().SelectMany(GetTypes())` scan once per lifetime
-  (transient/scoped/singleton). Startup-only cost so low severity, but consolidate into a single scan bucketed by
-  lifetime if easy.
-
 - [ ] **`LowercaseControllerNameConvention.Convert` builds a string with `+=` in a loop (O(n²)).**
   `src/WebHost/AspNetCore/Mvc/ControllerExtensions.cs:19-32`
   Use `StringBuilder`.
@@ -178,10 +169,30 @@ performance pass. Nothing below has been fixed yet — this is a tracking list f
   `src/SharedKernel/Exceptions/ValidationException.cs:7` — renamed to `ErrorMessage` (PascalCase, private member,
   no external impact).
 
-### Naming — non-breaking (internal/private, safe to rename)
+### Modularity — fixed
 
-- [ ] **`AsemblyTypeExtensions` misspelled.** `src/Modularity/Extensions/AsemblyTypeExtensions.cs` (file + class) →
-  rename to `AssemblyTypeExtensions` (internal class, no consumer impact).
+- [x] **`AssemblyTypeExtensions` (formerly `AsemblyTypeExtensions`) `??=` bug.**
+  `src/Modularity/Extensions/AssemblyTypeExtensions.cs:9-13` — replaced `assemblies ??= AppDomain.CurrentDomain
+  .GetAssemblies();` (never fired for a non-null empty array) with a plain assignment, so
+  `ModuleBuilderExtensions.UseModules(builder, [])` now correctly falls back to scanning all loaded assemblies.
+
+- [x] **`AsemblyTypeExtensions` misspelling.**
+  File and class renamed to `AssemblyTypeExtensions` (internal class, no consumer impact). All 3 call sites
+  (`ModuleBuilderExtensions.cs` x2, `ModuleServiceCollectionExtensions.cs` x1) updated.
+
+- [x] **`AutoAddServiceExtensions` scanned all assemblies 3 times instead of once.**
+  `src/Modularity/Extensions/DependencyInjection/AutoAddServiceExtensions.cs` — `AutoAddDependencies()` now scans
+  `AppDomain.CurrentDomain.GetAssemblies()` once into a materialized list and reuses it for all three lifetime
+  buckets (transient/scoped/singleton), instead of `AddServices` re-scanning per lifetime.
+
+- [x] **Non-deterministic interface-matching heuristic in DI auto-registration.**
+  `src/Modularity/Extensions/DependencyInjection/AutoAddServiceExtensions.cs` — interface matching changed from
+  `x.Name.Contains(s.Name)` (could match multiple candidate interfaces non-deterministically via `FirstOrDefault`
+  over an unordered `GetInterfaces()`) to an exact `x.Name == "I" + s.Name` convention match. A class without an
+  interface literally named `I<ClassName>` is now registered by concrete type only (no interface mapping) —
+  documented as a behavior change in the new Modularity README.
+
+### Naming — non-breaking (internal/private, safe to rename)
 
 - [ ] **`ControllerExtensions.cs` file name doesn't match its contents.**
   `src/WebHost/AspNetCore/Mvc/ControllerExtensions.cs` contains `LowercaseControllerNameConvention` and
@@ -267,22 +278,22 @@ performance pass. Nothing below has been fixed yet — this is a tracking list f
   `src/SharedKernel/Contracts/IAggregateRoot.cs` uses `namespace Light.Contracts { ... }` while virtually every
   other file in this solution uses file-scoped namespaces.
 
-- [ ] **Non-deterministic interface-matching heuristic in DI auto-registration.**
-  `src/Modularity/Extensions/DependencyInjection/AutoAddServiceExtensions.cs:26-35` —
-  `x.Name.Contains(s.Name)` combined with `.FirstOrDefault()` over `GetInterfaces()` (order not contractually
-  guaranteed) can pick the wrong interface when a class implements multiple interfaces whose names all contain the
-  class name as a substring. Consider an exact-match heuristic (`x.Name == "I" + s.Name"`) instead.
-
 ---
+
+## Removed projects
+
+- **`src/Http` and `src/OpenApi` have been deleted from the repo.** `Http.csproj` and `OpenApi.csproj` are gone;
+  neither ever caused a solution-load failure on their own (`Http` was never listed in `Framework.slnx`), but
+  `OpenApi` was — its `<Project>` entry has been removed from `Framework.slnx` as part of this sync so the solution
+  loads/builds cleanly again. The dangling reference from `samples/Sample.OpenApi/Sample.OpenApi.csproj` to the old
+  `src/OpenApi` project family is now doubly orphaned — see the "Blocks the build" item above.
+- The `Asp.Versioning.Mvc.ApiExplorer` exact-vs-floating version-mismatch previously noted between `OpenApi.csproj`
+  and `Swagger.csproj`/`WebHost.csproj` no longer applies — `OpenApi.csproj` is gone.
 
 ## Dependency graph notes (informational, not action items)
 
 - Graph is nearly flat: only real internal project reference is `WebHost → SharedKernel`; Authorization, Extensions,
-  Modularity, OpenApi, Swagger are all leaves with no internal `ProjectReference`. No circular references.
+  Modularity, Swagger are all leaves with no internal `ProjectReference`. No circular references.
 - `Directory.Build.props` centralizes `AspnetVersion=10.*`, `TargetFramework=net10.0`, `Nullable=enable`,
   `ImplicitUsings=enable`, SourceLink. `Extensions.csproj` intentionally overrides to `netstandard2.1` (broad
-  compat). `Sample.OpenApi.csproj` overrides to `net9.0` — inconsistent with the `net10.0` baseline, worth
-  confirming intentional.
-- `Asp.Versioning.Mvc.ApiExplorer` is pinned to exact `10.0.0` in `OpenApi.csproj` but floating `10.*` in
-  `Swagger.csproj`/`WebHost.csproj` — version-mismatch risk, no central package management
-  (`Directory.Packages.props`) in place for this solution.
+  compat). `Sample.OpenApi.csproj` overrides to `net9.0` — moot if that sample is removed per the item above.

@@ -16,7 +16,7 @@ public static class ModuleServiceCollectionExtensions
         where T : IModuleServiceCollection
     {
         // get all classes inherit from interface
-        var moduleServices = AsemblyTypeExtensions.GetAssignableFrom<T>(assemblies)
+        var moduleServices = AssemblyTypeExtensions.GetAssignableFrom<T>(assemblies)
             .Select(s => Activator.CreateInstance(s) as IModuleServiceCollection);
 
         foreach (var instance in moduleServices)

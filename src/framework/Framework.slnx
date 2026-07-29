@@ -15,7 +15,6 @@
     <Project Path="src/Identity.EntityFrameworkCore/Identity.EntityFrameworkCore.csproj" />
     <Project Path="src/Identity/Identity.csproj" />
     <Project Path="src/Modularity/Modularity.csproj" />
-    <Project Path="src/OpenApi/OpenApi.csproj" />
     <Project Path="src/SharedKernel/SharedKernel.csproj" />
     <Project Path="src/Swagger/Swagger.csproj" />
     <Project Path="src/WebHost/WebHost.csproj" />

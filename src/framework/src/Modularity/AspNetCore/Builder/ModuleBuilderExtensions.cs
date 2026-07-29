@@ -15,7 +15,7 @@ public static class ModuleBuilderExtensions
         where T : IModuleBuilder
     {
         // get all classes inherit from interface
-        var modulePipelines = AsemblyTypeExtensions.GetAssignableFrom<T>(assemblies)
+        var modulePipelines = AssemblyTypeExtensions.GetAssignableFrom<T>(assemblies)
             .Select(s => Activator.CreateInstance(s) as IModuleBuilder);
 
         foreach (var instance in modulePipelines)
@@ -40,7 +40,7 @@ public static class ModuleBuilderExtensions
         where T : IModuleEndpoint
     {
         // get all classes inherit from interface
-        var modulePipelines = AsemblyTypeExtensions.GetAssignableFrom<T>(assemblies)
+        var modulePipelines = AssemblyTypeExtensions.GetAssignableFrom<T>(assemblies)
             .Select(s => Activator.CreateInstance(s) as IModuleEndpoint);
 
         foreach (var instance in modulePipelines)
