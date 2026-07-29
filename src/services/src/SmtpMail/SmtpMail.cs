@@ -1,4 +1,5 @@
 ﻿using Light.Mail;
+using System.IO;
 using System.Net.Mail;
 using System.Threading.Tasks;
 
@@ -46,6 +47,15 @@ namespace Light.SmtpMail
                 }
             }
 
+            if (mail.Attachments != null)
+            {
+                // add attachments
+                foreach (var attachment in mail.Attachments)
+                {
+                    message.Attachments.Add(new Attachment(new MemoryStream(attachment.FileToBytes), attachment.FileName));
+                }
+            }
+
             using var smtpClient = new SmtpClient(Host, Port)
             {
                 DeliveryMethod = SmtpDeliveryMethod.Network,
@@ -53,7 +63,6 @@ namespace Light.SmtpMail
             };
 
             await smtpClient.SendMailAsync(message);
-            smtpClient.Dispose();
         }
     }
 }

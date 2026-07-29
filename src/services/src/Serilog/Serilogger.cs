@@ -4,14 +4,17 @@ namespace Light.Serilog
 {
     public class Serilogger
     {
+        private static bool _initialized;
+
         public static ILogger Initialize() =>
             new LoggerConfiguration().Enrich.FromLogContext().WriteTo.Console().CreateLogger();
 
         public static void EnsureInitialized()
         {
-            if (Log.Logger.GetType() != typeof(Serilogger))
+            if (!_initialized)
             {
                 Log.Logger = Initialize();
+                _initialized = true;
             }
         }
     }

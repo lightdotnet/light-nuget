@@ -2,6 +2,7 @@
 using CsvHelper.Configuration;
 using CsvHelper.TypeConversion;
 using System;
+using System.Globalization;
 
 namespace Light.Infrastructure.Csv
 {
@@ -16,7 +17,7 @@ namespace Light.Infrastructure.Csv
             if (double.TryParse(text, out double doubleValue)) return doubleValue;
             if (decimal.TryParse(text, out decimal decimalValue)) return decimalValue;
             if (bool.TryParse(text, out bool boolValue)) return boolValue;
-            if (DateTime.TryParse(text, out DateTime dateTimeValue)) return dateTimeValue;
+            if (DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeValue)) return dateTimeValue;
 
             return text; // Return as string if no match
         }

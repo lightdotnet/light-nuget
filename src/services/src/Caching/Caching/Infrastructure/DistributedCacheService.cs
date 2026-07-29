@@ -96,7 +96,7 @@ namespace Light.Caching.Infrastructure
         {
             try
             {
-                await GetAsync<T>(key, cancellationToken);
+                await SetAsync(key, value, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -129,7 +129,7 @@ namespace Light.Caching.Infrastructure
 
         public Task RemoveAsync(string key,
             CancellationToken cancellationToken = default)
-            => _cache.RefreshAsync(key, cancellationToken);
+            => _cache.RemoveAsync(key, cancellationToken);
 
         #endregion
     }
