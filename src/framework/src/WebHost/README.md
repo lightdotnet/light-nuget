@@ -11,7 +11,7 @@ and the only one with an internal `ProjectReference` to another project in the s
 (`..\SharedKernel\SharedKernel.csproj`). It also depends on `Asp.Versioning.Mvc.ApiExplorer`,
 `Lightsoft.Result` (external package), and `Microsoft.AspNetCore.Authentication.JwtBearer`.
 
-Per the top-level solution README (`src/framework/README.md`), this is the "Default Hosting config"
+Per the [main README](https://github.com/lightdotnet/light-nuget#readme), this is the "Default Hosting config"
 package: JWT auth setup, request logging middleware, exception handling, JSON ordering converters, MVC
 conventions/base controllers, and config-file loading helpers for a typical ASP.NET Core host.
 
