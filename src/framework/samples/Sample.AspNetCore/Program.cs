@@ -4,15 +4,14 @@ using Light.AspNetCore.Builder;
 using Light.AspNetCore.Middlewares;
 using Light.AspNetCore.Swagger;
 using Light.Extensions.DependencyInjection;
-using Light.Identity;
 using Light.Serilog;
 using Sample.AspNetCore;
 using Sample.AspNetCore.HealthChecks;
-using Sample.AspNetCore.Identity;
 using Sample.AspNetCore.SoapCore;
 using Sample.AspNetCore.TestOption;
 using Serilog;
 using System.Reflection;
+using System.Security.Claims;
 
 Serilogger.EnsureInitialized();
 Log.Information("Application start...");
@@ -52,8 +51,6 @@ try
     //builder.Services.AddGlobalExceptionHandler();
 
     builder.Services.AutoAddDependencies();
-
-    builder.Services.AddInfrastructureIdentity(builder.Configuration);
 
     builder.Services.AddModules(builder.Configuration, [executingAssembly]);
 

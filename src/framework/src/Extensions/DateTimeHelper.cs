@@ -13,7 +13,7 @@ namespace Light.Extensions
         public static bool IsNearlyInMinutes(this DateTime dateTime, int mins)
         {
             var diff = dateTime - DateTime.Now;
-            return diff.TotalMinutes <= mins;
+            return diff.TotalMinutes >= 0 && diff.TotalMinutes <= mins;
         }
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace Light.Extensions
         public static bool IsNearlyInSeconds(this DateTime dateTime, int seconds)
         {
             var diff = dateTime - DateTime.Now;
-            return diff.TotalSeconds <= seconds;
+            return diff.TotalSeconds >= 0 && diff.TotalSeconds <= seconds;
         }
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace Light.Extensions
         public static bool IsNearlyInHours(this DateTime dateTime, int hours)
         {
             var diff = dateTime - DateTime.Now;
-            return diff.TotalHours <= hours;
+            return diff.TotalHours >= 0 && diff.TotalHours <= hours;
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace Light.Extensions
         public static bool IsNearlyInDays(this DateTime dateTime, int days)
         {
             var diff = dateTime - DateTime.Now;
-            return diff.TotalDays <= days;
+            return diff.TotalDays >= 0 && diff.TotalDays <= days;
         }
 
         /// <summary>

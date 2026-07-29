@@ -6,12 +6,12 @@ namespace Light.Extensions
 {
     public static class DataConverter
     {
-        private const string _defaultSplitChar = "|";
+        private const string DefaultSplitChar = "|";
 
         /// <summary>
         /// Split string to array
         /// </summary>
-        public static string[] ToArray(this string? value, string splitChar = _defaultSplitChar)
+        public static string[] ToArray(this string? value, string splitChar = DefaultSplitChar)
         {
             if (string.IsNullOrEmpty(value))
                 return Array.Empty<string>();
@@ -22,40 +22,30 @@ namespace Light.Extensions
         /// <summary>
         /// Split string to list
         /// </summary>
-        public static IEnumerable<string> ToList(this string? value, string splitChar = _defaultSplitChar)
+        public static IEnumerable<string> ToList(this string? value, string splitChar = DefaultSplitChar)
         {
             if (string.IsNullOrEmpty(value))
                 return new List<string>();
 
-            return value.Split(new string[] { splitChar }, StringSplitOptions.RemoveEmptyEntries);
+            return value.Split(new string[] { splitChar }, StringSplitOptions.RemoveEmptyEntries).ToList();
         }
 
         /// <summary>
         /// Join a List, Array of string to string
         /// </summary>
-        public static string JoinToString(this IList<string> values, string splitChar = _defaultSplitChar)
-        {
-            //check list name extentions
-            return values != null && values.Any()
-                ? string.Join(splitChar, values)
-                : string.Empty;
-        }
+        public static string JoinToString(this IList<string> values, string splitChar = DefaultSplitChar) =>
+            values == null ? string.Empty : string.Join(splitChar, values);
 
         /// <summary>
         /// Join a IEnumerable of string to string
         /// </summary>
-        public static string JoinToString(this IEnumerable<string> values, string splitChar = _defaultSplitChar)
-        {
-            //check list name extentions
-            return values != null && values.Any()
-                ? string.Join(splitChar, values)
-                : string.Empty;
-        }
+        public static string JoinToString(this IEnumerable<string> values, string splitChar = DefaultSplitChar) =>
+            values == null ? string.Empty : string.Join(splitChar, values);
 
         /// <summary>
-        /// Convert AreaText HTML to array
+        /// Split multi-line text (e.g. HTML textarea content) into an array of lines
         /// </summary>
-        public static string[] AreaTextToArray(this string value)
+        public static string[] SplitLines(this string value)
         {
             if (string.IsNullOrEmpty(value))
                 return Array.Empty<string>();
@@ -64,9 +54,9 @@ namespace Light.Extensions
         }
 
         /// <summary>
-        /// Convert AreaText HTML to a list string
+        /// Split multi-line text (e.g. HTML textarea content) into a list of lines
         /// </summary>
-        public static List<string> AreaTextToList(this string value)
+        public static List<string> ToLines(this string value)
         {
             if (string.IsNullOrEmpty(value))
                 return new List<string>();
@@ -115,14 +105,14 @@ namespace Light.Extensions
         }
 
         /// <summary>
-        /// Convert binary (2, 8, 10, 16 default is 16) to number
+        /// Convert a number string in the given base (2, 8, 10, 16 default is 16) to Int64
         /// </summary>
-        public static long ToInt64FromBinary(this string baseString, int toBase = 16)
+        public static long ToInt64(this string baseString, int fromBase = 16)
         {
             if (string.IsNullOrEmpty(baseString))
                 return 0;
 
-            return Convert.ToInt64(baseString, toBase);
+            return Convert.ToInt64(baseString, fromBase);
         }
     }
 }

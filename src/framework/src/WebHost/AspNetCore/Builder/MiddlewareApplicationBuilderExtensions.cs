@@ -34,7 +34,6 @@ public static class MiddlewareApplicationBuilderExtensions
         return app;
     }
 
-    //[Obsolete("please use AddGlobalExceptionHandler() instead")]
     public static IApplicationBuilder UseLightExceptionHandler(this IApplicationBuilder app)
     {
         app.UseMiddleware<ExceptionHandlerMiddleware>();

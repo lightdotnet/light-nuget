@@ -12,8 +12,6 @@
   <Folder Name="/src/">
     <Project Path="src/Authorization/Authorization.csproj" />
     <Project Path="src/Extensions/Extensions.csproj" />
-    <Project Path="src/Identity.EntityFrameworkCore/Identity.EntityFrameworkCore.csproj" />
-    <Project Path="src/Identity/Identity.csproj" />
     <Project Path="src/Modularity/Modularity.csproj" />
     <Project Path="src/SharedKernel/SharedKernel.csproj" />
     <Project Path="src/Swagger/Swagger.csproj" />

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Security.Claims;
 
 namespace Light.Extensions
@@ -15,10 +14,5 @@ namespace Light.Extensions
 
             return claims;
         }
-
-        public static string? FindFirstValue(this ClaimsPrincipal principal, string claimType) =>
-            principal is null
-                ? throw new ArgumentNullException(nameof(principal))
-                : principal.FindFirst(claimType)?.Value;
     }
 }

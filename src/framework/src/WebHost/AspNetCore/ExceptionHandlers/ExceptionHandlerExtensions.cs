@@ -12,6 +12,12 @@ namespace Light.AspNetCore.ExceptionHandlers;
 
 internal static class ExceptionHandlerExtensions
 {
+    private static readonly JsonSerializerOptions ErrorResponseJsonOptions = new()
+    {
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
     public static async Task HandleExceptionAsync(
         this HttpContext httpContext,
         Exception exception,
@@ -44,17 +50,17 @@ internal static class ExceptionHandlerExtensions
                 {
                     response.StatusCode = (int)e.StatusCode;
 
-                    var errors = e.ValidationErrors
-                        .Select(s =>
-                        {
-                            // convert error from dictionary to model_prop: error1,error2,...
-                            var modelState = $"{s.Key}: {string.Join(",", s.Value)}";
-
-                            return modelState;
-                        });
-
-                    if (errors.Any())
+                    if (e.ValidationErrors.Count > 0)
                     {
+                        var errors = e.ValidationErrors
+                            .Select(s =>
+                            {
+                                // convert error from dictionary to model_prop: error1,error2,...
+                                var modelState = $"{s.Key}: {string.Join(",", s.Value)}";
+
+                                return modelState;
+                            });
+
                         message = string.Join("|", errors);
                     }
 
@@ -71,7 +77,7 @@ internal static class ExceptionHandlerExtensions
 
             default:
                 response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                message = settings.HideUndentifyException ? $"Internal Server Error" : message;
+                message = settings.HideUnidentifiedException ? $"Internal Server Error" : message;
                 break;
         }
 
@@ -97,15 +103,9 @@ internal static class ExceptionHandlerExtensions
                 RequestId = traceId,
             };
 
-            var jsonOptions = new JsonSerializerOptions
-            {
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            };
-
             response.ContentType = MediaTypeNames.Application.Json;
 
-            await response.WriteAsJsonAsync(result, jsonOptions, cancellationToken: cancellationToken);
+            await response.WriteAsJsonAsync(result, ErrorResponseJsonOptions, cancellationToken: cancellationToken);
         }
         else
         {

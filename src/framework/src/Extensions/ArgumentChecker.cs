@@ -49,11 +49,11 @@ namespace Light.Extensions
             string? paramName = null,
             string? message = null)
         {
-            if (input is null || EqualityComparer<T>.Default.Equals(input))
+            if (input is null || EqualityComparer<T>.Default.Equals(input, default!))
             {
                 if (string.IsNullOrEmpty(paramName))
                 {
-                    paramName ??= typeof(T).Name;
+                    paramName = typeof(T).Name;
                 }
 
                 if (string.IsNullOrEmpty(message))

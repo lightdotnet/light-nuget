@@ -12,11 +12,11 @@ namespace Light.AspNetCore.Mvc;
 public abstract class ApiControllerBase : ControllerBase
 {
     /// <summary>
-    /// Default success response
+    /// Default success response, wrapped in the framework's Result envelope
     /// </summary>
     /// <returns></returns>
     [ApiExplorerSettings(IgnoreApi = true)]
-    public new virtual IActionResult Ok()
+    public virtual IActionResult Success()
     {
         var result = Result.Success();
         result.RequestId = HttpContext.TraceIdentifier;
@@ -24,8 +24,11 @@ public abstract class ApiControllerBase : ControllerBase
         return result.ToActionResult();
     }
 
+    /// <summary>
+    /// Default success response with data, wrapped in the framework's Result envelope
+    /// </summary>
     [ApiExplorerSettings(IgnoreApi = true)]
-    public virtual IActionResult Ok<T>(T data)
+    public virtual IActionResult Success<T>(T data)
     {
         var result = data as ResultBase ?? Result<T>.Success(data);
         result.RequestId = HttpContext.TraceIdentifier;

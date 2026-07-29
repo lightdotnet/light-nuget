@@ -13,7 +13,7 @@ public static class JwtAuthServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddJwtAuth(this IServiceCollection services, string issuer, string secretKey, JwtBearerEvents jwtBearerEvents, string roleClaimType)
     {
-        var keyAsBytes = Encoding.ASCII.GetBytes(secretKey);
+        var keyAsBytes = Encoding.UTF8.GetBytes(secretKey);
 
         services
             .AddAuthentication(authentication =>
