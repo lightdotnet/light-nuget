@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # Lightsoft.AspNetCore.Extensions
 
 NuGet package ID: **`Lightsoft.AspNetCore.Extensions`** (see `WebHost.csproj`; the `.csproj` file itself

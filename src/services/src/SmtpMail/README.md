@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # Lightsoft.SmtpMail
 
 SMTP email-sending implementations behind a single shared contract, `ISmtpMailSender`. The package ships two senders — one built on the legacy `System.Net.Mail.SmtpClient` (no authentication) and one built on MailKit (with authentication) — plus optional `IServiceCollection` registration helpers for each.

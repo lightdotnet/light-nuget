@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # Lightsoft.ActiveDirectory
 
 Pluggable Active Directory / LDAP authentication and user-lookup services, exposed behind a single `IActiveDirectoryService` abstraction. Consumers register one of three backing implementations depending on their environment (no AD available, classic Windows AD, or cross-platform LDAP bind) without changing any calling code.

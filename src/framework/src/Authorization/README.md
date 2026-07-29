@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # Lightsoft.AspNetCore.Authorization
 
 Permission-based authorization building blocks for ASP.NET Core. The package lets you use ordinary `[Authorize(Policy = "...")]` attributes as permission checks without having to pre-register every permission as a named policy with `AddAuthorization`.

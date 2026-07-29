@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # Lightsoft.Mail.Contracts
 
 Shared mail data-transfer objects for the `Services` solution's mail-sending packages. It defines the message/sender/attachment shapes that `SmtpMail` (`ISmtpMailSender`) and `Graph` (`IGraphMailService`) both accept, so callers can send an email through either transport using the exact same `MailFrom`/`MailMessage` without depending on either implementation package directly.

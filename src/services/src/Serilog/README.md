@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # Lightsoft.Serilog
 
 Serilog wiring for ASP.NET Core `Generic Host` applications. The package configures a `Serilog.LoggerConfiguration` with a Console + Debug baseline, optional rolling-file and Elasticsearch sinks driven by `appsettings.json`, standard enrichers (machine name, environment, application name), and layers in whatever the `Serilog` configuration section itself specifies. It also ships a small standalone bootstrap logger for use before/outside the host-builder pipeline.

@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # Lightsoft.Graph
 
 Thin wrapper around the Microsoft Graph SDK for sending mail and reading Teams chats as an application (app-only, client-credentials auth). Authentication is handled internally via `Azure.Identity`'s `ClientSecretCredential`; consumers only supply a tenant/client/secret triple and a `GraphServiceClient` is registered for them.

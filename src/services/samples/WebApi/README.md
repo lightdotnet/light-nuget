@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # WebApi (IntegrationServices Sample)
 
 A runnable ASP.NET Core Web API sample under `src/services/samples/WebApi`. It is **not** a NuGet package — it exists to exercise every library in the `IntegrationServices` solution (`src/services`) from real `Program.cs` startup code and real controllers, so a developer can see each package wired up and called in context.

@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # Lightsoft.FileGenerator
 
 CSV and Excel read/write helpers behind two small service interfaces — `ICsvService` (built on CsvHelper) and `IExcelService` (built on ClosedXML) — plus a DI extension to register both.

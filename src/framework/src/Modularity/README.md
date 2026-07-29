@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # Lightsoft.AspNetCore.Modularity
 
 NuGet package ID: **`Lightsoft.AspNetCore.Modularity`** (see `Modularity.csproj`).

@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # Lightsoft.SharedKernel
 
 Root namespace: `Light` · Package/assembly: `Lightsoft.SharedKernel` · Target: `net10.0`

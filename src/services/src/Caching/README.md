@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # Lightsoft.Caching
 
 Cache abstraction and provider implementations for services that need a swappable in-process or distributed cache behind a single interface. Consumers depend on `ICacheService` (or the async-only `IAsyncCacheService`) and pick the backing provider — in-process `MemoryCache` or Redis via `Microsoft.Extensions.Caching.StackExchangeRedis` — purely through DI configuration, with no code change at the call site.

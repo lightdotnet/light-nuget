@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # Lightsoft.Extensions
 
 `Light.Extensions` namespace. Targets **netstandard2.1** (unlike the rest of the `Framework` solution, which targets `net10.0`) — this is intentional, to keep the package usable by older/broader .NET runtimes. It has no `ProjectReference`s to other projects in this repo; it only depends on `System.ComponentModel.Annotations` and `System.Text.Json` (see `Extensions.csproj`).

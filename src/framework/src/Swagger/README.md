@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # Lightsoft.AspNetCore.Swagger
 
 NuGet package id: **`Lightsoft.AspNetCore.Swagger`** (root namespace `Light.AspNetCore.Swagger`).

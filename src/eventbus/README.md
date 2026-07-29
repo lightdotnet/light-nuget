@@ -1,3 +1,5 @@
+[← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
+
 # EventBus
 
 Two NuGet packages: a transport-agnostic `IEventBus` contract, and a MassTransit + RabbitMQ implementation of it.
