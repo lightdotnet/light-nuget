@@ -8,7 +8,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Package containing useful AspNetCore extensions.</Description>
 	<Summary>Package containing useful AspNetCore extensions.</Summary>
-	<Version>10.1.1-preview1</Version>
+	<Version>10.1.1-preview2</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

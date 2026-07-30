@@ -16,7 +16,7 @@ public abstract class ApiControllerBase : ControllerBase
     /// </summary>
     /// <returns></returns>
     [ApiExplorerSettings(IgnoreApi = true)]
-    public virtual IActionResult Success()
+    public new virtual IActionResult Ok()
     {
         var result = Result.Success();
         result.RequestId = HttpContext.TraceIdentifier;
@@ -28,7 +28,7 @@ public abstract class ApiControllerBase : ControllerBase
     /// Default success response with data, wrapped in the framework's Result envelope
     /// </summary>
     [ApiExplorerSettings(IgnoreApi = true)]
-    public virtual IActionResult Success<T>(T data)
+    public virtual IActionResult Ok<T>(T data)
     {
         var result = data as ResultBase ?? Result<T>.Success(data);
         result.RequestId = HttpContext.TraceIdentifier;
