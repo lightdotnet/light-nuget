@@ -4,17 +4,21 @@ namespace Light.SmtpMail
     {
         public string Host { get; set; } = null!;
 
-        public virtual int Port { get; set; } = 25;
+        public int Port { get; set; } = 25;
 
         public bool UseSsl { get; set; }
     }
 
-    public class SmtpMailKitOptions : SmtpMailOptions
+    public class SmtpMailKitOptions
     {
-        public override int Port { get; set; } = 587;
+        public string Host { get; set; } = null!;
+
+        public int Port { get; set; } = 587;
 
         public string UserName { get; set; } = null!;
 
         public string Password { get; set; } = null!;
+
+        public bool UseSsl { get; set; }
     }
 }
