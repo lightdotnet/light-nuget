@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace Light.SmtpMail
 {
-    public class SmtpMailKit : SmtpConnection, ISmtpMailSender
+    public class SmtpMailKitSender : SmtpConnection, ISmtpMailSender
     {
         public string UserName { get; protected set; }
 
         public string Password { get; protected set; }
 
-        public SmtpMailKit(string host, string username, string password, int port = 587)
+        public SmtpMailKitSender(string host, string username, string password, int port = 587)
         {
             Host = host;
             Port = port;

@@ -45,7 +45,7 @@ namespace WebApi.Controllers
             var userName = "jermain.torphy@ethereal.email";
             var password = "GHMdV12nF7zfFhqG7Z";
 
-            var smtpClient = new SmtpMailKit(host, userName, password)
+            var smtpClient = new SmtpMailKitSender(host, userName, password)
             {
                 UseSsl = false,
             };

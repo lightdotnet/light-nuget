@@ -6,7 +6,7 @@ namespace UnitTests.SmtpMailTests;
 
 public class SmtpMailKitTests
 {
-    private readonly SmtpMailKit _smtpMailKit;
+    private readonly SmtpMailKitSender _smtpMailKit;
     private readonly string _fromMail;
 
     /// <summary>
@@ -20,7 +20,7 @@ public class SmtpMailKitTests
         var userName = _fromMail;
         var password = "RUMp811zYYVkPuvcdY";
 
-        _smtpMailKit = new SmtpMailKit(host, userName, password)
+        _smtpMailKit = new SmtpMailKitSender(host, userName, password)
         {
             UseSsl = false,
         };

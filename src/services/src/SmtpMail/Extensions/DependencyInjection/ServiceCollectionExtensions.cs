@@ -24,7 +24,7 @@ namespace Light.Extensions.DependencyInjection
         }
 
         /// <summary>
-        /// Registers <see cref="ISmtpMailSender"/> backed by <see cref="SmtpMailKit"/> (MailKit, with authentication).
+        /// Registers <see cref="ISmtpMailSender"/> backed by <see cref="SmtpMailKitSender"/> (MailKit, with authentication).
         /// </summary>
         public static IServiceCollection AddSmtpMailKit(this IServiceCollection services, Action<SmtpMailKitOptions> action)
         {
@@ -32,7 +32,7 @@ namespace Light.Extensions.DependencyInjection
             action.Invoke(options);
 
             services.AddTransient<ISmtpMailSender>(sp =>
-                new SmtpMailKit(options.Host, options.UserName, options.Password, options.Port)
+                new SmtpMailKitSender(options.Host, options.UserName, options.Password, options.Port)
                 {
                     UseSsl = options.UseSsl
                 });
