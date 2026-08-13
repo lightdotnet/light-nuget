@@ -14,7 +14,7 @@ foreach ($folder in $packageFolders) {
   $packageList.Add($packageId);
 
 }
-
+<# Note:
 $packageList =
 @(
     "Lightsoft.Grab.Auth",
@@ -29,6 +29,7 @@ $packageList =
     "Lightsoft.Tiki",
     "Lightsoft.Tiki.Core"
 )
+#>
 
 foreach ($packageId in $packageList) {
 
