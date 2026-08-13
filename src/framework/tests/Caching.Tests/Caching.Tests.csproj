@@ -31,12 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ActiveDirectory\ActiveDirectory.csproj" />
-    <ProjectReference Include="..\..\src\FileGenerator\FileGenerator.csproj" />
-    <ProjectReference Include="..\..\src\Graph\Graph.csproj" />
-    <ProjectReference Include="..\..\src\Mail.Contracts\Mail.Contracts.csproj" />
-    <ProjectReference Include="..\..\src\Serilog\Serilog.csproj" />
-    <ProjectReference Include="..\..\src\SmtpMail\SmtpMail.csproj" />
+    <ProjectReference Include="..\..\src\Caching\Caching.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,9 +1,11 @@
+using Light.Exceptions;
+using Light.Extensions.Caching;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
-namespace Light.Caching.Infrastructure
+namespace Light.Infrastructure
 {
-    public class MemoryCacheService : Interfaces.IMemoryCache
+    public class MemoryCacheService : ICacheService
     {
         private readonly IMemoryCache _cache;
         private readonly ILogger<MemoryCacheService> _logger;
@@ -12,9 +14,19 @@ namespace Light.Caching.Infrastructure
             ILogger<MemoryCacheService> logger)
             => (_cache, _logger) = (cache, logger);
 
-        public T Get<T>(string key) => _cache.Get<T>(key);
+        public T? Get<T>(string key)
+        {
+            try
+            {
+                return _cache.Get<T>(key);
+            }
+            catch (InvalidCastException ex)
+            {
+                throw new CacheDeserializationException(key, typeof(T), ex);
+            }
+        }
 
-        public T TryGet<T>(string key)
+        public T? TryGet<T>(string key)
         {
             try
             {
@@ -27,31 +39,23 @@ namespace Light.Caching.Infrastructure
             }
         }
 
-        public void Set<T>(string key, T value) => _cache.Set(key, value);
-
-        public void TrySet<T>(string key, T value)
+        public void Set<T>(string key, T value, TimeSpan? slidingExpiration = null)
         {
-            try
+            if (!slidingExpiration.HasValue)
             {
-                Set(key, value);
+                _cache.Set(key, value);
+                return;
             }
-            catch (Exception ex)
-            {
-                _logger.LogError("Cache {key} SET error: {error}", key, ex.Message);
-            }
-        }
 
-        public void Set<T>(string key, T value, TimeSpan slidingExpiration)
-        {
             var options = new MemoryCacheEntryOptions
             {
-                SlidingExpiration = slidingExpiration
+                SlidingExpiration = slidingExpiration.Value
             };
 
             _cache.Set(key, value, options);
         }
 
-        public void TrySet<T>(string key, T value, TimeSpan slidingExpiration)
+        public void TrySet<T>(string key, T value, TimeSpan? slidingExpiration = null)
         {
             try
             {
@@ -67,11 +71,11 @@ namespace Light.Caching.Infrastructure
 
         #region[Async]
 
-        public Task<T> GetAsync<T>(string key,
+        public Task<T?> GetAsync<T>(string key,
             CancellationToken cancellationToken = default)
             => Task.FromResult(Get<T>(key));
 
-        public async Task<T> TryGetAsync<T>(string key,
+        public async Task<T?> TryGetAsync<T>(string key,
             CancellationToken cancellationToken = default)
         {
             try
@@ -85,34 +89,14 @@ namespace Light.Caching.Infrastructure
             }
         }
 
-        public Task SetAsync<T>(string key, T value,
-            CancellationToken cancellationToken = default)
-        {
-            Set(key, value);
-            return Task.CompletedTask;
-        }
-
-        public async Task TrySetAsync<T>(string key, T value,
-            CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                await SetAsync(key, value, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Cache {key} SET error: {error}", key, ex.Message);
-            }
-        }
-
-        public Task SetAsync<T>(string key, T value, TimeSpan slidingExpiration,
+        public Task SetAsync<T>(string key, T value, TimeSpan? slidingExpiration = null,
             CancellationToken cancellationToken = default)
         {
             Set(key, value, slidingExpiration);
             return Task.CompletedTask;
         }
 
-        public async Task TrySetAsync<T>(string key, T value, TimeSpan slidingExpiration,
+        public async Task TrySetAsync<T>(string key, T value, TimeSpan? slidingExpiration = null,
             CancellationToken cancellationToken = default)
         {
             try

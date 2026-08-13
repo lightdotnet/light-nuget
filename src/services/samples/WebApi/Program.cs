@@ -1,7 +1,5 @@
-using Light.Caching.Infrastructure;
 using Light.Extensions.DependencyInjection;
 using Light.Serilog;
-using Microsoft.OpenApi;
 using System.Reflection;
 using WebApi;
 
@@ -27,14 +25,6 @@ builder.Services.AddMicrosoftGraph(opt =>
 */
 
 builder.Services.AddFileGenerator();
-
-var settings = builder.Configuration.GetSection("Caching").Get<CacheOptions>();
-builder.Services.AddCache(opt =>
-{
-    opt.Provider = settings!.Provider;
-    opt.RedisHost = settings.RedisHost;
-    opt.RedisPassword = settings.RedisPassword;
-});
 
 builder.Services.AddControllers(options =>
 {

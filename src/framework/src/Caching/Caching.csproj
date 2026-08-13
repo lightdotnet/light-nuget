@@ -1,17 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<TargetFramework>net10.0</TargetFramework>
-	<ImplicitUsings>enable</ImplicitUsings>
-	<Nullable>disable</Nullable>
-    <RootNamespace>Light.Caching</RootNamespace>
-	<AssemblyName>Lightsoft.Caching</AssemblyName>
-	<Title>Lightsoft.Caching</Title>
+    <RootNamespace>$(RootName)</RootNamespace>
+	<AssemblyName>$(OrgName).Caching</AssemblyName>
+	<Title>$(OrgName).Caching</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<Authors>minhvu</Authors>
 	<Description>Cache package services using Memory, Distributed, Redis.</Description>
 	<Summary>Cache package services using Memory, Distributed, Redis.</Summary>
-	<Version>10.2.1-preview1</Version>
+	<Version>$(NugetVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

@@ -1,18 +1,15 @@
-using Light.Caching.Infrastructure;
-using Microsoft.Extensions.Caching.Distributed;
+using Light.Exceptions;
+using Light.Infrastructure;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using NUnit.Framework;
-using System.Text.Json;
 
 namespace UnitTests.CachingTests;
 
-public class DistributedCacheServiceTests
+public class MemoryCacheServiceTests
 {
-    private static DistributedCacheService CreateService() =>
-        new(new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions())),
-            NullLogger<DistributedCacheService>.Instance);
+    private static MemoryCacheService CreateService() =>
+        new(new MemoryCache(new MemoryCacheOptions()), NullLogger<MemoryCacheService>.Instance);
 
     [Test]
     public void Set_Get_RoundTrip_ReturnsStoredValue()
@@ -57,8 +54,6 @@ public class DistributedCacheServiceTests
     [Test]
     public async Task RemoveAsync_ExistingKey_SubsequentGetAsyncReturnsDefault()
     {
-        // Regression test: RemoveAsync previously called _cache.RefreshAsync (a no-op reset of the
-        // sliding-expiration timer) instead of _cache.RemoveAsync, so the entry was never removed.
         var cache = CreateService();
         await cache.SetAsync("key", 1);
 
@@ -79,22 +74,23 @@ public class DistributedCacheServiceTests
     }
 
     [Test]
-    public void Get_JsonTypeMismatch_ThrowsJsonException()
+    public void Get_TypeMismatch_ThrowsCacheDeserializationException()
     {
         var cache = CreateService();
-        cache.Set("key", 42);
+        cache.Set("key", "a string value");
 
-        Assert.Throws<JsonException>(() => cache.Get<Guid>("key"));
+        var ex = Assert.Throws<CacheDeserializationException>(() => cache.Get<int>("key"));
+        Assert.That(ex!.InnerException, Is.TypeOf<InvalidCastException>());
     }
 
     [Test]
-    public void TryGet_JsonTypeMismatch_ReturnsDefault_DoesNotThrow()
+    public void TryGet_TypeMismatch_ReturnsDefault_DoesNotThrow()
     {
         var cache = CreateService();
-        cache.Set("key", 42);
+        cache.Set("key", "a string value");
 
-        Assert.DoesNotThrow(() => cache.TryGet<Guid>("key"));
-        cache.TryGet<Guid>("key").ShouldBe(Guid.Empty);
+        Assert.DoesNotThrow(() => cache.TryGet<int>("key"));
+        cache.TryGet<int>("key").ShouldBe(0);
     }
 
     [Test]

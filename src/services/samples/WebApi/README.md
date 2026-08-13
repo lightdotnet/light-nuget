@@ -4,12 +4,11 @@
 
 A runnable ASP.NET Core Web API sample under `src/services/samples/WebApi`. It is **not** a NuGet package — it exists to exercise every library in the `IntegrationServices` solution (`src/services`) from real `Program.cs` startup code and real controllers, so a developer can see each package wired up and called in context.
 
-`WebApi.csproj` (`net10.0`) has a `ProjectReference` to all seven libraries in `src/services/src`:
+`WebApi.csproj` (`net10.0`) has a `ProjectReference` to all six libraries in `src/services/src`:
 
 | Library | Used by |
 |---|---|
 | `ActiveDirectory` | `ADController` |
-| `Caching` | `CachingController` |
 | `FileGenerator` | `CsvController`, `ExcelController` |
 | `Graph` | `GraphController` (registration currently disabled — see below) |
 | `Mail.Contracts` | `MailController`, `GraphController` (shared `MailFrom`/`MailMessage` types) |
@@ -27,7 +26,6 @@ It also references `Lightsoft.Extensions` (NuGet) and `Swashbuckle.AspNetCore.Sw
 | `builder.Services.AddActiveDirectory(opt => opt.Name = "company.local")` | active | The **real** `ActiveDirectoryService` overload (Windows-only, `System.DirectoryServices.AccountManagement`), not the no-op `FakeActiveDirectoryService`. Wrapped in `#pragma warning disable CA1416` because the API is `[SupportedOSPlatform("windows")]`. |
 | `builder.Services.AddMicrosoftGraph(opt => { ClientSecret/ClientId/TenantId = "" })` | commented out | Disabled because it needs real Azure AD app registration credentials. `GraphController` still exists and takes a dependency on `IGraphMailService`/`IGraphTeams`, so calling its endpoints while this is commented out will fail with a DI resolution error. |
 | `builder.Services.AddFileGenerator()` | active | Registers `ICsvService`/`IExcelService` (both `AddTransient`) used by `CsvController`/`ExcelController`. |
-| `builder.Services.AddCache(opt => ...)` | active | Reads the `Caching` section of `appsettings.json` (`Provider`, `RedisHost`, `RedisPassword`) into `CacheOptions` and registers `ICacheService` used by `CachingController`. |
 | `builder.Services.AddControllers(...)` with a custom `ByteArrayModelBinderProvider` | active | Lets `byte[]`-bodied actions (e.g. `ExcelController.Import([FromBody] byte[])`) bind from either a Swagger multipart file picker or a raw JSON base64 string body — see `ByteArrayFileUploadFilter.cs`. |
 | `builder.Services.AddSwaggerGen(c => c.OperationFilter<RawByteArrayBodyFilter>())` | active | Makes Swagger render `byte[]` request bodies as a file-upload widget instead of a base64 string field. |
 | `app.UseSwagger()` / `app.UseSwaggerUI()` | active | Swagger UI is enabled with no environment guard (runs in all environments as configured today). |
@@ -41,8 +39,6 @@ It also references `Lightsoft.Extensions` (NuGet) and `Swashbuckle.AspNetCore.Sw
 |---|---|---|---|
 | `ADController` | `GET /AD?user={user}` | GET | `IActiveDirectoryService.GetByUserNameAsync` — look up an AD user by username. |
 | | `GET /AD/check_password?user={user}&password={password}` | GET | `IActiveDirectoryService.CheckPasswordSignInAsync` — validate AD credentials. |
-| `CachingController` | `GET /Caching` | GET | `ICacheService.SetAsync` — writes a ~200,000-entry `Dictionary<string, decimal>` under key `test_key`. |
-| | `GET /Caching/read` | GET | `ICacheService.GetAsync<T>` — reads the same key back and returns entry `W0001_10000` (throws if `/Caching` wasn't called first in this run). |
 | `CsvController` | `GET /Csv/read?fileName={name}` | GET | `ICsvService.Read(TextReader)` — reads `D:\Files\{fileName}.csv` into a `DataTable`. |
 | | `GET /Csv/read_as?fileName={name}` | GET | `ICsvService.Read<CsvObject>(TextReader)` — reads the same file into a typed `CsvObject` (via `CsvHelper` `[Index]` attributes). |
 | | `GET /Csv/export` | GET | `ICsvService.ReadAs<T>` + `WriteAsync<T>` — reads a hardcoded local CSV, round-trips it through the service, and returns it as a downloadable `DataExport.csv`. |
@@ -61,11 +57,10 @@ It also references `Lightsoft.Extensions` (NuGet) and `Swashbuckle.AspNetCore.Sw
 
 - **`GraphController`** — will fail with a DI resolution error for `IGraphMailService`/`IGraphTeams` as the code stands today, because `AddMicrosoftGraph` is commented out in `Program.cs`. To make it work you must uncomment that block and supply a real Azure AD app registration's `TenantId`, `ClientId`, and `ClientSecret` (currently empty strings in the commented-out code).
 - **`ADController`** — needs a reachable, domain-joined Active Directory / Windows domain matching the configured domain name `"company.local"` (`Program.cs`). This only works on Windows (`[SupportedOSPlatform("windows")]`) and against a real directory service; there is no fake/mock wired up for this sample.
-- **`CachingController`** — needs a reachable Redis instance. `appsettings.json`'s `Caching` section points at `10.114.32.16:6379` with password `123`, an internal address that generally won't be reachable outside that network. Change `RedisHost`/`RedisPassword` (or `Provider`) to a Redis instance you control.
 - **`CsvController`** — `/Csv/read` and `/Csv/read_as` require a file at `D:\Files\{fileName}.csv`; `/Csv/export` requires the hardcoded file `D:\Files\Adobe_aswDM50210_20250311182339.csv` to exist. `/Csv/export_dt` needs no external file.
 - **`ExcelController`** — `/Excel/import` requires a file at `D:\test.xlsx`. `/Excel/upload` needs no local file (bytes come from the request body). `/Excel`, `/Excel/test`, `/Excel/export_multi_list`, and `/Excel/export_multi_dt` need no external file.
 - **`MailController`** — **security note:** `Controllers/MailController.cs` has real-looking Ethereal (fake/test SMTP) credentials hardcoded directly in source (`host = "smtp.ethereal.email"`, `userName = "jermain.torphy@ethereal.email"`, `password = "GHMdV12nF7zfFhqG7Z"`) and committed to the repository. Ethereal is a disposable test-inbox service (no real mail is delivered), so the practical blast radius is limited, but hardcoded credentials committed to source control should still be treated as a smell — do not copy this pattern into production code, and rotate/replace these values if this sample is ever adapted for real use.
-- **Configuration secrets in general** — `appsettings.json` also has plaintext credentials checked into source: an `SMTP` section with a Gmail account (`zord.contactus@gmail.com`) and app password, a `Serilog` → `ElasticsearchAsync1` sink with `Username`/`Password` `elastic`/`elastic` against an internal endpoint, and the Redis password mentioned above. None of these are read via user secrets/environment variables/a vault — treat this file as sample-only and never commit real credentials to it in a fork of this pattern.
+- **Configuration secrets in general** — `appsettings.json` also has plaintext credentials checked into source: an `SMTP` section with a Gmail account (`zord.contactus@gmail.com`) and app password, and a `Serilog` → `ElasticsearchAsync1` sink with `Username`/`Password` `elastic`/`elastic` against an internal endpoint. None of these are read via user secrets/environment variables/a vault — treat this file as sample-only and never commit real credentials to it in a fork of this pattern.
 
 ## Running it
 

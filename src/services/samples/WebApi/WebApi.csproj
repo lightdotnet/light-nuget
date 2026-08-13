@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ActiveDirectory\ActiveDirectory.csproj" />
-    <ProjectReference Include="..\..\src\Caching\Caching.csproj" />
     <ProjectReference Include="..\..\src\FileGenerator\FileGenerator.csproj" />
     <ProjectReference Include="..\..\src\Graph\Graph.csproj" />
     <ProjectReference Include="..\..\src\Mail.Contracts\Mail.Contracts.csproj" />

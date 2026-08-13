@@ -1,7 +1,7 @@
-using Light.Caching.Interfaces;
+using Light.Extensions.Caching;
 using Microsoft.AspNetCore.Mvc;
 
-namespace WebApi.Controllers
+namespace Sample.AspNetCore.Controllers
 {
     [Route("[controller]")]
     [ApiController]
@@ -28,6 +28,9 @@ namespace WebApi.Controllers
         public async Task<IActionResult> Get()
         {
             var res = await cacheService.GetAsync<Dictionary<string, decimal>>(TEST_KEY);
+            if (res is null)
+                return NotFound($"Key '{TEST_KEY}' not cached — call GET /Caching first.");
+
             var result = res["W0001_10000"];
 
             return Ok(result);

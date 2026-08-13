@@ -1,9 +1,12 @@
+using Light.Exceptions;
+using Light.Extensions.Caching;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
-namespace Light.Caching.Infrastructure
+namespace Light.Infrastructure
 {
-    public class DistributedCacheService : Interfaces.IDistributedCache
+    public class DistributedCacheService : ICacheService
     {
         private readonly IDistributedCache _cache;
         private readonly ILogger<DistributedCacheService> _logger;
@@ -12,9 +15,19 @@ namespace Light.Caching.Infrastructure
             ILogger<DistributedCacheService> logger)
             => (_cache, _logger) = (cache, logger);
 
-        public T Get<T>(string key) => _cache.GetString(key).ReadFromJson<T>();
+        public T? Get<T>(string key)
+        {
+            try
+            {
+                return _cache.GetString(key).ReadFromJson<T>();
+            }
+            catch (JsonException ex)
+            {
+                throw new CacheDeserializationException(key, typeof(T), ex);
+            }
+        }
 
-        public T TryGet<T>(string key)
+        public T? TryGet<T>(string key)
         {
             try
             {
@@ -27,30 +40,21 @@ namespace Light.Caching.Infrastructure
             }
         }
 
-        public void Set<T>(string key, T value) => _cache.SetString(key, value.JsonSerialize());
-
-        public void TrySet<T>(string key, T value)
+        public void Set<T>(string key, T value, TimeSpan? slidingExpiration = null)
         {
-            try
+            if (!slidingExpiration.HasValue)
             {
-                Set(key, value);
+                _cache.SetString(key, value.JsonSerialize());
+                return;
             }
-            catch (Exception ex)
-            {
-                _logger.LogError("Cache {key} SET error: {error}", key, ex.Message);
-            }
-        }
 
-        public void Set<T>(string key, T value, TimeSpan slidingExpiration)
-        {
             var options = new DistributedCacheEntryOptions();
-
-            options.SetSlidingExpiration(slidingExpiration);
+            options.SetSlidingExpiration(slidingExpiration.Value);
 
             _cache.SetString(key, value.JsonSerialize(), options);
         }
 
-        public void TrySet<T>(string key, T value, TimeSpan slidingExpiration)
+        public void TrySet<T>(string key, T value, TimeSpan? slidingExpiration = null)
         {
             try
             {
@@ -66,14 +70,22 @@ namespace Light.Caching.Infrastructure
 
         #region[Async]
 
-        public async Task<T> GetAsync<T>(string key,
+        public async Task<T?> GetAsync<T>(string key,
             CancellationToken cancellationToken = default)
         {
             var cacheValue = await _cache.GetStringAsync(key, cancellationToken);
-            return cacheValue.ReadFromJson<T>();
+
+            try
+            {
+                return cacheValue.ReadFromJson<T>();
+            }
+            catch (JsonException ex)
+            {
+                throw new CacheDeserializationException(key, typeof(T), ex);
+            }
         }
 
-        public async Task<T> TryGetAsync<T>(string key,
+        public async Task<T?> TryGetAsync<T>(string key,
             CancellationToken cancellationToken = default)
         {
             try
@@ -87,34 +99,19 @@ namespace Light.Caching.Infrastructure
             }
         }
 
-        public Task SetAsync<T>(string key, T value,
-            CancellationToken cancellationToken = default)
-            => _cache.SetStringAsync(key, value.JsonSerialize(), cancellationToken);
-
-        public async Task TrySetAsync<T>(string key, T value,
+        public Task SetAsync<T>(string key, T value, TimeSpan? slidingExpiration = null,
             CancellationToken cancellationToken = default)
         {
-            try
-            {
-                await SetAsync(key, value, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Cache {key} SET error: {error}", key, ex.Message);
-            }
-        }
+            if (!slidingExpiration.HasValue)
+                return _cache.SetStringAsync(key, value.JsonSerialize(), cancellationToken);
 
-        public Task SetAsync<T>(string key, T value, TimeSpan slidingExpiration,
-            CancellationToken cancellationToken = default)
-        {
             var options = new DistributedCacheEntryOptions();
-
-            options.SetSlidingExpiration(slidingExpiration);
+            options.SetSlidingExpiration(slidingExpiration.Value);
 
             return _cache.SetStringAsync(key, value.JsonSerialize(), options, cancellationToken);
         }
 
-        public async Task TrySetAsync<T>(string key, T value, TimeSpan slidingExpiration,
+        public async Task TrySetAsync<T>(string key, T value, TimeSpan? slidingExpiration = null,
             CancellationToken cancellationToken = default)
         {
             try

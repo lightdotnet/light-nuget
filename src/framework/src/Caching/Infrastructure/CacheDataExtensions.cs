@@ -1,16 +1,15 @@
 ﻿using System.Text.Json;
 
-namespace Light.Caching.Infrastructure
+namespace Light.Infrastructure
 {
     internal static class CacheDataExtensions
     {
-        internal static JsonSerializerOptions DefaultJsonOptions
-            => new JsonSerializerOptions()
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            };
+        private static readonly JsonSerializerOptions DefaultJsonOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
 
-        internal static T ReadFromJson<T>(this string json)
+        internal static T? ReadFromJson<T>(this string? json)
             => string.IsNullOrEmpty(json)
             ? default
             : JsonSerializer.Deserialize<T>(json, DefaultJsonOptions);

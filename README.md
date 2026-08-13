@@ -22,11 +22,11 @@ This solution contains Light .NET projects publish to NuGet.org
 - [Lightsoft.AspNetCore.Extensions](src/framework/src/WebHost/README.md) — Default hosting config: JWT auth setup, request logging, exception handling, JSON converters, MVC conventions/base controllers, and config-loading helpers
 - [Lightsoft.Specification](src/framework/src/Specification/README.md) — Specification Pattern with context-agnostic Repository + Unit of Work interfaces
 - [Lightsoft.EntityFrameworkCore](src/framework/src/EntityFrameworkCore/README.md) — EF Core implementations of Specification's Repository/Unit of Work, plus NOLOCK, Dapper, and global-query-filter extensions
+- [Lightsoft.Caching](src/framework/src/Caching/README.md) — Swappable in-process/Redis cache behind a single `ICacheService` interface
 
 ### Integration Services
 
 - [Lightsoft.ActiveDirectory](src/services/src/ActiveDirectory/README.md) — Pluggable AD/LDAP authentication and user lookup behind a single `IActiveDirectoryService` abstraction
-- [Lightsoft.Caching](src/services/src/Caching/README.md) — Swappable in-process/Redis cache behind a single `ICacheService` interface
 - [Lightsoft.FileGenerator](src/services/src/FileGenerator/README.md) — CSV/Excel read-write helpers (`ICsvService`, `IExcelService`)
 - [Lightsoft.Graph](src/services/src/Graph/README.md) — Thin Microsoft Graph SDK wrapper for sending mail and reading Teams chats (app-only auth)
 - [Lightsoft.Mail.Contracts](src/services/src/Mail.Contracts/README.md) — Shared mail DTOs used by `SmtpMail` and `Graph`

@@ -1,5 +1,5 @@
-﻿using Light.Caching.Infrastructure;
-using Light.Caching.Interfaces;
+﻿using Light.Extensions.Caching;
+using Light.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 

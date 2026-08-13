@@ -4,6 +4,7 @@ using Light.AspNetCore.Builder;
 using Light.AspNetCore.Middlewares;
 using Light.AspNetCore.Swagger;
 using Light.Extensions.DependencyInjection;
+using Light.Infrastructure;
 using Light.Serilog;
 using Sample.AspNetCore;
 using Sample.AspNetCore.HealthChecks;
@@ -28,6 +29,14 @@ try
     // Add services to the container.
 
     var executingAssembly = Assembly.GetExecutingAssembly();
+
+    var settings = builder.Configuration.GetSection("Caching").Get<CacheOptions>();
+    builder.Services.AddCache(opt =>
+    {
+        opt.Provider = settings!.Provider;
+        opt.RedisHost = settings.RedisHost;
+        opt.RedisPassword = settings.RedisPassword;
+    });
 
     builder.Services.AddTestOptions(builder.Configuration);
 
