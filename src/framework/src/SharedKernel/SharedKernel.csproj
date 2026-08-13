@@ -18,8 +18,4 @@
 	<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
 
-  <ItemGroup>
-	<PackageReference Include="Ulid" Version="1.4.1" />
-  </ItemGroup>
-
 </Project>
