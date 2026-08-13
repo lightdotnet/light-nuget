@@ -5,19 +5,24 @@
   <Folder Name="/Solution Items/">
     <File Path="../../.github/workflows/publish-aspnetcore-to-nuget.yml" />
     <File Path="../../.github/workflows/publish-core-to-nuget.yml" />
+    <File Path="../../.github/workflows/publish-efcore-to-nuget.yml" />
     <File Path="../../.github/workflows/publish-identity-to-nuget.yml" />
     <File Path="Directory.Build.props" />
     <File Path="README.md" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Authorization/Authorization.csproj" />
+    <Project Path="src/EntityFrameworkCore/EntityFrameworkCore.csproj" />
     <Project Path="src/Extensions/Extensions.csproj" />
     <Project Path="src/Modularity/Modularity.csproj" />
     <Project Path="src/SharedKernel/SharedKernel.csproj" />
+    <Project Path="src/Specification/Specification.csproj" />
     <Project Path="src/Swagger/Swagger.csproj" />
     <Project Path="src/WebHost/WebHost.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/EntityFrameworkCore.Tests/EntityFrameworkCore.Tests.csproj" />
+    <Project Path="tests/Specification.Tests/Specification.Tests.csproj" />
     <Project Path="tests/UnitTests/UnitTests.csproj" />
   </Folder>
 </Solution>

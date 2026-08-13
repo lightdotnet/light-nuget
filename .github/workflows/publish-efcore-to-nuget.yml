@@ -26,4 +26,4 @@ jobs:
             "src/Specification/Specification.csproj",
             "src/EntityFrameworkCore/EntityFrameworkCore.csproj"
           ]
-        working-dir: ./src/efcore
+        working-dir: ./src/framework

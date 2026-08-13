@@ -8,10 +8,6 @@ This solution contains Light .NET projects publish to NuGet.org
 
 ## Packages
 
-### EFCore
-
-- [Light.Specification & Light.EntityFrameworkCore](src/efcore/README.md) — Specification Pattern + Repository/Unit of Work for EF Core
-
 ### EventBus
 
 - [EventBus](src/eventbus/README.md) — Transport-agnostic `IEventBus` contract, plus a MassTransit + RabbitMQ implementation
@@ -24,6 +20,8 @@ This solution contains Light .NET projects publish to NuGet.org
 - [Lightsoft.AspNetCore.Swagger](src/framework/src/Swagger/README.md) — Configuration-driven Swagger/OpenAPI + Swagger UI setup with optional JWT/Basic auth and API-version awareness
 - [Lightsoft.Extensions](src/framework/src/Extensions/README.md) — Static helper/extension classes for argument guards, date/time, random generation, string/number conversion, reflection, JSON, streams, XML, query strings, and enums
 - [Lightsoft.AspNetCore.Extensions](src/framework/src/WebHost/README.md) — Default hosting config: JWT auth setup, request logging, exception handling, JSON converters, MVC conventions/base controllers, and config-loading helpers
+- [Lightsoft.Specification](src/framework/src/Specification/README.md) — Specification Pattern with context-agnostic Repository + Unit of Work interfaces
+- [Lightsoft.EntityFrameworkCore](src/framework/src/EntityFrameworkCore/README.md) — EF Core implementations of Specification's Repository/Unit of Work, plus NOLOCK, Dapper, and global-query-filter extensions
 
 ### Integration Services
 

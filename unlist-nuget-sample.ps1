@@ -5,7 +5,7 @@
 $packageList = [System.Collections.Generic.List[string]]::new()
 
 $name = "Lightsoft"
-$packageFolders = Get-ChildItem -Path "src\efcore\src" -Directory | Select-Object -ExpandProperty Name
+$packageFolders = Get-ChildItem -Path "src\framework\src" -Directory | Select-Object -ExpandProperty Name
 
 foreach ($folder in $packageFolders) {
 
