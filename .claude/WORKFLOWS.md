@@ -11,6 +11,7 @@ This file indexes the workflows in [workflows/](workflows/). Workflows are step-
 | [review-repository](workflows/review-repository.md) | "Review the repository/codebase" | No (read-only) | No |
 | [sync-documentation](workflows/sync-documentation.md) | "Sync/update documentation" | No | Yes |
 | [end-session](workflows/end-session.md) | End of a non-trivial session | No | No (suggests only) |
+| [ROT check](ROT.md) | "Run ROT check" / "check outdated agents/skills/workflows" | No (report first, fix second) | No |
 
 ## Selection Guide
 
@@ -21,6 +22,7 @@ This file indexes the workflows in [workflows/](workflows/). Workflows are step-
 - User wants a broad, read-only audit across the repo/solution → `review-repository`
 - User explicitly wants docs regenerated/updated to match code → `sync-documentation`
 - Wrapping up a session with meaningful changes → `end-session`
+- User wants to check if agents/skills/workflows are stale relative to the current Claude model/capabilities → `ROT check`
 
 ## Relationship to Skills and Agents
 

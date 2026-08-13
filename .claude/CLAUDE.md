@@ -70,6 +70,7 @@ Session- and task-level workflows live in [workflows/](workflows/) — see [WORK
 - [review-repository](workflows/review-repository.md)
 - [sync-documentation](workflows/sync-documentation.md)
 - [end-session](workflows/end-session.md) — end of every non-trivial session
+- [ROT.md](ROT.md) — checks agents/skills/workflows for staleness against the current Claude model/capabilities; manual trigger only, never automatic
 
 ## 7. Context Management
 
@@ -98,3 +99,4 @@ Session- and task-level workflows live in [workflows/](workflows/) — see [WORK
 | "Review code" | [skills/review-code.md](skills/review-code.md) |
 | "Implement a feature" | [workflows/implement-feature.md](workflows/implement-feature.md) |
 | "Update CLAUDE documentation" | [skills/sync-docs.md](skills/sync-docs.md), scoped to `.claude/` docs only |
+| "Run ROT check" / "check outdated agents/skills/workflows" | [ROT.md](ROT.md) — manual trigger only |
