@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<RootNamespace>Light</RootNamespace>
-	<AssemblyName>Lightsoft.AspNetCore.Extensions</AssemblyName>
-	<Title>Lightsoft.AspNetCore.Extensions</Title>
+	<RootNamespace>$(RootName)</RootNamespace>
+	<AssemblyName>$(OrgName).AspNetCore.Extensions</AssemblyName>
+	<Title>$(OrgName).AspNetCore.Extensions</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<Authors>minhvu</Authors>
 	<Description>Package containing useful AspNetCore extensions.</Description>
 	<Summary>Package containing useful AspNetCore extensions.</Summary>
-	<Version>10.1.1-preview2</Version>
+	<Version>$(NugetVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

@@ -1,9 +1,8 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 
-namespace Light.Extensions
+namespace Light.Extensions.Json
 {
     public class JsonHelper
     {

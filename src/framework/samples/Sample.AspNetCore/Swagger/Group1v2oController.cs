@@ -10,7 +10,7 @@ namespace Sample.AspNetCore.Swagger
         [HttpGet]
         public IActionResult Get()
         {
-            return Success("Group2_v2");
+            return Ok("Group2_v2");
         }
     }
 }

@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<RootNamespace>Light</RootNamespace>
-	<AssemblyName>Lightsoft.SharedKernel</AssemblyName>
-	<Title>Lightsoft.SharedKernel</Title>
+	<RootNamespace>$(RootName)</RootNamespace>
+	<AssemblyName>$(OrgName).SharedKernel</AssemblyName>
+	<Title>$(OrgName).SharedKernel</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<Authors>minhvu</Authors>
 	<Description>Package containing useful base interfaces, classes, enums, value objects.</Description>
 	<Summary>Package containing useful base interfaces, classes, enums, value objects.</Summary>
-	<Version>1.10.2</Version>
+	<Version>$(NugetVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<PackageReleaseNotes></PackageReleaseNotes>

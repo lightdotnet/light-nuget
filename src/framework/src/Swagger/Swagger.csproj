@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<RootNamespace>Light.AspNetCore.Swagger</RootNamespace>
-	<AssemblyName>Lightsoft.AspNetCore.Swagger</AssemblyName>
-	<Title>Lightsoft.AspNetCore.Swagger</Title>
+	<RootNamespace>$(RootName).AspNetCore.Swagger</RootNamespace>
+	<AssemblyName>$(OrgName).AspNetCore.Swagger</AssemblyName>
+	<Title>$(OrgName).AspNetCore.Swagger</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<Authors>minhvu</Authors>
 	<Description>AspNetCore Swagger package.</Description>
 	<Summary>AspNetCore Swagger package.</Summary>
-	<Version>10.1.1-preview1</Version>
+	<Version>$(NugetVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

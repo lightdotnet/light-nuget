@@ -19,6 +19,7 @@ public static class ApiVersionServiceCollectionExtensions
             config.AssumeDefaultVersionWhenUnspecified = true;
             config.ReportApiVersions = true;
         })
+        .AddMvc()
         .AddApiExplorer(o =>
         {
             o.GroupNameFormat = "'v'VVV";

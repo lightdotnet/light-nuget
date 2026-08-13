@@ -1,6 +1,9 @@
 <Project>
   <PropertyGroup>
 	<AspnetVersion>10.*</AspnetVersion>
+	<RootName>Light</RootName>
+	<OrgName>Lightsoft</OrgName>
+	<NugetVersion>2.0.0-preview.1</NugetVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == ''">
 	<TargetFramework>net10.0</TargetFramework>

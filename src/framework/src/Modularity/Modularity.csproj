@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<RootNamespace>Light</RootNamespace>
-	<AssemblyName>Lightsoft.AspNetCore.Modularity</AssemblyName>
-	<Title>Lightsoft.AspNetCore.Modularity</Title>
+	<RootNamespace>$(RootName)</RootNamespace>
+	<AssemblyName>$(OrgName).AspNetCore.Modularity</AssemblyName>
+	<Title>$(OrgName).AspNetCore.Modularity</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<Authors>minhvu</Authors>
 	<Description>AspNetCore Modularity package.</Description>
 	<Summary>AspNetCore Modularity package.</Summary>
-	<Version>10.2.1-preview1</Version>
+	<Version>$(NugetVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

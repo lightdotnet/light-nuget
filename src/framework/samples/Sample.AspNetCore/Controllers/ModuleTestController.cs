@@ -1,6 +1,5 @@
 ﻿using Light.Contracts;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Sample.AspNetCore.Modules;
 
 namespace Sample.AspNetCore.Controllers;

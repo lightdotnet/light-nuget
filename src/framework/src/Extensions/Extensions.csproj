@@ -4,14 +4,14 @@
 	<TargetFramework>netstandard2.1</TargetFramework>
 	<ImplicitUsings>false</ImplicitUsings>
 	<Nullable>enable</Nullable>
-	<RootNamespace>Light.Extensions</RootNamespace>
-	<AssemblyName>Lightsoft.Extensions</AssemblyName>
-	<Title>Lightsoft.Extensions</Title>
+	<RootNamespace>$(RootName).Extensions</RootNamespace>
+	<AssemblyName>$(OrgName).Extensions</AssemblyName>
+	<Title>$(OrgName).Extensions</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<Authors>minhvu</Authors>
 	<Description>A simple package to process data faster.</Description>
 	<Summary>A simple package to process data faster.</Summary>
-	<Version>1.10.1-preview1</Version>
+	<Version>$(NugetVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<PackageReleaseNotes></PackageReleaseNotes>
@@ -22,8 +22,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
-    <PackageReference Include="System.Text.Json" Version="$(AspnetVersion)" />
+	<PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
-
+	
 </Project>
