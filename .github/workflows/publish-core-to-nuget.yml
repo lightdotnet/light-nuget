@@ -25,6 +25,6 @@ jobs:
           [
             "src/Extensions/Extensions.csproj",
             "src/SharedKernel/SharedKernel.csproj",
-            "src/Caching/Caching.csproj",
+            "src/Caching/Caching.csproj"
           ]
         working-dir: ./src/framework
