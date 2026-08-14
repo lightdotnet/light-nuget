@@ -17,6 +17,10 @@ Permission-based authorization building blocks for ASP.NET Core. The package let
 | `PermissionRequirement(string Permission)` | `Light.AspNetCore.Authorization` | `IAuthorizationRequirement` record carrying the permission (= policy name) to check. |
 | `PermissionAuthorizationHandler` | `Light.AspNetCore.Authorization` | Abstract `AuthorizationHandler<PermissionRequirement>`. You implement `HandleRequirementAsync` in a derived class to decide whether the current user has the permission. |
 | `MustHavePermissionAttribute(string policy)` | `Light.AspNetCore.Authorization` | Thin `AuthorizeAttribute` subclass — sets `Policy` from the constructor argument, purely for readability at call sites. |
+| `PermissionDefinition(string name, string? displayName = null, string? parent = null)` | `Light.AspNetCore.Authorization` | Sealed class describing one named permission — `Name`, `DisplayName` (defaults to `Name`), and an optional `Parent` permission name for hierarchical grouping. |
+| `IPermissionDefinitionProvider` | `Light.AspNetCore.Authorization` | Contract for declaring a module's/consumer's permissions — `IEnumerable<PermissionDefinition> Define()`. Register implementations in DI; every registered provider is consulted at `PermissionManager` construction time. |
+| `PermissionRegistry` | `Light.AspNetCore.Authorization` | Internal `Dictionary<string, PermissionDefinition>`-backed catalog used by `PermissionManager`. `Add` uses `TryAdd`, so the first provider to register a given permission `Name` wins; later duplicates are silently ignored. |
+| `IPermissionManager` / `PermissionManager` | `Light.AspNetCore.Authorization` | `PermissionManager` aggregates every registered `IPermissionDefinitionProvider` into a `PermissionRegistry` at construction time and exposes the combined catalog via `GetPermissions()`. Registered as `AddSingleton<IPermissionManager, PermissionManager>()` automatically by `AddPermissionPolicyProvider[<T>]` (see below) — you don't register it yourself. |
 | `ServiceCollectionExtensions` | `Light.Extensions.DependencyInjection` | `AddPermissionPolicyProvider[<T>]` and `AddPermissionAuthorizationHandler<T>` registration helpers. |
 
 ## How `PermissionPolicyProvider` works
@@ -61,7 +65,7 @@ services.AddPermissionPolicyProvider();               // or AddPermissionPolicyP
 services.AddPermissionAuthorizationHandler<MyPermissionHandler>();
 ```
 
-`AddPermissionPolicyProvider` registers `PermissionPolicyProvider` as `IAuthorizationPolicyProvider` (`AddSingleton`, replacing/overriding the framework default). `AddPermissionAuthorizationHandler<T>` registers `T` as `IAuthorizationHandler` (`AddScoped`).
+`AddPermissionPolicyProvider[<T>]` registers **two** singletons: `T : PermissionPolicyProvider` (or `PermissionPolicyProvider` itself) as `IAuthorizationPolicyProvider` (replacing/overriding the framework default), and `PermissionManager` as `IPermissionManager`. `AddPermissionAuthorizationHandler<T>` registers `T` as `IAuthorizationHandler` (`AddScoped`).
 
 ### 3. Declare permissions on endpoints
 
@@ -77,6 +81,36 @@ public IActionResult GetOrders() => ...;
 ```
 
 `Orders.Read` is passed straight through as `PermissionRequirement.Permission`, and your `PermissionAuthorizationHandler` decides whether the current user has it.
+
+### 4. (Optional) Declare a permission catalog
+
+If you want a queryable list of all permissions your app defines (e.g. to render a permission-assignment UI), implement `IPermissionDefinitionProvider` and register it before calling `AddPermissionPolicyProvider`:
+
+```csharp
+public class OrderPermissions : IPermissionDefinitionProvider
+{
+    public IEnumerable<PermissionDefinition> Define()
+    {
+        yield return new PermissionDefinition("Orders.Read", "View orders");
+        yield return new PermissionDefinition("Orders.Write", "Manage orders", parent: "Orders.Read");
+    }
+}
+```
+
+```csharp
+services.AddSingleton<IPermissionDefinitionProvider, OrderPermissions>();
+services.AddPermissionPolicyProvider();
+```
+
+```csharp
+public class PermissionsController(IPermissionManager permissionManager) : ControllerBase
+{
+    [HttpGet]
+    public IReadOnlyCollection<PermissionDefinition> GetAll() => permissionManager.GetPermissions();
+}
+```
+
+This catalog is purely descriptive/discovery-oriented — it plays no role in `PermissionPolicyProvider`'s actual `GetPolicyAsync`/authorization-check pipeline described above; a policy name not present in the catalog is still authorized normally as long as your `PermissionAuthorizationHandler` accepts it.
 
 ## Notes
 

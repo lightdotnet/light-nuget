@@ -76,7 +76,7 @@ try
     // Configure the HTTP request pipeline.
     app.UseSwagger();
 
-    app.UseUlidTraceId();
+    app.UseGuidV7TraceId();
     //app.UseMiddlewares(builder.Configuration);
     app.UseLightRequestLogging();
     app.UseLightExceptionHandler(); // must inject after Inbound Logging

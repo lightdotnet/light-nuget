@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<RootNamespace>$(RootName)</RootNamespace>
+	<RootNamespace>$(BaseNamespace)</RootNamespace>
 	<AssemblyName>$(OrgName).AspNetCore.Modularity</AssemblyName>
 	<Title>$(OrgName).AspNetCore.Modularity</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>

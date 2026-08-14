@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<RootNamespace>$(RootName)</RootNamespace>
+	<RootNamespace>$(BaseNamespace)</RootNamespace>
 	<AssemblyName>$(OrgName).EntityFrameworkCore</AssemblyName>
 	<Title>$(OrgName).EntityFrameworkCore</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>

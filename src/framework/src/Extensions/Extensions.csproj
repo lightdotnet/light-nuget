@@ -4,7 +4,7 @@
 	<TargetFramework>netstandard2.1</TargetFramework>
 	<ImplicitUsings>false</ImplicitUsings>
 	<Nullable>enable</Nullable>
-	<RootNamespace>$(RootName).Extensions</RootNamespace>
+	<RootNamespace>$(BaseNamespace).Extensions</RootNamespace>
 	<AssemblyName>$(OrgName).Extensions</AssemblyName>
 	<Title>$(OrgName).Extensions</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>

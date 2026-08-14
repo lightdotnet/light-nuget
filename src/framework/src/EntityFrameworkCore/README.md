@@ -28,9 +28,9 @@ dynamic global query filters.
 | `IDbContext` | `Light.EntityFrameworkCore` | Minimal `DbContext` abstraction — `ChangeTracker`, `Database`, `Entry<T>`, `SaveChangesAsync` |
 | `IDbSet` | `Light.EntityFrameworkCore` | `Set<TEntity>()` abstraction for dynamic `DbSet<T>` resolution |
 | `SpecificationExtensions` | `Light.EntityFrameworkCore` | `ToListAsync`, `SingleAsync`, `SingleOrDefaultAsync`, `FirstAsync`, `FirstOrDefaultAsync`, `AnyAsync`, `CountAsync` — on both `DbSet<T>` and `DbContext` |
-| `DapperExtensions` | `Light.EntityFrameworkCore` | `QueryAsync<T>` on `DbContext` |
-| `QueryableWithNoLockExtensions` | `Light.EntityFrameworkCore` | `WithNoLock`, `ToListWithNoLockAsync`, `CountWithNoLockAsync`, etc. |
-| `AppendGlobalQueryFilterExtension` | `Light.EntityFrameworkCore` | `AppendGlobalQueryFilter<TInterface>` on `ModelBuilder` |
+| `DapperExtensions` | `Light.EntityFrameworkCore` | Two `QueryAsync<T>` overloads on `DbContext`: one delegates to Dapper's `IDbConnection.QueryAsync<T>` (SQL + object param); the other takes a manual `Func<DbDataReader, T> map` delegate and reads via raw ADO.NET (`DbCommand`/`DbDataReader`), without going through Dapper's own mapping. |
+| `QueryableWithNoLockExtensions` | `Light.EntityFrameworkCore` | Terminal-operator extensions on `IQueryable<T>`, each opening its own `TransactionScope(ReadUncommitted)` around the query: `ToListWithNoLockAsync`, `FirstWithNoLockAsync`, `FirstOrDefaultWithNoLockAsync`, `SingleOrDefaultWithNoLockAsync`, `SumWithNoLockAsync`, `CountWithNoLockAsync`, `ToDictionaryWithNoLockAsync`. There is no separate `WithNoLock()` call — each method is a full terminal operator you call directly on the query. |
+| `ModelBuilderExtensions` | `Light.EntityFrameworkCore` | `AppendGlobalQueryFilter<TInterface>` / `AppendGlobalQueryFilterIf<TInterface>(condition, filter)` on `ModelBuilder`. (File is named `AppendGlobalQueryFilterExtension.cs`, but the class itself is `ModelBuilderExtensions`.) |
 | `RepositoryServiceCollectionExtensions` | `Light.Extensions.DependencyInjection` | `AddUnitOfWork`, `AddUnitOfWork<TContext>`, `AddUnitOfWork<TInterface, TImplement>` |
 
 ---
@@ -132,11 +132,15 @@ var count  = await dbContext.CountAsync(spec);
 
 ### NOLOCK Query Extensions
 
+Each extension is a self-contained terminal operator — build the `IQueryable<T>` normally, then call the
+`*WithNoLockAsync` method last instead of the regular `ToListAsync`/`CountAsync`/etc.:
+
 ```csharp
 var result = await dbContext.Products
-    .WithNoLock()
     .Where(x => x.IsActive)
     .ToListWithNoLockAsync();
+
+var count = await dbContext.Products.CountWithNoLockAsync();
 ```
 
 > **Caveats:** these extensions use `TransactionScope(IsolationLevel.ReadUncommitted)` under the hood.
@@ -154,6 +158,11 @@ var products = await dbContext.QueryAsync<Product>(
     new { Price = 100m });
 ```
 
+A second overload, `QueryAsync<T>(this DbContext, string query, Func<DbDataReader, T> map, CancellationToken)`,
+skips Dapper's own mapping and lets you map each row yourself from a raw `DbDataReader` — useful when Dapper's
+convention-based mapping doesn't fit. It opens/closes the underlying connection around the read itself, rather
+than delegating to Dapper's connection handling.
+
 ### Global Query Filter
 
 ```csharp
@@ -169,7 +178,8 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 > named/default filters natively). Calling `AppendGlobalQueryFilter<TInterface>` more than once for the *same*
 > interface **replaces** the previously registered filter for that key rather than AND-ing the two calls together.
 > The filter is applied once per entity hierarchy, at the point where `TInterface` is first implemented — EF Core
-> propagates it to derived types automatically.
+> propagates it to derived types automatically. `AppendGlobalQueryFilterIf<TInterface>(condition, filter)` is a
+> conditional wrapper that only calls `AppendGlobalQueryFilter` when `condition` is `true`.
 
 ---
 

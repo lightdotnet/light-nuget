@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 using NUnit.Framework;
 using System.Text.Json;
 
-namespace UnitTests.CachingTests;
+namespace Caching.Tests.CachingTests;
 
 public class DistributedCacheServiceTests
 {

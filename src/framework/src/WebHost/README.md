@@ -176,13 +176,13 @@ public class OrdersController : ApiControllerBase
 
 ## Trace ID middleware
 
-Namespace: `Light.AspNetCore.Middlewares`, registered via `UseGuidTraceId()` / `UseUlidTraceId()`
+Namespace: `Light.AspNetCore.Middlewares`, registered via `UseGuidTraceId()` / `UseGuidV7TraceId()`
 (`Light.AspNetCore.Builder`). Both set `HttpContext.TraceIdentifier` early in the pipeline and echo it back
 as the `X-Trace-Id` response header:
 
-- `GuidTraceIdMiddleware` — `TraceIdentifier = Guid.NewGuid().ToString()`.
-- `UlidTraceIdMiddleware` — `TraceIdentifier = LightId.NewId()` (ULID, from `Light.Domain` in
-  `SharedKernel`).
+- `GuidTraceIdMiddleware` — `TraceIdentifier = Guid.NewGuid().ToString()` (random GUID v4).
+- `GuidV7TraceIdMiddleware` — `TraceIdentifier = LightId.NewId()` (GUID v7, from `Light.Domain` in
+  `SharedKernel` — time-ordered, so trace IDs sort chronologically).
 
 Use at most one of the two.
 

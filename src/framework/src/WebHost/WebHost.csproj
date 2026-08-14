@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<RootNamespace>$(RootName)</RootNamespace>
+	<RootNamespace>$(BaseNamespace)</RootNamespace>
 	<AssemblyName>$(OrgName).AspNetCore.Extensions</AssemblyName>
 	<Title>$(OrgName).AspNetCore.Extensions</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>

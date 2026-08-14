@@ -5,7 +5,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 
-namespace UnitTests.CachingTests;
+namespace Caching.Tests.CachingTests;
 
 public class CacheServiceExtensionsTests
 {

@@ -5,7 +5,7 @@
 Cache abstraction and provider implementations for services that need a swappable in-process or distributed cache behind a single interface. Consumers depend on `ICacheService` (or the async-only `IAsyncCacheService`) and pick the backing provider — in-process `MemoryCache` or Redis via `Microsoft.Extensions.Caching.StackExchangeRedis` — purely through DI configuration, with no code change at the call site.
 
 - **NuGet package id / assembly name:** `Lightsoft.Caching` (no explicit `PackageId`, so it defaults to `AssemblyName`)
-- **Root namespace:** `Light` (bare — `RootNamespace` is `$(RootName)`, not `$(RootName).Caching`). Types live under `Light.Extensions.Caching`, `Light.Infrastructure`, `Light.Exceptions`, `Light.Extensions`, and `Light.Extensions.DependencyInjection` — **these are shared with other framework packages** (see the "Namespace layout" note below).
+- **Root namespace:** `Light` (bare — `RootNamespace` is `$(BaseNamespace)`, not `$(BaseNamespace).Caching`). Types live under `Light.Extensions.Caching`, `Light.Infrastructure`, `Light.Exceptions`, `Light.Extensions`, and `Light.Extensions.DependencyInjection` — **these are shared with other framework packages** (see the "Namespace layout" note below).
 - **Target framework:** net10.0
 - **Dependencies:** `Microsoft.Extensions.Caching.Memory` and `Microsoft.Extensions.Caching.StackExchangeRedis` (both versioned via the shared `$(AspnetVersion)` MSBuild property). No `ProjectReference`s — this is a leaf project.
 
@@ -25,7 +25,7 @@ Cache abstraction and provider implementations for services that need a swappabl
 
 ### ⚠️ Namespace layout
 
-This package's `RootNamespace` is the bare `$(RootName)` (`Light`), not `$(RootName).Caching` like every other framework package (`Light.Extensions`, `Light.AspNetCore.Swagger`, etc.). As a result, two of its types land in namespaces **already owned by other, unrelated framework packages**, compiled into different assemblies:
+This package's `RootNamespace` is the bare `$(BaseNamespace)` (`Light`), not `$(BaseNamespace).Caching` like every other framework package (`Light.Extensions`, `Light.AspNetCore.Swagger`, etc.). As a result, two of its types land in namespaces **already owned by other, unrelated framework packages**, compiled into different assemblies:
 
 - `CacheServiceExtensions` sits in `Light.Extensions` — the same namespace as the `Lightsoft.Extensions` package's ~20 unrelated static helper classes (`StringHelper`, `DateTimeHelper`, `ArgumentChecker`, etc.).
 - `CacheDeserializationException` sits in `Light.Exceptions` — the same namespace as `Lightsoft.SharedKernel`'s HTTP-status exception hierarchy (`ExceptionBase`, `NotFoundException`, `ForbiddenException`, ...), despite having no relation to it.

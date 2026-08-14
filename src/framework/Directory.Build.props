@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
 	<AspnetVersion>10.*</AspnetVersion>
-	<RootName>Light</RootName>
+	<BaseNamespace>Light</BaseNamespace>
 	<OrgName>Lightsoft</OrgName>
 	<NugetVersion>2.0.0-preview.1</NugetVersion>
   </PropertyGroup>
