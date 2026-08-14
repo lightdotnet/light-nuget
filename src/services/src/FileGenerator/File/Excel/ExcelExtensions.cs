@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 
-namespace Light.FileGenerator.File.Excel
+namespace Light.File.Excel
 {
     public static class ExcelExtensions
     {

@@ -1,10 +1,11 @@
-﻿using Light.Mail;
-using MailKit.Net.Smtp;
+﻿using MailKit.Net.Smtp;
 using MimeKit;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Light.SmtpMail
+namespace Light.Smtp
 {
     public class SmtpMailKitSender : SmtpConnection, ISmtpMailSender
     {
@@ -21,46 +22,49 @@ namespace Light.SmtpMail
             Password = password;
         }
 
-        public async Task SendAsync(MailFrom from, MailMessage mail, CancellationToken cancellationToken = default)
+        public async Task SendAsync(
+            string from,
+            string fromDisplayName,
+            List<string> recipients,
+            string subject,
+            string content,
+            List<string>? cc = null,
+            List<string>? bcc = null,
+            Dictionary<string, byte[]>? attachments = null,
+            CancellationToken cancellationToken = default)
         {
             var email = new MimeMessage
             {
-                Sender = new MailboxAddress(from.DisplayName, from.Address),
-                Subject = mail.Subject,
+                Sender = new MailboxAddress(fromDisplayName, from),
+                Subject = subject,
             };
 
-            var bodyBuilder = new BodyBuilder { HtmlBody = mail.Content };
+            var bodyBuilder = new BodyBuilder { HtmlBody = content };
 
             // add address mail to send
-            foreach (var address in mail.Recipients)
+            foreach (var address in recipients)
             {
                 email.To.Add(MailboxAddress.Parse(address));
             }
 
-            if (mail.CcRecipients != null)
+            if (cc != null)
             {
                 // add CC
-                foreach (var address in mail.CcRecipients)
-                {
-                    email.Cc.Add(MailboxAddress.Parse(address));
-                }
+                email.Cc.AddRange(cc.Select(s => MailboxAddress.Parse(s)));
             }
 
-            if (mail.BccRecipients != null)
+            if (bcc != null)
             {
                 // add BCC
-                foreach (var address in mail.BccRecipients)
-                {
-                    email.Bcc.Add(MailboxAddress.Parse(address));
-                }
+                email.Bcc.AddRange(bcc.Select(s => MailboxAddress.Parse(s)));
             }
 
-            if (mail.Attachments != null)
+            if (attachments != null)
             {
-                foreach (var attachment in mail.Attachments)
+                foreach (var attachment in attachments)
                 {
                     // file from stream
-                    bodyBuilder.Attachments.Add(attachment.FileName, attachment.FileToBytes);
+                    bodyBuilder.Attachments.Add(attachment.Key, attachment.Value);
                 }
             }
 

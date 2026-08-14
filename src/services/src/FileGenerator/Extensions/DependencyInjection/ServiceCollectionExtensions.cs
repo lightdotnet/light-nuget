@@ -1,7 +1,7 @@
-﻿using Light.FileGenerator.File.Csv;
-using Light.FileGenerator.File.Excel;
-using Light.FileGenerator.Infrastructure.Csv;
-using Light.FileGenerator.Infrastructure.Excel;
+﻿using Light.File.Csv;
+using Light.File.Excel;
+using Light.Infrastructure.Csv;
+using Light.Infrastructure.Excel;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Light.Extensions.DependencyInjection

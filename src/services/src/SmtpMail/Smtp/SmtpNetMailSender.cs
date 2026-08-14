@@ -1,10 +1,10 @@
-﻿using Light.Mail;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Net.Mail;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Light.SmtpMail
+namespace Light.Smtp
 {
     public class SmtpNetMailSender : SmtpConnection, ISmtpMailSender
     {
@@ -14,46 +14,58 @@ namespace Light.SmtpMail
             Port = port;
         }
 
-        public async Task SendAsync(MailFrom from, Mail.MailMessage mail, CancellationToken cancellationToken = default)
+        public Task SendAsync(
+            string from,
+            string fromDisplayName,
+            List<string> recipients,
+            string subject,
+            string content,
+            List<string>? cc = null,
+            List<string>? bcc = null,
+            Dictionary<string, byte[]>? attachments = null,
+            CancellationToken cancellationToken = default)
         {
             var message = new System.Net.Mail.MailMessage
             {
-                From = new MailAddress(from.Address, from.DisplayName),
-                Subject = mail.Subject,
+                From = new MailAddress(from, fromDisplayName),
+                Subject = subject,
                 IsBodyHtml = true,
-                Body = mail.Content,
+                Body = content,
             };
 
             // add address mail to send
-            foreach (var address in mail.Recipients)
+            foreach (var address in recipients)
             {
                 message.To.Add(new MailAddress(address));
             }
 
-            if (mail.CcRecipients != null)
+            if (cc != null)
             {
                 // add CC
-                foreach (var address in mail.CcRecipients)
+                foreach (var address in cc)
                 {
                     message.CC.Add(new MailAddress(address));
                 }
             }
 
-            if (mail.BccRecipients != null)
+            if (bcc != null)
             {
                 // add BCC
-                foreach (var address in mail.BccRecipients)
+                foreach (var address in bcc)
                 {
                     message.Bcc.Add(new MailAddress(address));
                 }
             }
 
-            if (mail.Attachments != null)
+            if (attachments != null)
             {
                 // add attachments
-                foreach (var attachment in mail.Attachments)
+                foreach (var attachment in attachments)
                 {
-                    message.Attachments.Add(new Attachment(new MemoryStream(attachment.FileToBytes), attachment.FileName));
+                    message.Attachments.Add(
+                        new Attachment(
+                            new MemoryStream(attachment.Value),
+                            attachment.Key));
                 }
             }
 
@@ -65,7 +77,7 @@ namespace Light.SmtpMail
 
             using var cancellationRegistration = cancellationToken.Register(smtpClient.SendAsyncCancel);
 
-            await smtpClient.SendMailAsync(message);
+            return smtpClient.SendMailAsync(message);
         }
     }
 }

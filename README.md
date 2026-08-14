@@ -29,7 +29,6 @@ This solution contains Light .NET projects publish to NuGet.org
 - [Lightsoft.ActiveDirectory](src/services/src/ActiveDirectory/README.md) — Pluggable AD/LDAP authentication and user lookup behind a single `IActiveDirectoryService` abstraction
 - [Lightsoft.FileGenerator](src/services/src/FileGenerator/README.md) — CSV/Excel read-write helpers (`ICsvService`, `IExcelService`)
 - [Lightsoft.Graph](src/services/src/Graph/README.md) — Thin Microsoft Graph SDK wrapper for sending mail and reading Teams chats (app-only auth)
-- [Lightsoft.Mail.Contracts](src/services/src/Mail.Contracts/README.md) — Shared mail DTOs used by `SmtpMail` and `Graph`
 - [Lightsoft.Serilog](src/services/src/Serilog/README.md) — Serilog wiring for ASP.NET Core Generic Host apps (console/file/Elasticsearch sinks, enrichers)
 - [Lightsoft.SmtpMail](src/services/src/SmtpMail/README.md) — SMTP email senders (`SmtpClient` + MailKit) behind a shared `ISmtpMailSender` contract
 

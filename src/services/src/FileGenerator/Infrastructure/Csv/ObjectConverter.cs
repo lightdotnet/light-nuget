@@ -4,7 +4,7 @@ using CsvHelper.TypeConversion;
 using System;
 using System.Globalization;
 
-namespace Light.FileGenerator.Infrastructure.Csv
+namespace Light.Infrastructure.Csv
 {
     public class ObjectConverter : DefaultTypeConverter
     {

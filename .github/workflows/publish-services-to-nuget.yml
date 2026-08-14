@@ -24,10 +24,8 @@ jobs:
         projects: |
           [
             "src/ActiveDirectory/ActiveDirectory.csproj",
-            "src/Caching/Caching.csproj",
             "src/Serilog/Serilog.csproj",
             "src/FileGenerator/FileGenerator.csproj",
-            "src/Mail.Contracts/Mail.Contracts.csproj",
             "src/SmtpMail/SmtpMail.csproj",
             "src/Graph/Graph.csproj"
           ]

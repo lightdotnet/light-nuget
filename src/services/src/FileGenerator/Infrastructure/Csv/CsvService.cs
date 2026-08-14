@@ -1,6 +1,6 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
-using Light.FileGenerator.File.Csv;
+using Light.File.Csv;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Light.FileGenerator.Infrastructure.Csv
+namespace Light.Infrastructure.Csv
 {
     public class CsvService : ICsvService
     {

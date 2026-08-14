@@ -1,5 +1,5 @@
 using CsvHelper.Configuration.Attributes;
-using Light.FileGenerator.File.Csv;
+using Light.File.Csv;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
 

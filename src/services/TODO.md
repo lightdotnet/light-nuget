@@ -1,7 +1,7 @@
 # TODO — Integration Services
 
 Open follow-ups for the `IntegrationServices` solution (`IntegrationServices.slnx`), covering
-`ActiveDirectory`, `Caching`, `FileGenerator`, `Graph`, `Mail.Contracts`, `Serilog`, `SmtpMail`
+`ActiveDirectory`, `Caching`, `FileGenerator`, `Graph`, `Serilog`, `SmtpMail`
 (`src/`), `tests/UnitTests`, and the `samples/WebApi` sample. See each project's own `README.md`
 for current, user-facing documentation.
 

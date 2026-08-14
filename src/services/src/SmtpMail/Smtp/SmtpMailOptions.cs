@@ -1,4 +1,4 @@
-namespace Light.SmtpMail
+namespace Light.Smtp
 {
     public class SmtpMailOptions
     {

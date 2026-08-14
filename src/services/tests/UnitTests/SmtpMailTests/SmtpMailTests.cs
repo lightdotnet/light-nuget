@@ -1,6 +1,4 @@
-﻿using Light.Mail;
-using Light.SmtpMail;
-using NUnit.Framework;
+﻿using Light.Smtp;
 
 namespace UnitTests.SmtpMailTests;
 
@@ -29,13 +27,11 @@ public class SmtpMailTests
             "user@domain.local"
         };
 
-        var mail = new MailMessage
-        {
-            Recipients = recipients,
-            Subject = "Test Email",
-            Content = "<h1>Hello World</h1><p>This is a test email.</p>",
-        };
-
-        await _smtpMail.SendAsync(new MailFrom(_fromMail), mail);
+        await _smtpMail.SendAsync(
+            _fromMail,
+            _fromMail,
+            recipients,
+            "Test Email",
+            "<h1>Hello World</h1><p>This is a test email.</p>");
     }
 }

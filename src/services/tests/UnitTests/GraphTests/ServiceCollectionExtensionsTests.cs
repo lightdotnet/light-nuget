@@ -1,5 +1,6 @@
 using Light.Extensions.DependencyInjection;
 using Light.Graph;
+using Light.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Graph;
 using NUnit.Framework;
@@ -10,7 +11,7 @@ public class ServiceCollectionExtensionsTests
 {
     // Fake, non-functional credentials: constructing ClientSecretCredential/GraphServiceClient
     // does not itself perform any network/token request, so this is safe without a real Azure AD tenant.
-    private static void ConfigureFakeOptions(Light.Graph.Infrastructure.GraphOptions options)
+    private static void ConfigureFakeOptions(GraphOptions options)
     {
         options.TenantId = "00000000-0000-0000-0000-000000000000";
         options.ClientId = "00000000-0000-0000-0000-000000000000";

@@ -1,5 +1,5 @@
 ﻿using ClosedXML.Excel;
-using Light.FileGenerator.File.Excel;
+using Light.File.Excel;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 
-namespace Light.FileGenerator.Infrastructure.Excel
+namespace Light.Infrastructure.Excel
 {
     public class ExcelService : IExcelService
     {

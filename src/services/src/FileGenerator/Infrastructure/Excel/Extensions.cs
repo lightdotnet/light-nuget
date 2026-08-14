@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Light.FileGenerator.Infrastructure.Excel
+namespace Light.Infrastructure.Excel
 {
     internal static class Extensions
     {

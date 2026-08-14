@@ -1,4 +1,4 @@
-using Light.SmtpMail;
+using Light.Smtp;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 

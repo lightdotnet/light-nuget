@@ -13,13 +13,10 @@ namespace WebApi.Controllers
         public async Task<IActionResult> SendMail()
         {
             await graphMailService.SendAsync(
-                new Light.Mail.MailFrom("test@yopmail.com"),
-                new Light.Mail.MailMessage
-                {
-                    Recipients = ["test@yopmail.com"],
-                    Subject = "Test",
-                    Content = "Test Body"
-                }
+                "test@yopmail.com",
+                ["test@yopmail.com"],
+                "Test",
+                "Test Body"
             );
 
             return Ok();

@@ -4,14 +4,13 @@
 
 A runnable ASP.NET Core Web API sample under `src/services/samples/WebApi`. It is **not** a NuGet package — it exists to exercise every library in the `IntegrationServices` solution (`src/services`) from real `Program.cs` startup code and real controllers, so a developer can see each package wired up and called in context.
 
-`WebApi.csproj` (`net10.0`) has a `ProjectReference` to all six libraries in `src/services/src`:
+`WebApi.csproj` (`net10.0`) has a `ProjectReference` to all five libraries in `src/services/src`:
 
 | Library | Used by |
 |---|---|
 | `ActiveDirectory` | `ADController` |
 | `FileGenerator` | `CsvController`, `ExcelController` |
 | `Graph` | `GraphController` (registration currently disabled — see below) |
-| `Mail.Contracts` | `MailController`, `GraphController` (shared `MailFrom`/`MailMessage` types) |
 | `Serilog` | wired globally via `ConfigureSerilog()` in `Program.cs` |
 | `SmtpMail` | `MailController` |
 
@@ -31,7 +30,7 @@ It also references `Lightsoft.Extensions` (NuGet) and `Swashbuckle.AspNetCore.Sw
 | `app.UseSwagger()` / `app.UseSwaggerUI()` | active | Swagger UI is enabled with no environment guard (runs in all environments as configured today). |
 | `app.UseAuthentication()` / `app.UseAuthorization()` | active | No authentication scheme is registered, so these currently run as a no-op pass-through — no `[Authorize]` attributes are used anywhere in the sample. |
 
-`SmtpMail` and `Mail.Contracts` are **not** registered via DI at all — `MailController` constructs `SmtpMailKit` directly inside the action method (see below).
+`SmtpMail` is **not** registered via DI at all — `MailController` constructs `SmtpMailKitSender` directly inside the action method (see below).
 
 ## Controllers
 
@@ -49,9 +48,9 @@ It also references `Lightsoft.Extensions` (NuGet) and `Swashbuckle.AspNetCore.Sw
 | | `GET /Excel/test` | GET | Not related to `FileGenerator` — just an indexed `Select` LINQ loop that writes to `Console.WriteLine`; returns `200 OK` with no body. |
 | | `GET /Excel/export_multi_list` | GET | `IExcelService.Export(params (object Data, string? Name)[])` — exports three different in-memory objects (two lists, one plain object) as separate sheets in one workbook. |
 | | `GET /Excel/export_multi_dt` | GET | Same multi-sheet `Export` overload, but with two `DataTable`s instead of lists/objects. |
-| `GraphController` | `GET /Graph/send_email` | GET | `IGraphMailService.SendAsync` — sends mail via Microsoft Graph using `Mail.Contracts`' `MailFrom`/`MailMessage` types. |
+| `GraphController` | `GET /Graph/send_email` | GET | `IGraphMailService.SendAsync` — sends mail via Microsoft Graph, called with hardcoded primitive arguments (`from`/`recipients`/`subject`/`content` all literal strings in the controller). |
 | | `GET /Graph?user={user}` | GET | `IGraphTeams.GetChatsAsync` — lists a user's Teams chats. |
-| `MailController` | `GET /Mail` | GET | Sends an email through `SmtpMail`'s `SmtpMailKit`, constructed directly in the action (not via DI) with `UseSsl = false`. Attachment/CC/BCC code paths exist but are commented out. |
+| `MailController` | `GET /Mail` | GET | Constructs `SmtpMail`'s `SmtpMailKitSender` directly (not via DI) with `UseSsl = false`, then calls `SendAsync(from, fromDisplayName, recipients, subject, content)` with hardcoded literal arguments. |
 
 ## Setup required to actually run each endpoint
 

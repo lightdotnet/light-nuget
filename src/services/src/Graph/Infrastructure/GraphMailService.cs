@@ -1,4 +1,4 @@
-﻿using Light.Mail;
+﻿using Light.Graph;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using System;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Light.Graph.Infrastructure
+namespace Light.Infrastructure
 {
     public class GraphMailService : IGraphMailService
     {
@@ -16,48 +16,6 @@ namespace Light.Graph.Infrastructure
         public GraphMailService(GraphServiceClient graphServiceClient)
         {
             _graphServiceClient = graphServiceClient;
-        }
-
-        public async Task SendAsync(MailFrom from, MailMessage mail, CancellationToken cancellationToken = default)
-        {
-            // Define a simple e-mail message.
-            var message = new Message
-            {
-                ToRecipients = RecipientBuilder(mail.Recipients),
-                Subject = mail.Subject,
-                Body = new ItemBody
-                {
-                    ContentType = BodyType.Html,
-                    Content = mail.Content
-                },
-            };
-
-            if (mail.CcRecipients != null)
-            {
-                // add CC
-                message.CcRecipients = RecipientBuilder(mail.CcRecipients);
-            }
-
-            if (mail.BccRecipients != null)
-            {
-                // add BCC
-                message.BccRecipients = RecipientBuilder(mail.BccRecipients);
-            }
-
-            if (mail.Attachments != null)
-            {
-                // add attachments
-                message.Attachments = AttachmentBuilder(mail.Attachments);
-            }
-
-            var request = new Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody
-            {
-                Message = message,
-                SaveToSentItems = true,
-            };
-
-            // Send mail as the given user. 
-            await _graphServiceClient.Users[from.Address].SendMail.PostAsync(request, cancellationToken: cancellationToken);
         }
 
         private List<Recipient> RecipientBuilder(List<string> addresses)
@@ -71,21 +29,71 @@ namespace Light.Graph.Infrastructure
                 .ToList();
         }
 
-        private List<Attachment> AttachmentBuilder(List<MailAttachment> attachments)
+        private List<Attachment> AttachmentBuilder(Dictionary<string, byte[]> attachments)
         {
             return attachments
                 .Select(s => new Attachment
                 {
                     OdataType = "#microsoft.graph.fileAttachment",
-                    Name = s.FileName,
+                    Name = s.Key,
                     AdditionalData = new Dictionary<string, object>
                     {
                         {
-                            "contentBytes" , Convert.ToBase64String(s.FileToBytes)
+                            "contentBytes" , Convert.ToBase64String(s.Value)
                         },
                     }
                 })
                 .ToList();
+        }
+
+        public Task SendAsync(
+            string from,
+            List<string> recipients,
+            string subject,
+            string content,
+            List<string>? ccRecipients = null,
+            List<string>? bccRecipients = null,
+            Dictionary<string, byte[]>? attachments = null,
+            CancellationToken cancellationToken = default)
+        {
+            // Define a simple e-mail message.
+            var message = new Message
+            {
+                ToRecipients = RecipientBuilder(recipients),
+                Subject = subject,
+                Body = new ItemBody
+                {
+                    ContentType = BodyType.Html,
+                    Content = content
+                },
+            };
+
+            if (ccRecipients != null)
+            {
+                // add CC
+                message.CcRecipients = RecipientBuilder(ccRecipients);
+            }
+
+            if (bccRecipients != null)
+            {
+                // add BCC
+                message.BccRecipients = RecipientBuilder(bccRecipients);
+            }
+
+            if (attachments != null)
+            {
+                // add attachments
+                message.Attachments = AttachmentBuilder(attachments);
+            }
+
+            var request = new Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody
+            {
+                Message = message,
+                SaveToSentItems = true,
+            };
+
+            // Send mail as the given user. 
+            return _graphServiceClient.Users[from].SendMail.PostAsync(request, cancellationToken: cancellationToken);
         }
     }
 }

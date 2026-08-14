@@ -1,4 +1,4 @@
-﻿namespace Light.Graph.Infrastructure
+﻿namespace Light.Infrastructure
 {
     public class GraphOptions
     {

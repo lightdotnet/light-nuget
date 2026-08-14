@@ -1,8 +1,9 @@
-﻿using Microsoft.Graph;
+﻿using Light.Graph;
+using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using System.Threading.Tasks;
 
-namespace Light.Graph.Infrastructure
+namespace Light.Infrastructure
 {
     internal class GraphTeamsService : IGraphTeams
     {

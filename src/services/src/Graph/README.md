@@ -5,31 +5,31 @@
 Thin wrapper around the Microsoft Graph SDK for sending mail and reading Teams chats as an application (app-only, client-credentials auth). Authentication is handled internally via `Azure.Identity`'s `ClientSecretCredential`; consumers only supply a tenant/client/secret triple and a `GraphServiceClient` is registered for them.
 
 - **NuGet package id / assembly name:** `Lightsoft.Graph` (`AssemblyName` is explicitly set; no `PackageId`, so it defaults to `AssemblyName`)
-- **Root namespace:** `Light.Graph` — implementation types live under `Light.Graph.Infrastructure`, DI registration lives under `Light.Extensions.DependencyInjection`
+- **Root namespace:** the public contracts (`IGraphMailService`, `IGraphTeams`) live under `Light.Graph`; the implementations (`GraphMailService`, `GraphTeamsService`, `GraphOptions`) live under `Light.Infrastructure`; DI registration lives under `Light.Extensions.DependencyInjection`
 - **Target framework:** netstandard2.1
-- **Dependencies:** `Azure.Identity` (`1.*`), `Microsoft.Graph` (`6.*`). One `ProjectReference`: `Mail.Contracts` (supplies the `Light.Mail.MailFrom`/`MailMessage`/`MailAttachment` types used by the mail contract).
+- **Dependencies:** `Azure.Identity` (`1.*`), `Microsoft.Graph` (`6.*`). No project references — the package no longer depends on a shared `Mail.Contracts` DTO project; `IGraphMailService.SendAsync` takes plain primitive parameters directly.
 
 ## What's in this package
 
 | Type | Namespace | Purpose |
 |---|---|---|
-| `IGraphMailService` | `Light.Graph` | `Task SendAsync(MailFrom from, MailMessage mail, CancellationToken cancellationToken = default)` — sends mail as a given user via Graph. |
-| `GraphMailService` | `Light.Graph.Infrastructure` | Public implementation of `IGraphMailService`, backed by a `GraphServiceClient`. |
+| `IGraphMailService` | `Light.Graph` | `Task SendAsync(string from, List<string> recipients, string subject, string content, List<string>? ccRecipients = null, List<string>? bccRecipients = null, Dictionary<string, byte[]>? attachments = null, CancellationToken cancellationToken = default)` — sends mail as a given user via Graph. |
+| `GraphMailService` | `Light.Infrastructure` | Public implementation of `IGraphMailService`, backed by a `GraphServiceClient`. |
 | `IGraphTeams` | `Light.Graph` | `Task<ChatCollectionResponse?> GetChatsAsync(string user)` — lists a user's Teams chats. |
-| `GraphTeamsService` | `Light.Graph.Infrastructure` | **Internal** implementation of `IGraphTeams`, backed by a `GraphServiceClient`. Not directly constructible by consumers — resolve it through `IGraphTeams`. |
-| `GraphOptions` | `Light.Graph.Infrastructure` | Options bag: `TenantId`, `ClientId`, `ClientSecret` (all `string?`). |
+| `GraphTeamsService` | `Light.Infrastructure` | **Internal** implementation of `IGraphTeams`, backed by a `GraphServiceClient`. Not directly constructible by consumers — resolve it through `IGraphTeams`. |
+| `GraphOptions` | `Light.Infrastructure` | Options bag: `TenantId`, `ClientId`, `ClientSecret` (all `string?`). |
 | `ServiceCollectionExtensions` | `Light.Extensions.DependencyInjection` | `AddMicrosoftGraph(Action<GraphOptions> action)` registration helper. |
 
 ## `GraphMailService.SendAsync` behavior
 
-Builds a Graph `Message` from the supplied `MailMessage`:
+Builds a Graph `Message` from the supplied parameters:
 
-- `ToRecipients` — from `mail.Recipients` (required).
-- `Subject` / `Body` — `Body.ContentType` is always `BodyType.Html`, populated from `mail.Content`.
-- `CcRecipients` / `BccRecipients` — set only if `mail.CcRecipients` / `mail.BccRecipients` is non-null.
-- `Attachments` — set only if `mail.Attachments` is non-null; each `MailAttachment` becomes a Graph file attachment (`OdataType = "#microsoft.graph.fileAttachment"`) with `AdditionalData["contentBytes"]` set to `Convert.ToBase64String(attachment.FileToBytes)`.
+- `ToRecipients` — from `recipients` (required).
+- `Subject` / `Body` — `Body.ContentType` is always `BodyType.Html`, populated from `content`.
+- `CcRecipients` / `BccRecipients` — set only if `ccRecipients` / `bccRecipients` is non-null.
+- `Attachments` — set only if `attachments` is non-null; each `Dictionary<string, byte[]>` entry becomes a Graph file attachment (`OdataType = "#microsoft.graph.fileAttachment"`) named after the key, with `AdditionalData["contentBytes"]` set to `Convert.ToBase64String(value)`.
 
-The message is sent via `_graphServiceClient.Users[from.Address].SendMail.PostAsync(...)` with `SaveToSentItems = true` — i.e. it is sent **as** the mailbox identified by `from.Address` (app-only Graph auth requires `Mail.Send` application permission and, typically, an application access policy scoping which mailboxes it can send as).
+The message is sent via `_graphServiceClient.Users[from].SendMail.PostAsync(...)` with `SaveToSentItems = true` — i.e. it is sent **as** the mailbox identified by the `from` address (app-only Graph auth requires `Mail.Send` application permission and, typically, an application access policy scoping which mailboxes it can send as).
 
 ## `GraphTeamsService.GetChatsAsync` behavior
 
@@ -59,14 +59,11 @@ public class NotificationController(IGraphMailService graphMailService) : Contro
     public async Task<IActionResult> Send(CancellationToken cancellationToken)
     {
         await graphMailService.SendAsync(
-            new MailFrom("notifications@contoso.com"),
-            new MailMessage
-            {
-                Recipients = ["someone@contoso.com"],
-                Subject = "Hello",
-                Content = "<p>Hello from Graph.</p>"
-            },
-            cancellationToken);
+            from: "notifications@contoso.com",
+            recipients: ["someone@contoso.com"],
+            subject: "Hello",
+            content: "<p>Hello from Graph.</p>",
+            cancellationToken: cancellationToken);
 
         return Ok();
     }

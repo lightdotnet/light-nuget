@@ -1,6 +1,6 @@
 using DocumentFormat.OpenXml.Spreadsheet;
 using Light.Extensions;
-using Light.FileGenerator.File.Excel;
+using Light.File.Excel;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
 

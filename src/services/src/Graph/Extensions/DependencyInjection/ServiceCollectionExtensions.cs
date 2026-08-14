@@ -1,6 +1,6 @@
 ﻿using Azure.Identity;
 using Light.Graph;
-using Light.Graph.Infrastructure;
+using Light.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Graph;
 using System;

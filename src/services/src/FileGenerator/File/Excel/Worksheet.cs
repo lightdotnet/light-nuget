@@ -1,4 +1,4 @@
-﻿namespace Light.FileGenerator.File.Excel
+﻿namespace Light.File.Excel
 {
     public class Worksheet
     {

@@ -1,7 +1,6 @@
 using ClosedXML.Excel;
-using Light.FileGenerator.File.Excel;
-using Light.FileGenerator.Infrastructure.Excel;
-using NUnit.Framework;
+using Light.File.Excel;
+using Light.Infrastructure.Excel;
 using System.Data;
 
 namespace UnitTests.FileGeneratorTests;
@@ -15,7 +14,7 @@ public class ExcelServiceTests
         public string Name { get; set; } = null!;
     }
 
-    private static Stream BuildWorkbook(string sheetName, string[] headers, params object[][] rows)
+    private static MemoryStream BuildWorkbook(string sheetName, string[] headers, params object[][] rows)
     {
         using var wb = new XLWorkbook();
         var ws = wb.Worksheets.Add(sheetName);
@@ -28,16 +27,16 @@ public class ExcelServiceTests
             for (int c = 0; c < rows[r].Length; c++)
             {
                 var cell = ws.Cell(r + 2, c + 1);
-                switch (rows[r][c])
+                cell.Value = rows[r][c] switch
                 {
-                    case int i: cell.Value = i; break;
-                    case long l: cell.Value = l; break;
-                    case double d: cell.Value = d; break;
-                    case bool b: cell.Value = b; break;
-                    case DateTime dt: cell.Value = dt; break;
-                    case string s: cell.Value = s; break;
-                    default: cell.Value = rows[r][c].ToString(); break;
-                }
+                    int i => (XLCellValue)i,
+                    long l => (XLCellValue)l,
+                    double d => (XLCellValue)d,
+                    bool b => (XLCellValue)b,
+                    DateTime dt => (XLCellValue)dt,
+                    string s => (XLCellValue)s,
+                    _ => (XLCellValue)rows[r][c].ToString(),
+                };
             }
         }
 

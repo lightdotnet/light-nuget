@@ -8,21 +8,21 @@ Uses `NUnit` 4.6.1 + `NUnit3TestAdapter` 6.2.0 + `Microsoft.NET.Test.Sdk` 18.6.0
 
 ## What's referenced
 
-`UnitTests.csproj` has a `ProjectReference` to every library project in the solution: `ActiveDirectory`, `Caching`, `FileGenerator`, `Graph`, `Mail.Contracts`, `Serilog`, `SmtpMail`. It also explicitly references `Microsoft.Extensions.Configuration`/`Microsoft.Extensions.Configuration.Binder` (for the Serilog config-binding tests) and `Microsoft.Extensions.DependencyInjection` (for the `ServiceCollection`/`BuildServiceProvider` DI-registration tests) — both are otherwise only pulled in transitively.
+`UnitTests.csproj` has a `ProjectReference` to every library project in the solution: `ActiveDirectory`, `FileGenerator`, `Graph`, `Serilog`, `SmtpMail`. It also explicitly references `Microsoft.Extensions.Configuration`/`Microsoft.Extensions.Configuration.Binder` (for the Serilog config-binding tests) and `Microsoft.Extensions.DependencyInjection` (for the `ServiceCollection`/`BuildServiceProvider` DI-registration tests) — both are otherwise only pulled in transitively.
 
 ## What's covered
 
 ### `SmtpMailTests/SmtpMailTests.cs`
 
-Tests `Light.SmtpMail.SmtpNetMailSender.SendAsync`. One test, `Must_Send_Email_With_No_Exceptions`:
+Exercises `Light.Smtp.SmtpNetMailSender.SendAsync`. One test, `Must_Send_Email_With_No_Exceptions`:
 - Constructs a `SmtpNetMailSender` against host `smtp.freesmtpservers.com` with `UseSsl = false`.
-- Sends a `MailMessage` (from `user@domain.local`, to `user@domain.local`) and passes if `SendAsync` completes without throwing — there is no assertion beyond "did not throw."
+- Calls `SendAsync(from, fromDisplayName, recipients, subject, content)` (from/to `user@domain.local`) and passes if it completes without throwing — there is no assertion beyond "did not throw."
 
 ### `SmtpMailTests/SmtpMailKitTests.cs`
 
-Tests `Light.SmtpMail.SmtpMailKit.SendAsync`. One test, `Must_Send_Email_With_No_Exceptions`:
-- Constructs a `SmtpMailKit` against host `smtp.ethereal.email` with a hardcoded username `waino.kuhlman@ethereal.email` and password `RUMp811zYYVkPuvcdY`, `UseSsl = false`.
-- Sends a `MailMessage` (from `waino.kuhlman@ethereal.email`, to `user@domain.local`) and passes if `SendAsync` completes without throwing.
+Exercises `Light.Smtp.SmtpMailKitSender.SendAsync`. One test, `Must_Send_Email_With_No_Exceptions`:
+- Constructs a `SmtpMailKitSender` against host `smtp.ethereal.email` with a hardcoded username `waino.kuhlman@ethereal.email` and password `RUMp811zYYVkPuvcdY`, `UseSsl = false`.
+- Calls `SendAsync(from, fromDisplayName, recipients, subject, content)` (from `waino.kuhlman@ethereal.email`, to `user@domain.local`) and passes if it completes without throwing.
 - The constructor carries a doc comment: "Please config new ethereal before Tests" — i.e. these credentials are expected to need periodic refreshing against ethereal.email, and the test will start failing once they expire/rotate.
 
 **Important — these are not mocked.** Both tests perform real network I/O against live, external, third-party test SMTP servers (`smtp.freesmtpservers.com` and `smtp.ethereal.email`). Consequences:
@@ -39,14 +39,6 @@ A small internal extension-method helper (`namespace UnitTests`) wrapping common
 - `ShouldBeTrue(this bool value)` / `ShouldBeFalse(this bool value)` → thin wrappers over `ShouldBe(value, true/false)`
 
 It adds no behavior beyond NUnit's built-in constraint model — it's purely fluent sugar. It's used by the newer test suites below (`ShouldBe`, `ShouldBeTrue`/`ShouldBeFalse`); the original `SmtpMailTests`/`SmtpMailKitTests` still don't use it.
-
-### `MailContractsTests/` (`Mail.Contracts`)
-
-`MailMessageTests`, `MailFromTests`, `MailAttachmentTests` — these types are plain DTOs with no validation logic, so coverage is intentionally small: default values for optional collections, both `MailFrom` constructor overloads, and that an empty attachment byte array is accepted rather than rejected.
-
-### `CachingTests/` (`Caching`)
-
-`MemoryCacheServiceTests` and `DistributedCacheServiceTests` construct the real service classes against real in-process backing stores — `Microsoft.Extensions.Caching.Memory.MemoryCache` and `Microsoft.Extensions.Caching.Distributed.MemoryDistributedCache` respectively — so no mocking and no live Redis is needed. Covers Get/Set round-trips (sync and async), missing-key defaults, sliding-expiration actually expiring, `Remove`/`RemoveAsync` actually removing (a regression test for the `RemoveAsync` → `RefreshAsync` bug fixed earlier this session), `Get` throwing on a type mismatch vs. `TryGet` swallowing it, and `Set` throwing on a null key vs. `TrySet` swallowing it.
 
 ### `FileGeneratorTests/` (`FileGenerator`)
 

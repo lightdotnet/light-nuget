@@ -4,14 +4,14 @@
     <TargetFramework>netstandard2.1</TargetFramework>
 	<ImplicitUsings>false</ImplicitUsings>
     <Nullable>enable</Nullable>
-	<RootNamespace>Light.Serilog</RootNamespace>
-	<AssemblyName>Lightsoft.Serilog</AssemblyName>
-	<Title>Lightsoft.Serilog</Title>
+	<RootNamespace>$(BaseNamespace).Serilog</RootNamespace>
+	<AssemblyName>$(OrgName).Serilog</AssemblyName>
+	<Title>$(OrgName).Serilog</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<Authors>minhvu</Authors>
 	<Description>Logging package using Serilog.</Description>
 	<Summary>Logging package using Serilog.</Summary>
-	<Version>1.1.1-preview1</Version>
+	<Version>$(NugetVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

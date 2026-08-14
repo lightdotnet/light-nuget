@@ -1,5 +1,4 @@
-using Light.FileGenerator.Infrastructure.Csv;
-using NUnit.Framework;
+using Light.Infrastructure.Csv;
 using System.Data;
 using System.Globalization;
 using System.Text;

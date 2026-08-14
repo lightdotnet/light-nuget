@@ -8,7 +8,6 @@
     <Project Path="src/ActiveDirectory/ActiveDirectory.csproj" />
     <Project Path="src/FileGenerator/FileGenerator.csproj" />
     <Project Path="src/Graph/Graph.csproj" />
-    <Project Path="src/Mail.Contracts/Mail.Contracts.csproj" />
     <Project Path="src/Serilog/Serilog.csproj" />
     <Project Path="src/SmtpMail/SmtpMail.csproj" />
   </Folder>
