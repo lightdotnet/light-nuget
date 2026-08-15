@@ -1,40 +1,11 @@
-﻿using Light.Domain.Entities.Interfaces;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace Light.Domain.Entities;
+﻿namespace Light.Domain.Entities;
 
 /// <summary>
-///     A base class for DDD Entities. Includes support for domain events dispatched post-persistence.
+///     Default base entity using a string-based <see cref="LightId"/> as primary key.
+///     Use this unless the entity requires a non-string key type.
 /// </summary>
-public abstract class Entity : IEntity, IEvent
+public abstract class Entity : BaseEntity<string>
 {
-    private readonly List<DomainEvent> _domainEvents = [];
-
-    [NotMapped]
-    public IReadOnlyCollection<DomainEvent> DomainEvents => _domainEvents.AsReadOnly();
-
-    public void AddDomainEvent(DomainEvent domainEvent)
-    {
-        _domainEvents.Add(domainEvent);
-    }
-
-    public void RemoveDomainEvent(DomainEvent domainEvent)
-    {
-        _domainEvents.Remove(domainEvent);
-    }
-
-    public void ClearDomainEvents()
-    {
-        _domainEvents.Clear();
-    }
-}
-
-/// <summary>
-///     A base class for DDD Entities. Includes support for domain events dispatched post-persistence.
-///     support both GUID and int IDs, change to EntityBase and use TId as the type for Id.
-/// </summary>
-public abstract class Entity<TId> : Entity, IEntity<TId>
-{
-    public virtual TId Id { get; set; } = default!;
+    protected Entity() => Id = LightId.NewId();
 }
 

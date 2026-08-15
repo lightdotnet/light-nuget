@@ -4,32 +4,35 @@ namespace Light.Extensions.DependencyInjection
 {
     public static class AutoAddServiceExtensions
     {
-        public static IServiceCollection AutoAddDependencies(this IServiceCollection services) =>
-            services
-                .AddServices(typeof(ITransientDependency), ServiceLifetime.Transient)
-                .AddServices(typeof(IScopedDependency), ServiceLifetime.Scoped)
-                .AddServices(typeof(ISingletonDependency), ServiceLifetime.Singleton);
-
-        private static IServiceCollection AddServices(this IServiceCollection services, Type typeOfDependency, ServiceLifetime lifetime)
+        public static IServiceCollection AutoAddDependencies(this IServiceCollection services)
         {
-            // get all classes inherit from Dependency
-            var allAssignableFromDependency = AppDomain.CurrentDomain
+            // scan every loaded assembly once and reuse the result for all three lifetimes
+            var candidateTypes = AppDomain.CurrentDomain
                 .GetAssemblies()
                 .SelectMany(s => s.GetTypes())
-                .Where(x =>
-                    typeOfDependency.IsAssignableFrom(x)
-                    && x.IsClass && !x.IsAbstract);
+                .Where(x => x.IsClass && !x.IsAbstract)
+                .ToList();
+
+            return services
+                .AddServices(candidateTypes, typeof(ITransientDependency), ServiceLifetime.Transient)
+                .AddServices(candidateTypes, typeof(IScopedDependency), ServiceLifetime.Scoped)
+                .AddServices(candidateTypes, typeof(ISingletonDependency), ServiceLifetime.Singleton);
+        }
+
+        private static IServiceCollection AddServices(this IServiceCollection services, IReadOnlyCollection<Type> candidateTypes, Type typeOfDependency, ServiceLifetime lifetime)
+        {
+            // get all classes inherit from Dependency
+            var allAssignableFromDependency = candidateTypes.Where(x => typeOfDependency.IsAssignableFrom(x));
 
             // select dependencies with interfaces
-            // get interface matching with class implementation
+            // get interface matching with class implementation by exact naming convention
             //      ex: Interface: IOrderService => Class: OrderService
             var dependencies = allAssignableFromDependency
                 .Select(s => new
                 {
                     Interface = s
                         .GetInterfaces()
-                        .Where(x => x != typeOfDependency && x.Name.Contains(s.Name))
-                        .FirstOrDefault(),
+                        .FirstOrDefault(x => x != typeOfDependency && x.Name == "I" + s.Name),
 
                     Implementation = s
                 });

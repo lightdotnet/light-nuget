@@ -4,15 +4,15 @@ using Light.AspNetCore.Builder;
 using Light.AspNetCore.Middlewares;
 using Light.AspNetCore.Swagger;
 using Light.Extensions.DependencyInjection;
-using Light.Identity;
+using Light.Infrastructure;
 using Light.Serilog;
 using Sample.AspNetCore;
 using Sample.AspNetCore.HealthChecks;
-using Sample.AspNetCore.Identity;
 using Sample.AspNetCore.SoapCore;
 using Sample.AspNetCore.TestOption;
 using Serilog;
 using System.Reflection;
+using System.Security.Claims;
 
 Serilogger.EnsureInitialized();
 Log.Information("Application start...");
@@ -29,6 +29,14 @@ try
     // Add services to the container.
 
     var executingAssembly = Assembly.GetExecutingAssembly();
+
+    var settings = builder.Configuration.GetSection("Caching").Get<CacheOptions>();
+    builder.Services.AddCache(opt =>
+    {
+        opt.Provider = settings!.Provider;
+        opt.RedisHost = settings.RedisHost;
+        opt.RedisPassword = settings.RedisPassword;
+    });
 
     builder.Services.AddTestOptions(builder.Configuration);
 
@@ -53,8 +61,6 @@ try
 
     builder.Services.AutoAddDependencies();
 
-    builder.Services.AddInfrastructureIdentity(builder.Configuration);
-
     builder.Services.AddModules(builder.Configuration, [executingAssembly]);
 
     builder.Services.AddAppSoapCore();
@@ -70,7 +76,7 @@ try
     // Configure the HTTP request pipeline.
     app.UseSwagger();
 
-    app.UseUlidTraceId();
+    app.UseGuidV7TraceId();
     //app.UseMiddlewares(builder.Configuration);
     app.UseLightRequestLogging();
     app.UseLightExceptionHandler(); // must inject after Inbound Logging

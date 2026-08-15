@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<RootNamespace>Light</RootNamespace>
-	<AssemblyName>Lightsoft.AspNetCore.Authorization</AssemblyName>
-	<Title>Lightsoft.AspNetCore.Authorization</Title>
+	<RootNamespace>$(BaseNamespace)</RootNamespace>
+	<AssemblyName>$(OrgName).AspNetCore.Authorization</AssemblyName>
+	<Title>$(OrgName).AspNetCore.Authorization</Title>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<Authors>minhvu</Authors>
 	<Description>Authorization with permissions module package.</Description>
 	<Summary>Authorization with permissions module package.</Summary>
-	<Version>10.0.1.1</Version>
+	<Version>$(AuthorizationVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

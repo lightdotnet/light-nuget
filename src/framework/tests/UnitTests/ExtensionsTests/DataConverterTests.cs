@@ -48,10 +48,10 @@ namespace UnitTests.ExtensionsTests
         public void Check_Object_Is_A_List()
         {
             var single = new TestObject();
-            LightAssert.ShouldBe(single.IsList(), false);
+            LightAssert.ShouldBe(single.IsListOfT(), false);
 
             var list = new List<TestObject>();
-            LightAssert.ShouldBe(list.IsList(), true);
+            LightAssert.ShouldBe(list.IsListOfT(), true);
         }
     }
 }

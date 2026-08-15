@@ -27,14 +27,13 @@ public static class MiddlewareApplicationBuilderExtensions
         return app;
     }
 
-    public static IApplicationBuilder UseUlidTraceId(this IApplicationBuilder app)
+    public static IApplicationBuilder UseGuidV7TraceId(this IApplicationBuilder app)
     {
-        app.UseMiddleware<UlidTraceIdMiddleware>();
+        app.UseMiddleware<GuidV7TraceIdMiddleware>();
 
         return app;
     }
 
-    //[Obsolete("please use AddGlobalExceptionHandler() instead")]
     public static IApplicationBuilder UseLightExceptionHandler(this IApplicationBuilder app)
     {
         app.UseMiddleware<ExceptionHandlerMiddleware>();

@@ -15,8 +15,6 @@ public class ColorChangedConsumer(
 
         logger.LogInformation("Color changed from {oldColor} to {newColor} on {date} by {Id}",
             message.OldColor, message.NewColor, message.ChangeOn, message.Id);
-
-        //throw new Exception("Color changed error when empty");
     }
 }
 

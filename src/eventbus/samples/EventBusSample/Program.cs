@@ -12,13 +12,12 @@ var executingAssembly = Assembly.GetExecutingAssembly();
 
 builder.Services.AddMassTransit(x =>
 {
-    //x.AddConsumer<ColorChangedConsumer, ColorChangedConsumerDefinition>();
     x.AddConsumers(executingAssembly);
     x.ConfigRabbitMQ(mq =>
     {
-        mq.Host = "10.114.32.16";
-        mq.Username = "super";
-        mq.Password = "adm!n";
+        mq.Host = builder.Configuration["RabbitMQ:Host"]!;
+        mq.Username = builder.Configuration["RabbitMQ:Username"]!;
+        mq.Password = builder.Configuration["RabbitMQ:Password"]!;
         mq.Exclude<IntegrationEvent>();
         mq.Exclude<EventBase>();
     });

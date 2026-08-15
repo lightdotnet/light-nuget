@@ -40,7 +40,7 @@ namespace Light.MassTransit.RabbitMQ
 
                 if (ThrowIfError)
                 {
-                    throw ex;
+                    throw;
                 }
             }
         }

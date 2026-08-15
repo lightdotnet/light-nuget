@@ -2,11 +2,11 @@
 
 public interface IEvent
 {
-    IReadOnlyCollection<DomainEvent> DomainEvents { get; }
+    IReadOnlyCollection<BaseEvent> DomainEvents { get; }
 
-    void AddDomainEvent(DomainEvent domainEvent);
+    void AddDomainEvent(BaseEvent domainEvent);
 
-    void RemoveDomainEvent(DomainEvent domainEvent);
+    void RemoveDomainEvent(BaseEvent domainEvent);
 
     void ClearDomainEvents();
 }

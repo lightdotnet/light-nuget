@@ -13,6 +13,16 @@ public class RequestLoggingMiddleware(
     ILogger<RequestLoggingMiddleware> logger)
 {
     private readonly RequestLoggingOptions _settings = options.Value;
+    private readonly IReadOnlyList<string> _excludePaths = BuildExcludePaths(options.Value);
+
+    private static IReadOnlyList<string> BuildExcludePaths(RequestLoggingOptions settings)
+    {
+        var excludePath = new List<string> { "hangfire", "swagger" };
+        if (settings.ExcludePaths is not null)
+            excludePath.AddRange(settings.ExcludePaths);
+
+        return excludePath;
+    }
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -38,12 +48,8 @@ public class RequestLoggingMiddleware(
 
     private bool CheckSkipWriteLog(HttpRequest httpRequest)
     {
-        // default exclude
-        var excludePath = new List<string> { "hangfire", "swagger" };
-        if (_settings.ExcludePaths is not null)
-            excludePath.AddRange(_settings.ExcludePaths);
-
-        return excludePath.Any(c => httpRequest.Path.ToString().Contains(c));
+        var path = httpRequest.Path.ToString();
+        return _excludePaths.Any(c => path.Contains(c));
     }
 
     private void WriteRequestLog(HttpContext context, long elapsedMilliseconds)
@@ -58,11 +64,8 @@ public class RequestLoggingMiddleware(
         var requestPath = httpRequest.Path;
         var requestQuery = httpRequest.QueryString.ToString();
         var requestScheme = httpRequest.Scheme;
-        //var requestHost = request.Host.ToString();
 
-        // Log the response body
         var statusCode = context.Response.StatusCode;
-        var contentType = context.Response.Headers.ContentType.ToString();
 
         var logContent = $"{traceId} {requestScheme} {requestMethod} {statusCode} {requestPath}{requestQuery} FromIP: {clientIp}";
 
@@ -128,17 +131,25 @@ public class RequestLoggingMiddleware(
         // Create a new memory stream to capture the response
         var originalBody = context.Response.Body;
 
+        using var responseBody = new MemoryStream();
+        context.Response.Body = responseBody;
+
         try
         {
-            using var responseBody = new MemoryStream();
-            context.Response.Body = responseBody;
-
-            // Continue processing the request
+            // Continue processing the request; let exceptions propagate to the
+            // exception-handling pipeline instead of being swallowed here
             await next(context);
+        }
+        finally
+        {
+            context.Response.Body = originalBody;
+        }
 
+        try
+        {
             // Read the response body
             responseBody.Seek(0, SeekOrigin.Begin);
-            string responseText = new StreamReader(responseBody).ReadToEnd();
+            string responseText = await new StreamReader(responseBody).ReadToEndAsync();
 
             if (!string.IsNullOrEmpty(responseText))
             {
@@ -154,10 +165,6 @@ public class RequestLoggingMiddleware(
         catch (Exception ex)
         {
             logger.LogError("Unhandler exception when write request log with error {error}.", ex.Message);
-        }
-        finally
-        {
-            context.Response.Body = originalBody;
         }
     }
 }

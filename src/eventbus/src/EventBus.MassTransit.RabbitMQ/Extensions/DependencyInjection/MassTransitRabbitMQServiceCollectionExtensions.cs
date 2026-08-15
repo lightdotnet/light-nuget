@@ -44,16 +44,27 @@ namespace Light.Extensions.DependencyInjection
             params Assembly[] assemblies)
         {
             // get all classes inherit from interface
-            var moduleConsumers = assemblies
+            var moduleConsumerTypes = assemblies
                 .SelectMany(s => s.GetTypes())
                 .Where(x =>
                     typeof(IModuleConsumer).IsAssignableFrom(x)
-                    && x.IsClass && !x.IsAbstract)
-                .Select(s => Activator.CreateInstance(s) as IModuleConsumer);
+                    && x.IsClass && !x.IsAbstract);
 
-            foreach (var instance in moduleConsumers)
+            foreach (var moduleConsumerType in moduleConsumerTypes)
             {
-                instance?.AddConsumers(configurator);
+                IModuleConsumer instance;
+                try
+                {
+                    instance = (IModuleConsumer)Activator.CreateInstance(moduleConsumerType)!;
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to create an instance of module consumer '{moduleConsumerType.FullName}'. " +
+                        "It must have a public parameterless constructor.", ex);
+                }
+
+                instance.AddConsumers(configurator);
             }
 
             return configurator;
@@ -86,7 +97,7 @@ namespace Light.Extensions.DependencyInjection
                 });
             });
 
-            services.AddScoped<IEventBus, MessageQueueService>();
+            services.AddScoped<IEventBus, RabbitMQEventBus>();
 
             return services;
         }

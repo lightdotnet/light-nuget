@@ -11,15 +11,15 @@
 	<PackageReference Include="FluentValidation" Version="12.1.1" />
 	<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
 	<PackageReference Include="Lightsoft.Serilog" Version="1.0.0.3" />
-    <PackageReference Include="Mapster" Version="10.0.8" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="$(AspnetVersion)" />
+    <PackageReference Include="Mapster" Version="10.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(AspnetVersion)" />
 	<PackageReference Include="SoapCore" Version="1.2.1.14" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Caching\Caching.csproj" />
     <ProjectReference Include="..\..\src\Extensions\Extensions.csproj" />
-    <ProjectReference Include="..\..\src\Identity.EntityFrameworkCore\Identity.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\src\Modularity\Modularity.csproj" />
     <ProjectReference Include="..\..\src\Swagger\Swagger.csproj" />
     <ProjectReference Include="..\..\src\WebHost\WebHost.csproj" />

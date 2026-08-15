@@ -18,7 +18,10 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddPermissionPolicyProvider<T>(this IServiceCollection services)
         where T : PermissionPolicyProvider
     {
+        services.AddSingleton<IPermissionManager, PermissionManager>();
+
         services.AddSingleton<IAuthorizationPolicyProvider, T>();
+
         return services;
     }
 

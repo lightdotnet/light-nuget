@@ -2,6 +2,6 @@
 
 namespace EventBusSample.Common
 {
-    [BindingName("color-value-changed")]
+    [BindingName("color-value-removed")]
     public record ColorRemovedIntegrationEvent(string Color) : EventBase;
 }

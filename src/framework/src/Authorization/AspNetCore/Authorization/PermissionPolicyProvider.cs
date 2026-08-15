@@ -1,26 +1,37 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
+using System.Collections.Concurrent;
 
 namespace Light.AspNetCore.Authorization;
 
 public class PermissionPolicyProvider(IOptions<AuthorizationOptions> options)
     : IAuthorizationPolicyProvider
 {
+    private readonly ConcurrentDictionary<string, AuthorizationPolicy> _policyCache = new();
+
     public DefaultAuthorizationPolicyProvider FallbackPolicyProvider { get; } = new DefaultAuthorizationPolicyProvider(options);
 
     public Task<AuthorizationPolicy> GetDefaultPolicyAsync() => FallbackPolicyProvider.GetDefaultPolicyAsync();
 
     public virtual async Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
     {
+        if (_policyCache.TryGetValue(policyName, out var cachedPolicy))
+        {
+            return cachedPolicy;
+        }
+
         if (await CheckPermissionValidAsync(policyName) is true)
         {
             var policy = new AuthorizationPolicyBuilder();
             policy.AddRequirements(new PermissionRequirement(policyName));
-            return policy.Build();
+            var builtPolicy = policy.Build();
+
+            _policyCache[policyName] = builtPolicy;
+            return builtPolicy;
         }
 
-        //return await FallbackPolicyProvider.GetPolicyAsync(policyName);
-        return null;
+        // fall back to normally-registered policies (e.g. AddAuthorization(o => o.AddPolicy(...)))
+        return await FallbackPolicyProvider.GetPolicyAsync(policyName);
     }
 
     /// <summary>

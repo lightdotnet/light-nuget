@@ -12,7 +12,7 @@ namespace Light.AspNetCore.Mvc;
 public abstract class ApiControllerBase : ControllerBase
 {
     /// <summary>
-    /// Default success response
+    /// Default success response, wrapped in the framework's Result envelope
     /// </summary>
     /// <returns></returns>
     [ApiExplorerSettings(IgnoreApi = true)]
@@ -24,6 +24,9 @@ public abstract class ApiControllerBase : ControllerBase
         return result.ToActionResult();
     }
 
+    /// <summary>
+    /// Default success response with data, wrapped in the framework's Result envelope
+    /// </summary>
     [ApiExplorerSettings(IgnoreApi = true)]
     public virtual IActionResult Ok<T>(T data)
     {

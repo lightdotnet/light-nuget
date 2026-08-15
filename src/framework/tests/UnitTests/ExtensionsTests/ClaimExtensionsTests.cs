@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using System.Security.Claims;
 
 namespace UnitTests.ExtensionsTests;

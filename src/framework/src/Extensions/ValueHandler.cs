@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 
@@ -6,17 +7,24 @@ namespace Light.Extensions
 {
     public static class ValueHandler
     {
+        private static readonly ConcurrentDictionary<Type, PropertyInfo[]> PropertyCache = new ConcurrentDictionary<Type, PropertyInfo[]>();
+
+        private static PropertyInfo[] GetCachedProperties(Type type) =>
+            PropertyCache.GetOrAdd(type, t => t.GetProperties());
+
         /// <summary>
         /// Trim limit lenght of string in object
         /// </summary>
         public static T MaximumCharHandler<T>(this T data, int lenght)
         {
             //select props string & value = null
-            var nullValueProperties = data?.GetType().GetProperties()
-                .Where(pi =>
-                    pi.PropertyType == typeof(string) &&
-                    !string.IsNullOrEmpty((string)pi.GetValue(data, null))
-                );
+            var nullValueProperties = data is null
+                ? null
+                : GetCachedProperties(data.GetType())
+                    .Where(pi =>
+                        pi.PropertyType == typeof(string) &&
+                        !string.IsNullOrEmpty((string)pi.GetValue(data, null))
+                    );
 
             foreach (PropertyInfo pi in nullValueProperties!)
             {
@@ -33,8 +41,10 @@ namespace Light.Extensions
         {
             defaultTime ??= new DateTime(1753, 01, 01);
 
-            var nullValueProperties = data?.GetType().GetProperties()
-                .Where(pi => pi.PropertyType == typeof(DateTime));
+            var nullValueProperties = data is null
+                ? null
+                : GetCachedProperties(data.GetType())
+                    .Where(pi => pi.PropertyType == typeof(DateTime));
 
             foreach (PropertyInfo pi in nullValueProperties!)
             {
@@ -56,11 +66,13 @@ namespace Light.Extensions
         public static T NullStringHandler<T>(this T data)
         {
             //select props string & value = null
-            var nullValueProperties = data?.GetType().GetProperties()
-                .Where(pi =>
-                    pi.PropertyType == typeof(string) &&
-                    string.IsNullOrEmpty((string)pi.GetValue(data, null))
-                );
+            var nullValueProperties = data is null
+                ? null
+                : GetCachedProperties(data.GetType())
+                    .Where(pi =>
+                        pi.PropertyType == typeof(string) &&
+                        string.IsNullOrEmpty((string)pi.GetValue(data, null))
+                    );
 
             foreach (PropertyInfo pi in nullValueProperties!)
             {

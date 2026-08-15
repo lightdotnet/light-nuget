@@ -49,9 +49,11 @@ public static class JsonConfigurationLocation
             return host; // use default config
         }
 
-        // combine paths to string
-        var path = Path.Combine(paths);
+        foreach (var path in paths)
+        {
+            host = host.LoadConfigurationFrom(path);
+        }
 
-        return host.LoadConfigurationFrom(path);
+        return host;
     }
 }

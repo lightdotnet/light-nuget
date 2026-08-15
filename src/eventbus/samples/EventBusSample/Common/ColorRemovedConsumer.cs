@@ -14,8 +14,6 @@ public class ColorRemovedConsumer(
         await Task.Delay(2000);
 
         logger.LogInformation("Color removed {color} by {id}", message.Color, message.Id);
-
-        //throw new Exception("Color changed error when empty");
     }
 }
 

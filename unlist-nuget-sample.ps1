@@ -2,20 +2,42 @@
     Must run this script with "Run Selection (F8)" 
 #>
 
+$packageList = [System.Collections.Generic.List[string]]::new()
+
 $name = "Lightsoft"
-$packageFolders = Get-ChildItem -Path "src\blazor\src" -Directory | Select-Object -ExpandProperty Name
+$packageFolders = Get-ChildItem -Path "src\framework\src" -Directory | Select-Object -ExpandProperty Name
 
 foreach ($folder in $packageFolders) {
 
   $packageId = "$name.$folder"
   
-  Unlist-Package($packageId)
+  $packageList.Add($packageId);
+
+}
+<# Note:
+$packageList =
+@(
+    "Lightsoft.Grab.Auth",
+    "Lightsoft.Grab.GrabExpress",
+    "Lightsoft.Grab.GrabExpress.Core",
+    "Lightsoft.Grab.GrabMart",
+    "Lightsoft.Grab.GrabMart.Core",
+    "Lightsoft.Lazada",
+    "Lightsoft.Lazada.Core",
+    "Lightsoft.Shopee",
+    "Lightsoft.Shopee.Core",
+    "Lightsoft.Tiki",
+    "Lightsoft.Tiki.Core"
+)
+#>
+
+foreach ($packageId in $packageList) {
+
+    Unlist-Package($packageId)
 
 }
 
-# Unlist-Package('Lightsoft.AspNetCore.Swagger')
-
-$apiKey = "<your_api_key_with_unlist_permission>"
+$apiKey = ""
 
 function Unlist-Package {
     param (
@@ -61,7 +83,5 @@ function Unlist-Package {
                 Start-Sleep -Seconds 2
             }  
         }
-
-        
     }
 }

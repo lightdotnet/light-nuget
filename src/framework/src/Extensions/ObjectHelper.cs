@@ -73,9 +73,9 @@ namespace Light.Extensions
         }
 
         /// <summary>
-        /// check object type is a list
+        /// check object type is a List&lt;T&gt; (does not match other IList implementors like arrays)
         /// </summary>
-		public static bool IsList(this object obj)
+        public static bool IsListOfT(this object obj)
         {
             return obj != null
                 && obj is IList
