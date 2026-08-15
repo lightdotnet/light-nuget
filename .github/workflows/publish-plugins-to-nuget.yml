@@ -1,4 +1,4 @@
-name: '[NuGet.org] Publish Integration Services packages'
+name: '[NuGet.org] Publish Plugins packages'
 
 on:
   workflow_dispatch
@@ -29,4 +29,4 @@ jobs:
             "src/SmtpMail/SmtpMail.csproj",
             "src/Graph/Graph.csproj"
           ]
-        working-dir: ./src/services
+        working-dir: ./src/plugins

@@ -24,13 +24,13 @@ This solution contains Light .NET projects publish to NuGet.org
 - [Lightsoft.EntityFrameworkCore](src/framework/src/EntityFrameworkCore/README.md) — EF Core implementations of Specification's Repository/Unit of Work, plus NOLOCK, Dapper, and global-query-filter extensions
 - [Lightsoft.Caching](src/framework/src/Caching/README.md) — Swappable in-process/Redis cache behind a single `ICacheService` interface
 
-### Integration Services
+### Plugins
 
-- [Lightsoft.ActiveDirectory](src/services/src/ActiveDirectory/README.md) — Pluggable AD/LDAP authentication and user lookup behind a single `IActiveDirectoryService` abstraction
-- [Lightsoft.FileGenerator](src/services/src/FileGenerator/README.md) — CSV/Excel read-write helpers (`ICsvService`, `IExcelService`)
-- [Lightsoft.Graph](src/services/src/Graph/README.md) — Thin Microsoft Graph SDK wrapper for sending mail and reading Teams chats (app-only auth)
-- [Lightsoft.Serilog](src/services/src/Serilog/README.md) — Serilog wiring for ASP.NET Core Generic Host apps (console/file/Elasticsearch sinks, enrichers)
-- [Lightsoft.SmtpMail](src/services/src/SmtpMail/README.md) — SMTP email senders (`SmtpClient` + MailKit) behind a shared `ISmtpMailSender` contract
+- [Lightsoft.ActiveDirectory](src/plugins/src/ActiveDirectory/README.md) — Pluggable AD/LDAP authentication and user lookup behind a single `IActiveDirectoryService` abstraction
+- [Lightsoft.FileGenerator](src/plugins/src/FileGenerator/README.md) — CSV/Excel read-write helpers (`ICsvService`, `IExcelService`)
+- [Lightsoft.Graph](src/plugins/src/Graph/README.md) — Thin Microsoft Graph SDK wrapper for sending mail and reading Teams chats (app-only auth)
+- [Lightsoft.Serilog](src/plugins/src/Serilog/README.md) — Serilog wiring for ASP.NET Core Generic Host apps (console/file/Elasticsearch sinks, enrichers)
+- [Lightsoft.SmtpMail](src/plugins/src/SmtpMail/README.md) — SMTP email senders (`SmtpClient` + MailKit) behind a shared `ISmtpMailSender` contract
 
 ### Blazor
 

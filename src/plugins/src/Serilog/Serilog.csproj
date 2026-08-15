@@ -11,7 +11,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Logging package using Serilog.</Description>
 	<Summary>Logging package using Serilog.</Summary>
-	<Version>$(NugetVersion)</Version>
+	<Version>$(SerilogVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

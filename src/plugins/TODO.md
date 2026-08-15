@@ -1,6 +1,6 @@
-# TODO — Integration Services
+# TODO — Plugins
 
-Open follow-ups for the `IntegrationServices` solution (`IntegrationServices.slnx`), covering
+Open follow-ups for the `Plugins` solution (`Plugins.slnx`), covering
 `ActiveDirectory`, `Caching`, `FileGenerator`, `Graph`, `Serilog`, `SmtpMail`
 (`src/`), `tests/UnitTests`, and the `samples/WebApi` sample. See each project's own `README.md`
 for current, user-facing documentation.

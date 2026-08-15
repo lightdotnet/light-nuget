@@ -2,7 +2,7 @@
 
 # UnitTests
 
-NUnit test project for the `IntegrationServices` solution (`src/services`). Targets **net10.0** (see `TargetFramework` in `UnitTests.csproj`; a stale `obj/Debug/net9.0` build output folder exists on disk but is not what the project currently targets).
+NUnit test project for the `Plugins` solution (`src/plugins`). Targets **net10.0** (see `TargetFramework` in `UnitTests.csproj`; a stale `obj/Debug/net9.0` build output folder exists on disk but is not what the project currently targets).
 
 Uses `NUnit` 4.6.1 + `NUnit3TestAdapter` 6.2.0 + `Microsoft.NET.Test.Sdk` 18.6.0, with `NUnit.Analyzers` and `coverlet.collector` for coverage collection. `GlobalUsings.cs` globally imports `NUnit.Framework`.
 
@@ -81,10 +81,10 @@ From this folder:
 dotnet test
 ```
 
-Or from the solution root (`src/services`):
+Or from the solution root (`src/plugins`):
 
 ```powershell
-dotnet test IntegrationServices.slnx
+dotnet test Plugins.slnx
 ```
 
 Because `SmtpMailTests` and `SmtpMailKitTests` hit live external SMTP servers, expect occasional failures unrelated to code changes (network/service availability, or expired ethereal.email credentials) rather than assuming a failing run always indicates a regression.

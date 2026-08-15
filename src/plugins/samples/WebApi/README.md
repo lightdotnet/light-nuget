@@ -1,10 +1,10 @@
 [← Back to main README](https://github.com/lightdotnet/light-nuget#readme)
 
-# WebApi (IntegrationServices Sample)
+# WebApi (Plugins Sample)
 
-A runnable ASP.NET Core Web API sample under `src/services/samples/WebApi`. It is **not** a NuGet package — it exists to exercise every library in the `IntegrationServices` solution (`src/services`) from real `Program.cs` startup code and real controllers, so a developer can see each package wired up and called in context.
+A runnable ASP.NET Core Web API sample under `src/plugins/samples/WebApi`. It is **not** a NuGet package — it exists to exercise every library in the `Plugins` solution (`src/plugins`) from real `Program.cs` startup code and real controllers, so a developer can see each package wired up and called in context.
 
-`WebApi.csproj` (`net10.0`) has a `ProjectReference` to all five libraries in `src/services/src`:
+`WebApi.csproj` (`net10.0`) has a `ProjectReference` to all five libraries in `src/plugins/src`:
 
 | Library | Used by |
 |---|---|

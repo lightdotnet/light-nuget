@@ -56,7 +56,7 @@ builder.Host.ConfigureSerilog();
 // ... other service registrations, builder.Build(), app.Run(), etc.
 ```
 
-This is exactly how the sample `WebApi` project wires it up (`src/services/samples/WebApi/Program.cs`).
+This is exactly how the sample `WebApi` project wires it up (`src/plugins/samples/WebApi/Program.cs`).
 
 ### appsettings.json
 

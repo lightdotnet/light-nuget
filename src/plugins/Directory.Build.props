@@ -1,0 +1,19 @@
+<Project>
+  <ItemGroup Condition="'$(ExcludeSourceLink)' != 'true'">
+	  <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.*" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
+	  <None Include="..\..\..\..\icon.png" Pack="true" Visible="false" PackagePath="\" />
+  </ItemGroup>
+  <PropertyGroup>
+    <AspnetVersion>10.*</AspnetVersion>
+    <BaseNamespace>Light</BaseNamespace>
+    <OrgName>Lightsoft</OrgName>
+    <NugetVersion>2.0.0</NugetVersion>
+    <ActiveDirectoryVersion>$(NugetVersion)</ActiveDirectoryVersion>
+    <FileGeneratorVersion>$(NugetVersion)</FileGeneratorVersion>
+    <GraphVersion>$(NugetVersion)</GraphVersion>
+    <SerilogVersion>$(NugetVersion)</SerilogVersion>
+    <SmtpMailVersion>$(NugetVersion)</SmtpMailVersion>
+  </PropertyGroup>
+</Project>
