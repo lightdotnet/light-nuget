@@ -24,7 +24,7 @@
             </table>
         </div>
     }
-    else if (Model.IsList())
+    else if (Model.IsListOfT())
     {
         var listObj = (IEnumerable<object>)Model;
 
@@ -81,7 +81,7 @@
 
         @foreach (var prop in dictionary)
         {
-            @if (prop.Value.IsList())
+            @if (prop.Value.IsListOfT())
             {
                 var listObj = (IEnumerable<object>)prop.Value;
 
@@ -145,7 +145,7 @@
 
     private async Task ExportAsync()
     {
-        if (Model != null && Model.IsList())
+        if (Model != null && Model.IsListOfT())
         {
             var file = ExcelService.Export(new Worksheet(Model));
 
