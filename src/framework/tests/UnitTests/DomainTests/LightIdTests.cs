@@ -17,25 +17,33 @@ namespace UnitTests.DomainTests
         {
             string value = LightId.NewId();
 
-            value[14].ShouldBe('7');
+            value[12].ShouldBe('7');
         }
 
         [Test]
-        public void ToString_Matches_Underlying_Guid_ToString()
+        public void ToString_Matches_Underlying_Guid_ToString_N_Format()
         {
             var id = LightId.NewId();
 
-            id.ToString().ShouldBe(id.Guid.ToString());
+            id.ToString().ShouldBe(id.Guid.ToString("N"));
         }
 
         [Test]
-        public void Implicit_Conversion_To_String_Matches_Guid_ToString()
+        public void ToString_Does_Not_Contain_Hyphens()
+        {
+            var id = LightId.NewId();
+
+            Assert.That(id.ToString(), Does.Not.Contain("-"));
+        }
+
+        [Test]
+        public void Implicit_Conversion_To_String_Matches_Guid_ToString_N_Format()
         {
             var id = LightId.NewId();
 
             string value = id;
 
-            value.ShouldBe(id.Guid.ToString());
+            value.ShouldBe(id.Guid.ToString("N"));
         }
 
         [Test]
@@ -99,6 +107,52 @@ namespace UnitTests.DomainTests
             (lower.CompareTo(higher) < 0).ShouldBeTrue();
             (higher.CompareTo(lower) > 0).ShouldBeTrue();
             lower.CompareTo(lower).ShouldBe(0);
+        }
+
+        [Test]
+        public void Parse_Round_Trips_Own_ToString_Output()
+        {
+            var id = LightId.NewId();
+
+            var parsed = LightId.Parse(id.ToString());
+
+            parsed.ShouldBe(id);
+        }
+
+        [Test]
+        public void Parse_Accepts_Hyphenated_Guid_Format()
+        {
+            var guid = Guid.NewGuid();
+
+            var parsed = LightId.Parse(guid.ToString());
+
+            parsed.Guid.ShouldBe(guid);
+        }
+
+        [Test]
+        public void Parse_Throws_For_Invalid_Input()
+        {
+            Assert.Throws<FormatException>(() => LightId.Parse("not-a-guid"));
+        }
+
+        [Test]
+        public void TryParse_Returns_True_And_Result_For_Valid_Input()
+        {
+            var id = LightId.NewId();
+
+            var success = LightId.TryParse(id.ToString(), null, out var result);
+
+            success.ShouldBeTrue();
+            result.ShouldBe(id);
+        }
+
+        [Test]
+        public void TryParse_Returns_False_And_Default_For_Invalid_Input()
+        {
+            var success = LightId.TryParse("not-a-guid", null, out var result);
+
+            success.ShouldBeFalse();
+            result.ShouldBe(default);
         }
     }
 }

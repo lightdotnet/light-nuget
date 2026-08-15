@@ -1,6 +1,6 @@
 ﻿namespace Light.Domain;
 
-public readonly struct LightId : IEquatable<LightId>, IComparable<LightId>
+public readonly struct LightId : IEquatable<LightId>, IComparable<LightId>, IParsable<LightId>
 {
     public static readonly LightId Empty = default;
 
@@ -16,7 +16,7 @@ public readonly struct LightId : IEquatable<LightId>, IComparable<LightId>
 
     public Guid Guid { get; }
 
-    public override string ToString() => Guid.ToString();
+    public override string ToString() => Guid.ToString("N");
 
     public override bool Equals(object? obj) => obj is LightId other && Equals(other);
 
@@ -31,10 +31,24 @@ public readonly struct LightId : IEquatable<LightId>, IComparable<LightId>
     public static bool operator !=(LightId left, LightId right) => !left.Equals(right);
 
     public static implicit operator string(LightId lightId)
-        => lightId.Guid.ToString();
+        => lightId.ToString();
 
     public static implicit operator Guid(LightId lightId)
         => lightId.Guid;
 
     public static LightId NewId() => new();
+
+    public static LightId Parse(string s, IFormatProvider? provider = null) => new(Guid.Parse(s));
+
+    public static bool TryParse(string? s, IFormatProvider? provider, out LightId result)
+    {
+        if (Guid.TryParse(s, out var guid))
+        {
+            result = new LightId(guid);
+            return true;
+        }
+
+        result = default;
+        return false;
+    }
 }

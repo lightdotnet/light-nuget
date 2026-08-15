@@ -18,16 +18,19 @@ Within this solution, `WebHost` is the only project that references `SharedKerne
 ### Domain building blocks (`Light.Domain`, `Light.Domain.Entities`, `Light.Domain.ValueObjects`)
 
 - **`LightId`** — `readonly struct` wrapping a GUID v7 (`Guid.CreateVersion7()`), so values are
-  time-ordered/sortable. Implements `IEquatable<LightId>` and `IComparable<LightId>`, and
-  implicitly converts to both `string` and `Guid`, so it drops into existing `string`/`Guid` IDs
-  without an explicit cast. `LightId.Empty` is the `Guid.Empty`-backed sentinel value (equivalent
-  to `default(LightId)`).
+  time-ordered/sortable. Implements `IEquatable<LightId>`, `IComparable<LightId>`, and
+  `IParsable<LightId>`, and implicitly converts to both `string` and `Guid`, so it drops into
+  existing `string`/`Guid` IDs without an explicit cast. Its `string` form (`ToString()` and the
+  implicit `string` conversion) uses `Guid.ToString("N")` — 32 hex digits, no hyphens.
+  `LightId.Empty` is the `Guid.Empty`-backed sentinel value (equivalent to `default(LightId)`).
 
   ```csharp
   LightId id = LightId.NewId();
-  string asString = id;       // implicit conversion
+  string asString = id;       // implicit conversion, hyphen-free ("N" format)
   Guid asGuid = id;           // implicit conversion
   var wrapped = new LightId(existingGuid); // round-trip an existing Guid
+  var parsed = LightId.Parse(asString);    // round-trip back from string (any Guid format)
+  LightId.TryParse(asString, null, out var tryParsed);
   ```
 
 - **`IEntity` / `IEntity<TKey>`** — marker interfaces; `IEntity<TKey>` exposes `TKey Id`.
@@ -134,6 +137,11 @@ name / property type / property value) rather than columns.
   a database's native GUID/`uniqueidentifier` sort — e.g. SQL Server's default `uniqueidentifier`
   comparison uses a different byte order than either .NET or the RFC 9562 string form. Store/sort
   `LightId` as its `string` form if you need order to survive a round trip through such a column.
+- **`LightId` string format change**: `ToString()` and the implicit `string` conversion now use
+  `Guid.ToString("N")` (32 hex digits, no hyphens) instead of the default `"D"` format. If any
+  changelog, older doc, or stored data assumed hyphenated `LightId` strings, that's stale —
+  `LightId.Parse`/`TryParse` (via `IParsable<LightId>`) still accept any `Guid`-parsable format on
+  the way back in.
 - **`DynamicMapper` conversion behavior**: `DynamicMapper.MapToObject` no longer silently
   swallows type-conversion failures. `ConvertToType` calls `int.Parse`, `bool.Parse`,
   `DateTime.Parse`, etc. (or falls back to `Convert.ChangeType`) directly, with no try/catch —
