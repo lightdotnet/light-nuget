@@ -11,7 +11,7 @@
 	<Authors>minhvu</Authors>
 	<Description>A simple package to process data faster.</Description>
 	<Summary>A simple package to process data faster.</Summary>
-	<Version>$(NugetVersion)</Version>
+	<Version>$(ExtensionsVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<PackageReleaseNotes></PackageReleaseNotes>

@@ -8,7 +8,7 @@
 	<Authors>minhvu</Authors>
 	<Description>AspNetCore Modularity package.</Description>
 	<Summary>AspNetCore Modularity package.</Summary>
-	<Version>$(NugetVersion)</Version>
+	<Version>$(ModularityVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

@@ -3,7 +3,16 @@
 	<AspnetVersion>10.*</AspnetVersion>
 	<BaseNamespace>Light</BaseNamespace>
 	<OrgName>Lightsoft</OrgName>
-	<NugetVersion>2.0.0-preview.1</NugetVersion>
+	<NugetVersion>2.0.0</NugetVersion>
+	<AuthorizationVersion>$(NugetVersion)</AuthorizationVersion>
+	<CachingVersion>$(NugetVersion)</CachingVersion>
+	<EntityFrameworkCoreVersion>$(NugetVersion)</EntityFrameworkCoreVersion>
+	<ExtensionsVersion>$(NugetVersion)</ExtensionsVersion>
+	<ModularityVersion>$(NugetVersion)</ModularityVersion>
+	<SharedKernelVersion>$(NugetVersion)</SharedKernelVersion>
+	<SpecificationVersion>$(NugetVersion)</SpecificationVersion>
+	<SwaggerVersion>$(NugetVersion)</SwaggerVersion>
+	<WebHostVersion>$(NugetVersion)</WebHostVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == ''">
 	<TargetFramework>net10.0</TargetFramework>

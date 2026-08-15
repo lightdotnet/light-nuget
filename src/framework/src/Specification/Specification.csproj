@@ -11,7 +11,7 @@
 	<Authors>minhvu</Authors>
 	<Description>A simple package with a base Specification class.</Description>
 	<Summary>A simple package with a base Specification class.</Summary>
-	<Version>$(NugetVersion)</Version>
+	<Version>$(SpecificationVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

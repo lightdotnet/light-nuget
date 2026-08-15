@@ -8,7 +8,7 @@
 	<Authors>minhvu</Authors>
 	<Description>EF Core plugin package containing EF Core evaluator.</Description>
 	<Summary>EF Core plugin package containing EF Core evaluator.</Summary>
-	<Version>$(NugetVersion)</Version>
+	<Version>$(EntityFrameworkCoreVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

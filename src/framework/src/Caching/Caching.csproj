@@ -8,7 +8,7 @@
 	<Authors>minhvu</Authors>
 	<Description>Cache package services using Memory, Distributed, Redis.</Description>
 	<Summary>Cache package services using Memory, Distributed, Redis.</Summary>
-	<Version>$(NugetVersion)</Version>
+	<Version>$(CachingVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

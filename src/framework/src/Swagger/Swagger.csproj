@@ -8,7 +8,7 @@
 	<Authors>minhvu</Authors>
 	<Description>AspNetCore Swagger package.</Description>
 	<Summary>AspNetCore Swagger package.</Summary>
-	<Version>$(NugetVersion)</Version>
+	<Version>$(SwaggerVersion)</Version>
 	<PackageTags>lightframework;dotnet;aspnetcore</PackageTags>
 	<PackageIcon>icon.png</PackageIcon>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
