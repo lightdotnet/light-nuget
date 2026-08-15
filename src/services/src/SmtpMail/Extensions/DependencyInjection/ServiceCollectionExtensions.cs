@@ -7,7 +7,7 @@ namespace Light.Extensions.DependencyInjection
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Registers <see cref="ISmtpMailSender"/> backed by <see cref="SmtpNetMailSender"/> (the built-in
+        /// Registers <see cref="ISmtpMailSender"/> backed by <see cref="SmtpMailSender"/> (the built-in
         /// <see cref="System.Net.Mail.SmtpClient"/>, no authentication).
         /// </summary>
         public static IServiceCollection AddSmtpMail(this IServiceCollection services, Action<SmtpMailOptions> action)
@@ -15,7 +15,7 @@ namespace Light.Extensions.DependencyInjection
             var options = new SmtpMailOptions();
             action.Invoke(options);
 
-            services.AddTransient<ISmtpMailSender>(sp => new SmtpNetMailSender(options.Host, options.Port)
+            services.AddTransient<ISmtpMailSender>(sp => new SmtpMailSender(options.Host, options.Port)
             {
                 UseSsl = options.UseSsl
             });

@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Light.Smtp
 {
-    public class SmtpNetMailSender : SmtpConnection, ISmtpMailSender
+    public class SmtpMailSender : SmtpConnection, ISmtpMailSender
     {
-        public SmtpNetMailSender(string host, int port = 25)
+        public SmtpMailSender(string host, int port = 25)
         {
             Host = host;
             Port = port;
