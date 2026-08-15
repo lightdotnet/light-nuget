@@ -64,6 +64,13 @@ Within this solution, `WebHost` is the only project that references `SharedKerne
 - **`IAggregateRoot`** — marker interface. Intended so repositories only operate on aggregate
   roots, not on child entities.
 
+### JSON support (`Light.Extensions.Json`)
+
+- **`PropertyOrderAttribute`** — `[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]`
+  attribute carrying an `int Order`. Consumed by `WebHost`'s `PropertyOrderedConverter<T>` (via
+  `ProjectReference`) to control JSON property serialization order; lives here rather than in
+  `WebHost` so it's available without pulling in the rest of that package.
+
 ### Exceptions (`Light.Exceptions`)
 
 All exceptions derive from `ExceptionBase`, which carries an `HttpStatusCode` alongside the

@@ -34,7 +34,7 @@ public abstract class OrderedConverterBase<T> : JsonConverter<T> where T : class
     {
         // GetPropertyInfos() reflects + orders once; cache the materialized result since STJ
         // creates one converter instance per type and reuses it for every Write() call.
-        var orderedProps = _cachedOrderedProps ??= GetPropertyInfos().ToArray();
+        var orderedProps = _cachedOrderedProps ??= [.. GetPropertyInfos()];
 
         writer.WriteStartObject();
 

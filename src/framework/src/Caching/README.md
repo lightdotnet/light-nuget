@@ -20,7 +20,7 @@ Cache abstraction and provider implementations for services that need a swappabl
 | `CacheOptions` | `Light.Infrastructure` | Configuration POCO: `Provider` (`string`, defaults to `"memory"`), `RedisHost`/`RedisPassword` (`string?`). |
 | `CacheDataExtensions` *(internal)* | `Light.Infrastructure` | `JsonSerialize<T>` / `ReadFromJson<T>` helpers used internally by `DistributedCacheService`, backed by a shared camelCase `JsonSerializerOptions`. |
 | `CacheDeserializationException` | `Light.Exceptions` | Thrown by `Get<T>`/`GetAsync<T>` on a type mismatch (see Notes below). Does **not** derive from `SharedKernel`'s `Light.Exceptions.ExceptionBase` hierarchy — this project has no `ProjectReference` to `SharedKernel`, it just happens to share the namespace. |
-| `ServiceCollectionExtensions` | `Light.Extensions.DependencyInjection` | `AddCache(Action<CacheOptions>)` and `AddCache(CacheOptions)` registration helpers. |
+| `ServiceCollectionExtensions` | `Light.Extensions.DependencyInjection` | `AddCache(Action<CacheOptions>)` and `AddCache(CacheOptions?)` registration helpers. |
 | `CacheServiceExtensions` | `Light.Extensions` | `GetOrSetAsync<T>(ICacheService, string, Func<Task<T?>>, TimeSpan? slidingExpiration = null, ...)` — returns the cached value, or invokes the factory, caches, and returns the result on a miss. |
 
 ### ⚠️ Namespace layout
@@ -34,7 +34,7 @@ This is a known, intentional trade-off (not a build error — C# allows a namesp
 
 ## How `AddCache` picks a provider
 
-`AddCache(CacheOptions settings)` (the `Action<CacheOptions>` overload just builds a `CacheOptions` and delegates to this one) branches on `settings.Provider`:
+`AddCache(CacheOptions? settings)` (the `Action<CacheOptions>` overload just builds a `CacheOptions` and delegates to this one) branches on `settings.Provider`:
 
 - **`"redis"`** — throws a plain `Exception` if `settings.RedisHost` is null/empty. Otherwise builds a `StackExchange.Redis.ConfigurationOptions` (`AbortOnConnectFail = true`, single endpoint = `RedisHost`, `Password` set only if `RedisPassword` is non-empty), calls `services.AddStackExchangeRedisCache(...)` with it, and registers `ICacheService` → `DistributedCacheService` via `AddTransient`.
 - **Anything else (including null/empty)** — treated as the default: calls `services.AddMemoryCache()` and registers `ICacheService` → `MemoryCacheService` via `AddTransient`.
@@ -120,4 +120,5 @@ Notes:
 - Only sliding expiration is exposed (`Set<T>(key, value, slidingExpiration)` → `MemoryCacheEntryOptions.SlidingExpiration` or `DistributedCacheEntryOptions.SetSlidingExpiration`; omit/pass `null` for no expiration). There is no parameter for absolute expiration.
 - `AddCache` registers `ICacheService` with `AddTransient`, so a new `MemoryCacheService`/`DistributedCacheService` wrapper is created per resolution — cheap, since the wrapped `Microsoft.Extensions.Caching.*` cache itself is registered as a singleton by `AddMemoryCache`/`AddStackExchangeRedisCache`.
 - `AddCache` throws a plain `System.Exception` (not a more specific exception type) when `Provider == "redis"` and `RedisHost` is missing — catch `Exception` broadly if you need to handle this at startup, or validate `CacheOptions` yourself beforehand.
+- The `CacheOptions` overload's parameter is annotated `CacheOptions?` (nullable-aware signature), but it still throws `ArgumentNullException` via `ArgumentNullException.ThrowIfNull(settings)` when `null` is passed — the annotation documents nullability for callers/analyzers, it doesn't make `null` a valid input.
 - The project has `<Nullable>enable</Nullable>` (inherited from `Directory.Build.props`).

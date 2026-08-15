@@ -17,7 +17,7 @@ namespace Light.Extensions.DependencyInjection
             return services;
         }
 
-        public static IServiceCollection AddCache(this IServiceCollection services, CacheOptions settings)
+        public static IServiceCollection AddCache(this IServiceCollection services, CacheOptions? settings)
         {
             ArgumentNullException.ThrowIfNull(settings);
 

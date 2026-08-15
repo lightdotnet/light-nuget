@@ -4,7 +4,7 @@
 
 NuGet package ID: **`Lightsoft.AspNetCore.Extensions`** (see `WebHost.csproj`; the `.csproj` file itself
 is still named `WebHost.csproj` and the project folder is `WebHost`, but the assembly/package name is
-`Lightsoft.AspNetCore.Extensions`). Version `10.1` at the time of writing.
+`Lightsoft.AspNetCore.Extensions`). Version `2.0.0-preview.2` at the time of writing.
 
 This is the largest and most complex project in the `Framework` solution (`src/framework/Framework.slnx`),
 and the only one with an internal `ProjectReference` to another project in the solution
@@ -124,9 +124,11 @@ case-insensitive property matching, and a `JsonStringEnumConverter`.
   `[JsonPropertyOrder]` attribute within each level. Applies to any non-string class that isn't
   `IEnumerable` (so POCOs, not collections/dictionaries).
 - **`PropertyOrderedConverterFactory` / `PropertyOrderedConverter<T>`** — orders properties purely by a
-  `[PropertyOrder]` attribute (`Light.Contracts`); applies only to concrete classes that have at least one
-  property decorated with `[PropertyOrder]`. **Not currently wired into `AddDefaultJsonOptions()`** — it
-  exists in the package but must be added to `JsonSerializerOptions.Converters` manually if needed.
+  `[PropertyOrder]` attribute (`PropertyOrderAttribute`, defined in `SharedKernel`'s `Light.Extensions.Json`
+  namespace — same namespace as the converter itself, so no separate `using` is needed); applies only to
+  concrete classes that have at least one property decorated with `[PropertyOrder]`. **Not currently wired
+  into `AddDefaultJsonOptions()`** — it exists in the package but must be added to
+  `JsonSerializerOptions.Converters` manually if needed.
 
 Both derive from the shared abstract `OrderedConverterBase<T>`, which:
 
