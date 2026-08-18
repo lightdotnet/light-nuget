@@ -14,7 +14,7 @@ namespace Light.Smtp
             Port = port;
         }
 
-        public Task SendAsync(
+        public async Task SendAsync(
             string from,
             string fromDisplayName,
             List<string> recipients,
@@ -77,7 +77,7 @@ namespace Light.Smtp
 
             using var cancellationRegistration = cancellationToken.Register(smtpClient.SendAsyncCancel);
 
-            return smtpClient.SendMailAsync(message);
+            await smtpClient.SendMailAsync(message);
         }
     }
 }
