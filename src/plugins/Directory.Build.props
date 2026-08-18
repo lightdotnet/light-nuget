@@ -14,6 +14,6 @@
     <FileGeneratorVersion>$(NugetVersion)</FileGeneratorVersion>
     <GraphVersion>$(NugetVersion)</GraphVersion>
     <SerilogVersion>$(NugetVersion)</SerilogVersion>
-    <SmtpMailVersion>2.0.1.preview1</SmtpMailVersion>
+    <SmtpMailVersion>2.0.1-preview.1</SmtpMailVersion>
   </PropertyGroup>
 </Project>
