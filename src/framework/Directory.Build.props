@@ -7,7 +7,7 @@
 	<AuthorizationVersion>$(NugetVersion)</AuthorizationVersion>
 	<CachingVersion>$(NugetVersion)</CachingVersion>
 	<EntityFrameworkCoreVersion>$(NugetVersion)</EntityFrameworkCoreVersion>
-	<ExtensionsVersion>$(NugetVersion)</ExtensionsVersion>
+	<ExtensionsVersion>2.0.0-preview.1</ExtensionsVersion>
 	<ModularityVersion>$(NugetVersion)</ModularityVersion>
 	<SharedKernelVersion>$(NugetVersion)</SharedKernelVersion>
 	<SpecificationVersion>$(NugetVersion)</SpecificationVersion>

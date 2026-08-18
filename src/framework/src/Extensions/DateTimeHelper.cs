@@ -5,54 +5,6 @@ namespace Light.Extensions
     public static class DateTimeHelper
     {
         /// <summary>
-        /// Use this for check remaining minutes from Now to DateTime
-        /// </summary>
-        /// <param name="dateTime"></param>
-        /// <param name="mins"></param>
-        /// <returns></returns>
-        public static bool IsNearlyInMinutes(this DateTime dateTime, int mins)
-        {
-            var diff = dateTime - DateTime.Now;
-            return diff.TotalMinutes >= 0 && diff.TotalMinutes <= mins;
-        }
-
-        /// <summary>
-        /// Use this for check remaining seconds from Now to DateTime
-        /// </summary>
-        /// <param name="dateTime"></param>
-        /// <param name="seconds"></param>
-        /// <returns></returns>
-        public static bool IsNearlyInSeconds(this DateTime dateTime, int seconds)
-        {
-            var diff = dateTime - DateTime.Now;
-            return diff.TotalSeconds >= 0 && diff.TotalSeconds <= seconds;
-        }
-
-        /// <summary>
-        /// Use this for check remaining hours from Now to DateTime
-        /// </summary>
-        /// <param name="dateTime"></param>
-        /// <param name="hours"></param>
-        /// <returns></returns>
-        public static bool IsNearlyInHours(this DateTime dateTime, int hours)
-        {
-            var diff = dateTime - DateTime.Now;
-            return diff.TotalHours >= 0 && diff.TotalHours <= hours;
-        }
-
-        /// <summary>
-        /// Use this for check remaining days from Now to DateTime
-        /// </summary>
-        /// <param name="dateTime"></param>
-        /// <param name="days"></param>
-        /// <returns></returns>
-        public static bool IsNearlyInDays(this DateTime dateTime, int days)
-        {
-            var diff = dateTime - DateTime.Now;
-            return diff.TotalDays >= 0 && diff.TotalDays <= days;
-        }
-
-        /// <summary>
         /// Convert DateTime to seconds Unix Timestamp
         /// </summary>
         public static long ToUnixTimeSeconds(this DateTime value)
@@ -73,17 +25,17 @@ namespace Light.Extensions
         /// <summary>
         /// Convert seconds Unix Timestamp to DateTime 
         /// </summary>
-        public static DateTime GetDateTimeFromSeconds(long value)
+        public static DateTimeOffset GetDateTimeFromSeconds(long value)
         {
-            return DateTimeOffset.FromUnixTimeSeconds(value).DateTime;
+            return DateTimeOffset.FromUnixTimeSeconds(value);
         }
 
         /// <summary>
         /// Convert milliseconds Unix Timestamp to DateTime 
         /// </summary>
-        public static DateTime GetDateTimeFromMilliseconds(long value)
+        public static DateTimeOffset GetDateTimeFromMilliseconds(long value)
         {
-            return DateTimeOffset.FromUnixTimeMilliseconds(value).DateTime;
+            return DateTimeOffset.FromUnixTimeMilliseconds(value);
         }
     }
 }
