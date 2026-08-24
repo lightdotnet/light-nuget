@@ -21,8 +21,18 @@
         </MudList>
 
         <div class="mt-2">
-            <Button Label="Import" Color="AppColor.Primary" OnClick="OnImport" />
-            <Button Label="Clear" OnClick="ClearAsync" Color="default" />
+            @if (Processing)
+            {
+                <MudButton Disabled="@Processing" Variant="Variant.Filled" Color="Color.Primary">
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Processing</MudText>
+                </MudButton>
+            }
+            else
+            {
+                <Button Disable="@Processing" Label="Import" Color="AppColor.Primary" OnClick="OnImport" />
+                <Button Label="Clear" OnClick="ClearAsync" Color="default" />
+            }
         </div>
     }
 </div>
@@ -45,6 +55,9 @@
 
     [Parameter]
     public bool DragAndDrop { get; set; } = true;
+
+    [Parameter]
+    public bool Processing { get; set; } = false;
 
     private Task FilesChangedAsync(IBrowserFile file)
     {
