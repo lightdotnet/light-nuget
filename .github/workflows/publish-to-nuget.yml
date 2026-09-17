@@ -15,7 +15,6 @@ on:
           - blazor
           - efcore
           - eventbus
-          - identity
           - plugins
 
 jobs:
@@ -73,14 +72,6 @@ jobs:
               [
                 "src/EventBus/EventBus.csproj",
                 "src/EventBus.MassTransit.RabbitMQ/EventBus.MassTransit.RabbitMQ.csproj"
-              ]
-
-          - group: identity
-            working-dir: ./src/framework
-            projects: |
-              [
-                "src/Identity/Identity.csproj",
-                "src/Identity.EntityFrameworkCore/Identity.EntityFrameworkCore.csproj"
               ]
 
           - group: plugins
