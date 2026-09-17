@@ -7,7 +7,7 @@ SMTP email-sending implementations behind a single shared contract, `ISmtpMailSe
 - **NuGet package id / assembly name:** `Lightsoft.SmtpMail` (no explicit `PackageId`, so it defaults to `AssemblyName`)
 - **Root namespace:** `Light.Smtp` — the interface, both senders, and the options classes all live directly under `Light.Smtp` (source files sit under `Smtp/`); DI extensions live under `Light.Extensions.DependencyInjection`
 - **Target framework:** netstandard2.1
-- **Dependencies:** `MailKit` (4.17.0), `MimeKit` (4.17.0), `Microsoft.Extensions.DependencyInjection.Abstractions`. No project references — the package no longer depends on a shared `Mail.Contracts` DTO project; `ISmtpMailSender.SendAsync` takes plain primitive parameters directly.
+- **Dependencies:** `MailKit` (4.18.0), `MimeKit` (4.18.0), `Microsoft.Extensions.DependencyInjection.Abstractions`. No project references — the package no longer depends on a shared `Mail.Contracts` DTO project; `ISmtpMailSender.SendAsync` takes plain primitive parameters directly.
 
 ## What's in this package
 

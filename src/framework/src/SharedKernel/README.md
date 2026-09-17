@@ -50,12 +50,12 @@ Within this solution, `WebHost` is the only project that references `SharedKerne
   ```
 
 - **`BaseAuditableEntity` / `BaseAuditableEntity<TId>`** — adds `Created`, `CreatedBy`,
-  `LastModified`, `LastModifiedBy` (implements `IAuditable`).
+  `LastModified`, `LastModifiedBy` (implements `IHasAuditTime, IHasAuditUser`).
 - **`AuditableEntity`** — `BaseAuditableEntity<string>` with the same auto-generated `LightId`
   behavior as `Entity`.
 - Audit/tenant/soft-delete interfaces available for opt-in composition on your own entities:
-  `IAuditable`, `IHasAuditTime`, `IHasCreationTime`, `IHasModificationTime`, `IHasAuditUser`,
-  `ISoftDelete`, `ITenant`.
+  `IHasAudit` (common marker), `IHasAuditTime`, `IHasCreationTime`, `IHasModificationTime`,
+  `IHasAuditUser`, `ISoftDelete`, `ITenant`.
 - **`ValueObject`** (`Light.Domain.ValueObjects`) — abstract base implementing structural
   equality via an overridden `GetEqualityComponents()`; also provides `EqualOperator`/
   `NotEqualOperator` helpers for use in derived `==`/`!=` operators.
@@ -122,6 +122,13 @@ name / property type / property value) rather than columns.
 
 ## Notes
 
+- **`IAuditable` removed (breaking change)**: the `IAuditable` interface has been removed.
+  `BaseAuditableEntity` now implements `IHasAuditTime, IHasAuditUser` directly instead of via
+  `IAuditable`. Existing consumers of `BaseAuditableEntity` itself are unaffected (the same
+  members are still present), but any code that referenced the `IAuditable` type name directly
+  (e.g. as a generic constraint, cast target, or interceptor/specification filter) will no longer
+  compile and must switch to `IHasAuditTime`/`IHasAuditUser` (or the new common marker
+  `IHasAudit`, if a broader "has some audit info" check is needed).
 - **`LightId` API shape change**: `LightId` is a `readonly struct` (value type), not a static
   class. `NewId()` returns a `LightId`, not a bare `string`/`Guid` — it converts implicitly to
   either. `Entity`/`AuditableEntity` still assign `Id = LightId.NewId()` into a `string Id`

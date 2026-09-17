@@ -47,6 +47,7 @@ Append one line per run so drift between runs is visible:
 | Date | Run by | Result |
 |---|---|---|
 | 2026-08-13 | manual | first full run — 29/29 files OK, no findings |
+| 2026-09-17 | manual | 28/28 files OK, no findings (triggered by post-refactor maintenance pass) |
 
 ## Scheduling
 

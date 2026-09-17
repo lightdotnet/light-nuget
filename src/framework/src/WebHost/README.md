@@ -4,7 +4,7 @@
 
 NuGet package ID: **`Lightsoft.AspNetCore.Extensions`** (see `WebHost.csproj`; the `.csproj` file itself
 is still named `WebHost.csproj` and the project folder is `WebHost`, but the assembly/package name is
-`Lightsoft.AspNetCore.Extensions`). Version `2.0.0-preview.2` at the time of writing.
+`Lightsoft.AspNetCore.Extensions`). Version `2.0.1` at the time of writing (tracks `$(NugetVersion)` in `src/framework/Directory.Build.props`).
 
 This is the largest and most complex project in the `Framework` solution (`src/framework/Framework.slnx`),
 and the only one with an internal `ProjectReference` to another project in the solution
