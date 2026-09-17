@@ -1,0 +1,113 @@
+name: '[NuGet.org] Publish packages'
+
+on:
+  workflow_dispatch:
+    inputs:
+      package-group:
+        description: 'Package group to publish'
+        required: true
+        type: choice
+        default: all
+        options:
+          - all
+          - core
+          - aspnetcore
+          - blazor
+          - efcore
+          - eventbus
+          - identity
+          - plugins
+
+jobs:
+
+  publish:
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write # required for NuGet.org Trusted Publishing (OIDC)
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: core
+            working-dir: ./src/framework
+            projects: |
+              [
+                "src/Extensions/Extensions.csproj",
+                "src/SharedKernel/SharedKernel.csproj",
+                "src/Caching/Caching.csproj"
+              ]
+
+          - group: aspnetcore
+            working-dir: ./src/framework
+            projects: |
+              [
+                "src/Authorization/Authorization.csproj",
+                "src/Modularity/Modularity.csproj",
+                "src/Swagger/Swagger.csproj",
+                "src/WebHost/WebHost.csproj"
+              ]
+
+          - group: blazor
+            working-dir: ./src/blazor
+            projects: |
+              [
+                "src/Blazor/Blazor.csproj",
+                "src/Blazor.MudBlazor.Extra/Blazor.MudBlazor.Extra.csproj",
+                "src/Blazor.FluentBlazor.Extra/Blazor.FluentBlazor.Extra.csproj"
+              ]
+
+          - group: efcore
+            working-dir: ./src/framework
+            projects: |
+              [
+                "src/Specification/Specification.csproj",
+                "src/EntityFrameworkCore/EntityFrameworkCore.csproj"
+              ]
+
+          - group: eventbus
+            working-dir: ./src/eventbus
+            projects: |
+              [
+                "src/EventBus/EventBus.csproj",
+                "src/EventBus.MassTransit.RabbitMQ/EventBus.MassTransit.RabbitMQ.csproj"
+              ]
+
+          - group: identity
+            working-dir: ./src/framework
+            projects: |
+              [
+                "src/Identity/Identity.csproj",
+                "src/Identity.EntityFrameworkCore/Identity.EntityFrameworkCore.csproj"
+              ]
+
+          - group: plugins
+            working-dir: ./src/plugins
+            projects: |
+              [
+                "src/ActiveDirectory/ActiveDirectory.csproj",
+                "src/Serilog/Serilog.csproj",
+                "src/FileGenerator/FileGenerator.csproj",
+                "src/SmtpMail/SmtpMail.csproj",
+                "src/Graph/Graph.csproj"
+              ]
+
+    steps:
+
+    # must run in every workflows
+    - uses: actions/checkout@v5
+      if: ${{ inputs.package-group == 'all' || inputs.package-group == matrix.group }}
+
+    - name: Setup .NET
+      uses: ./.github/actions/dotnet-setup
+      if: ${{ inputs.package-group == 'all' || inputs.package-group == matrix.group }}
+
+    - name: Publish packages
+      uses: ./.github/actions/publish-nuget
+      if: ${{ inputs.package-group == 'all' || inputs.package-group == matrix.group }}
+      with:
+        nuget-user: ${{ secrets.NUGET_USER }}
+        projects: ${{ matrix.projects }}
+        working-dir: ${{ matrix.working-dir }}
