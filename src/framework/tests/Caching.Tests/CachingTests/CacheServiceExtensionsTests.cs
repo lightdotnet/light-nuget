@@ -3,7 +3,6 @@ using Light.Extensions.Caching;
 using Light.Infrastructure;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
-using NUnit.Framework;
 
 namespace Caching.Tests.CachingTests;
 
