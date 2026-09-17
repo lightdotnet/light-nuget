@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Light.Extensions
 {
@@ -66,6 +67,14 @@ namespace Light.Extensions
                 return value;
 
             return value[(idx + 1)..];
+        }
+
+        /// <summary>
+        ///     Check value is null or empty or white space
+        /// </summary>
+        public static bool IsNullOrEmptyOrWhiteSpace([NotNullWhen(false)] string? input)
+        {
+            return string.IsNullOrEmpty(input) || string.IsNullOrWhiteSpace(input);
         }
     }
 }

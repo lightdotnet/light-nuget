@@ -6,7 +6,8 @@
     StartIcon="@StartIcon" EndIcon="@EndIcon"
     Class="@Class"
     ButtonType="buttonType"
-    OnClick="OnClick" Href="@Href">
+    OnClick="OnClick" Href="@Href"
+    Disabled="@Disable">
     @Label
 </MudButton>
 
@@ -40,6 +41,9 @@
 
     [Parameter]
     public bool Outlined { get; set; }
+
+    [Parameter]
+    public bool Disable { get; set; }
 
     private ButtonType buttonType => Submit ? ButtonType.Submit : ButtonType.Button;
 

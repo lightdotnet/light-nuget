@@ -1,6 +1,9 @@
 ﻿namespace Light.Domain.Entities.Interfaces;
 
-public interface IHasAuditUser
+/// <summary>
+/// Indicates that the entity has audit user properties (created by and last modified by).
+/// </summary>
+public interface IHasAuditUser : IHasAudit
 {
     string? CreatedBy { get; set; }
 

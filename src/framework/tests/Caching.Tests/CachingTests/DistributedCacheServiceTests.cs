@@ -4,7 +4,6 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using NUnit.Framework;
 using System.Text.Json;
 
 namespace Caching.Tests.CachingTests;

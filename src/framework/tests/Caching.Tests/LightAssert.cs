@@ -1,6 +1,4 @@
-﻿using NUnit.Framework;
-
-namespace Caching.Tests
+﻿namespace Caching.Tests
 {
     internal static class LightAssert
     {
