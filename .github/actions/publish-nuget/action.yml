@@ -1,10 +1,10 @@
 name: "Publish NuGet Package"
-description: "Restore, build, pack, and publish a .csproj"
+description: "Restore, build, pack, and publish a .csproj via NuGet.org Trusted Publishing (OIDC)"
 
 inputs:
-  token:
+  nuget-user:
     required: true
-    description: "api key must have publish permission"
+    description: "nuget.org username (profile name, not email) registered in the trusted publishing policy"
 
   projects:
     required: true
@@ -52,11 +52,17 @@ runs:
           dotnet pack --no-build "$project" --configuration Release --output nuget
         done
 
+    - name: NuGet login (OIDC -> temp API key)
+      uses: NuGet/login@v1
+      id: nuget-login
+      with:
+        user: ${{ inputs.nuget-user }}
+
     - name: Publish to NuGet.org
       shell: bash
       working-directory: ${{ inputs.working-dir }}
       run: |
         dotnet nuget push nuget/*.nupkg \
-          -k '${{ inputs.token }}' \
+          --api-key '${{ steps.nuget-login.outputs.NUGET_API_KEY }}' \
           --skip-duplicate \
           -s https://api.nuget.org/v3/index.json

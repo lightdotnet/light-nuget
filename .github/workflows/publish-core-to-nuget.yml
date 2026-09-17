@@ -9,6 +9,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write # required for NuGet.org Trusted Publishing (OIDC)
+
     steps:
 
     # must run in every workflows
@@ -20,7 +23,7 @@ jobs:
     - name: Publish packages
       uses: ./.github/actions/publish-nuget
       with:
-        token: ${{ secrets.NUGET_API_KEY }}
+        nuget-user: ${{ secrets.NUGET_USER }}
         projects: |
           [
             "src/Extensions/Extensions.csproj",
