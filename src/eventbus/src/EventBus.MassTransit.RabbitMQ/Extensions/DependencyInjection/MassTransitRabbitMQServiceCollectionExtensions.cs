@@ -6,6 +6,7 @@ using Light.MassTransit.RabbitMQ;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -23,8 +24,9 @@ namespace Light.Extensions.DependencyInjection
                 x.Username(configurator.Username);
                 x.Password(configurator.Password);
             });
-            rabbitMqBusFactoryConfigurator.ConfigureEndpoints(busRegistrationContext);
 
+            // topology (entity names, publish excludes) must be configured before the receive endpoints are created,
+            // otherwise the endpoints are bound using the default formatter/topology.
             var nameFormatter = new BusEntityBindingNameFormatter(rabbitMqBusFactoryConfigurator.MessageTopology.EntityNameFormatter);
             rabbitMqBusFactoryConfigurator.MessageTopology.SetEntityNameFormatter(nameFormatter);
 
@@ -36,7 +38,22 @@ namespace Light.Extensions.DependencyInjection
                 rabbitMqBusFactoryConfigurator.Publish(excludeType, p => p.Exclude = true);
             }
 
+            rabbitMqBusFactoryConfigurator.ConfigureEndpoints(busRegistrationContext);
+
             return rabbitMqBusFactoryConfigurator;
+        }
+
+        private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+        {
+            try
+            {
+                return assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                // some types could not be loaded (e.g. a missing optional dependency) - scan the ones that could.
+                return ex.Types.Where(x => x != null)!;
+            }
         }
 
         private static IBusRegistrationConfigurator AddModuleConsumers(
@@ -45,7 +62,7 @@ namespace Light.Extensions.DependencyInjection
         {
             // get all classes inherit from interface
             var moduleConsumerTypes = assemblies
-                .SelectMany(s => s.GetTypes())
+                .SelectMany(GetLoadableTypes)
                 .Where(x =>
                     typeof(IModuleConsumer).IsAssignableFrom(x)
                     && x.IsClass && !x.IsAbstract);
@@ -70,14 +87,59 @@ namespace Light.Extensions.DependencyInjection
             return configurator;
         }
 
-        public static IServiceCollection AddMassTransit(
+        private static void Validate(RabbitMQConfigurator configurator, string paramName)
+        {
+            if (string.IsNullOrWhiteSpace(configurator.Host))
+            {
+                throw new ArgumentException(
+                    $"RabbitMQ setting '{nameof(RabbitMQConfigurator.Host)}' is required. Set it via ConfigRabbitMQ(...).",
+                    paramName);
+            }
+
+            if (string.IsNullOrWhiteSpace(configurator.Username))
+            {
+                throw new ArgumentException(
+                    $"RabbitMQ setting '{nameof(RabbitMQConfigurator.Username)}' is required. Set it via ConfigRabbitMQ(...).",
+                    paramName);
+            }
+
+            if (string.IsNullOrEmpty(configurator.Password))
+            {
+                throw new ArgumentException(
+                    $"RabbitMQ setting '{nameof(RabbitMQConfigurator.Password)}' is required. Set it via ConfigRabbitMQ(...).",
+                    paramName);
+            }
+        }
+
+        /// <summary>
+        /// Registers MassTransit with the RabbitMQ transport, the configured consumers and
+        /// <see cref="IEventBus"/> (<see cref="RabbitMQEventBus"/>, scoped).
+        /// </summary>
+        /// <exception cref="ArgumentNullException"><paramref name="services"/> or <paramref name="action"/> is null.</exception>
+        /// <exception cref="ArgumentException">
+        /// <see cref="RabbitMQConfigurator.Host"/>, <see cref="RabbitMQConfigurator.Username"/> or
+        /// <see cref="RabbitMQConfigurator.Password"/> was not set by <paramref name="action"/>.
+        /// </exception>
+        public static IServiceCollection AddRabbitMQEventBus(
             this IServiceCollection services,
             Action<MassTransitConfigurator> action)
         {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
             var massTransitConfigurator = new MassTransitConfigurator();
             action(massTransitConfigurator);
 
-            services.AddMassTransit(x =>
+            Validate(massTransitConfigurator.RabbitMQConfigurator, nameof(action));
+
+            services.AddMassTransit((IBusRegistrationConfigurator x) =>
             {
                 foreach (var consumer in massTransitConfigurator.Consumers)
                 {
@@ -100,6 +162,18 @@ namespace Light.Extensions.DependencyInjection
             services.AddScoped<IEventBus, RabbitMQEventBus>();
 
             return services;
+        }
+
+        /// <summary>
+        /// Same as <see cref="AddRabbitMQEventBus"/>. Prefer <see cref="AddRabbitMQEventBus"/>: this name overlaps
+        /// MassTransit's own <c>AddMassTransit(IServiceCollection, Action&lt;IBusRegistrationConfigurator&gt;)</c>, so
+        /// which one a call binds to depends on the lambda body.
+        /// </summary>
+        public static IServiceCollection AddMassTransit(
+            this IServiceCollection services,
+            Action<MassTransitConfigurator> action)
+        {
+            return services.AddRabbitMQEventBus(action);
         }
     }
 }

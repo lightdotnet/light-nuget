@@ -11,7 +11,7 @@ namespace Light.MassTransit.RabbitMQ
         {
             var typeOfBindingNameAttribute = typeof(BindingNameAttribute);
 
-            var instance = memberInfo.GetCustomAttributes(typeOfBindingNameAttribute, true).FirstOrDefault() as BindingNameAttribute;
+            var instance = memberInfo.GetCustomAttributes(typeOfBindingNameAttribute, false).FirstOrDefault() as BindingNameAttribute;
 
             return instance?.BindingName;
         }

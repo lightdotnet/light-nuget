@@ -7,11 +7,17 @@ public class ColorRemovedConsumer(
     ILogger<ColorRemovedConsumer> logger) :
     Consumer<ColorRemovedIntegrationEvent>(logger)
 {
+    // log and swallow handler errors: the message is acknowledged even when Handle throws, so no retry policy or
+    // _error queue applies to this consumer (none is configured in ColorRemovedConsumerDefinition).
     public override bool ThrowIfError => false;
 
-    public override async Task Handle(ColorRemovedIntegrationEvent message)
+    public override Task Handle(ColorRemovedIntegrationEvent message) =>
+        throw new NotSupportedException("Handle(message, context) is used instead.");
+
+    // the ConsumeContext overload gives access to the CancellationToken, headers, etc.
+    protected override async Task Handle(ColorRemovedIntegrationEvent message, ConsumeContext<ColorRemovedIntegrationEvent> context)
     {
-        await Task.Delay(2000);
+        await Task.Delay(2000, context.CancellationToken);
 
         logger.LogInformation("Color removed {color} by {id}", message.Color, message.Id);
     }
@@ -32,8 +38,7 @@ internal class ColorRemovedConsumerDefinition :
         IConsumerConfigurator<ColorRemovedConsumer> consumerConfigurator,
         IRegistrationContext context)
     {
-        // configure message retry with millisecond intervals
-        configurator.UseMessageRetry(r => r.Intervals(100, 200, 5000, 8000, 10000));
+        // no UseMessageRetry here: ColorRemovedConsumer.ThrowIfError is false, so a retry policy would never trigger.
 
         // use the outbox to prevent duplicate events from being published
         configurator.UseInMemoryOutbox(context);
