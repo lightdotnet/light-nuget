@@ -2,7 +2,9 @@ using Light.EntityFrameworkCore.Repositories;
 using Light.Repositories;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Storage;
+using System.Data.Common;
 
 namespace EntityFrameworkCore.Tests;
 
@@ -27,15 +29,15 @@ public class UnitOfWorkTransactionTests
     [TearDown]
     public void TearDown() => _connection.Dispose();
 
-    private TestDbContext CreateContext(bool retrying)
+    private TestDbContext CreateContext(bool retrying, IInterceptor? interceptor = null)
     {
-        var options = new DbContextOptionsBuilder<TestDbContext>()
+        var builder = new DbContextOptionsBuilder<TestDbContext>()
             .UseSqlite(_connection, o =>
             {
                 if (retrying) o.ExecutionStrategy(d => new TestRetryingExecutionStrategy(d));
-            })
-            .Options;
-        return new TestDbContext(options);
+            });
+        if (interceptor is not null) builder.AddInterceptors(interceptor);
+        return new TestDbContext(builder.Options);
     }
 
     private int CountProducts()
@@ -138,7 +140,78 @@ public class UnitOfWorkTransactionTests
         CountProducts().ShouldBe(1);
     }
 
+    [TestCase(true, 1, 1)]
+    [TestCase(false, 2, 2)]
+    public async Task ExecuteInTransactionAsync_With_VerifySucceeded_Should_Not_Retry_A_Committed_Unit(
+        bool committedIsVisible, int expectedAttempts, int expectedRows)
+    {
+        // the first commit succeeds but its acknowledgement is "lost" (transient failure right after the commit)
+        await using var uow = new UnitOfWork(CreateContext(retrying: true, new LostCommitAckInterceptor()));
+        var attempts = 0;
+        var verifications = 0;
+
+        var result = await uow.ExecuteInTransactionAsync(async ct =>
+        {
+            attempts++;
+            await uow.Set<Product>().AddAsync(new Product { ProductName = "Once" }, ct);
+            return attempts;
+        }, _ =>
+        {
+            verifications++;
+            // a real check queries the store; false simulates "not found" and lets the unit be retried
+            return Task.FromResult(committedIsVisible && CountProducts() == 1);
+        });
+
+        verifications.ShouldBe(1);
+        attempts.ShouldBe(expectedAttempts);
+        result.ShouldBe(expectedAttempts);
+        CountProducts().ShouldBe(expectedRows);
+    }
+
+    [Test]
+    public async Task ExecuteInTransactionAsync_With_VerifySucceeded_Should_Commit_Without_Verifying()
+    {
+        await using var uow = new UnitOfWork(CreateContext(retrying: true));
+        var verifications = 0;
+
+        await uow.ExecuteInTransactionAsync(
+            async ct => await uow.Set<Product>().AddAsync(new Product { Id = 1, ProductName = "Committed" }, ct),
+            _ => { verifications++; return Task.FromResult(true); });
+
+        CountProducts().ShouldBe(1);
+        verifications.ShouldBe(0);
+    }
+
+    [Test]
+    public async Task Default_Interface_ExecuteInTransactionAsync_With_VerifySucceeded_Should_Commit()
+    {
+        await using var inner = new UnitOfWork(CreateContext(retrying: false));
+        IUnitOfWork uow = new MinimalUnitOfWork(inner);
+
+        var result = await uow.ExecuteInTransactionAsync(ct =>
+        {
+            uow.Set<Product>().Add(new Product { Id = 1, ProductName = "Default impl" });
+            return Task.FromResult(42);
+        }, _ => Task.FromResult(false));
+
+        result.ShouldBe(42);
+        CountProducts().ShouldBe(1);
+    }
+
     private sealed class TransientTestException : Exception;
+
+    /// <summary>Throws a transient error right after the first commit has succeeded.</summary>
+    private sealed class LostCommitAckInterceptor : DbTransactionInterceptor
+    {
+        private bool _thrown;
+
+        public override Task TransactionCommittedAsync(DbTransaction transaction, TransactionEndEventData eventData, CancellationToken cancellationToken = default)
+        {
+            if (_thrown) return Task.CompletedTask;
+            _thrown = true;
+            throw new TransientTestException();
+        }
+    }
 
     private sealed class TestRetryingExecutionStrategy(ExecutionStrategyDependencies dependencies)
         : ExecutionStrategy(dependencies, maxRetryCount: 3, maxRetryDelay: TimeSpan.Zero)

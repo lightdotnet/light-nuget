@@ -92,6 +92,47 @@ public class ExceptionHandlerTests
     }
 
     [Test]
+    public async Task ClearsPartialResponseStateBeforeWritingError()
+    {
+        var context = CreateContext();
+        context.Response.StatusCode = 201;
+        context.Response.ContentType = "text/plain";
+        context.Response.Headers.ETag = "\"stale\"";
+        context.Response.Headers.ContentLength = 3;
+        await context.Response.Body.WriteAsync("abc"u8.ToArray());
+
+        await Handler.TryHandleAsync(context, new NotFoundException("not found"), CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.Response.StatusCode, Is.EqualTo(404));
+            Assert.That(context.Response.ContentType, Does.StartWith("application/json"));
+            Assert.That(context.Response.Headers.ContainsKey("ETag"), Is.False);
+            Assert.That(context.Response.Headers.ContentLength, Is.Null);
+            Assert.That(ReadBody(context), Does.StartWith("{").And.Contain("not found"));
+        });
+    }
+
+    [Test]
+    public async Task PreservesCorsHeadersWhenClearingResponse()
+    {
+        var context = CreateContext();
+        context.Response.Headers.AccessControlAllowOrigin = "https://example.com";
+        context.Response.Headers.Vary = "Origin";
+        context.Response.Headers.ETag = "\"stale\"";
+
+        await Handler.TryHandleAsync(context, new NotFoundException("not found"), CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.Response.StatusCode, Is.EqualTo(404));
+            Assert.That(context.Response.Headers.AccessControlAllowOrigin.ToString(), Is.EqualTo("https://example.com"));
+            Assert.That(context.Response.Headers.Vary.ToString(), Is.EqualTo("Origin"));
+            Assert.That(context.Response.Headers.ContainsKey("ETag"), Is.False);
+        });
+    }
+
+    [Test]
     public async Task ResponseStarted_DoesNotWriteOrChangeStatus()
     {
         var context = CreateContext(started: true);

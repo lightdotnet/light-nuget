@@ -87,5 +87,47 @@ namespace Light.Repositories
                 throw;
             }
         }
+
+        /// <summary>
+        /// Runs <paramref name="action"/>, saves changes and commits, all inside one transaction.
+        /// <paramref name="verifySucceeded"/> is used by retrying implementations to detect whether a failed attempt
+        /// actually committed before retrying it.
+        /// </summary>
+        /// <remarks>
+        /// Use this overload when the unit of work runs under a retrying execution strategy and must not be applied
+        /// twice (e.g. inserts without a natural unique key). A transient failure can be reported for a commit that
+        /// in fact succeeded on the server (e.g. the connection dropped before the acknowledgement arrived); without
+        /// verification the whole unit is retried and its writes are applied again. After such a failure a retrying
+        /// implementation calls <paramref name="verifySucceeded"/>, which must query the store (with a fresh read,
+        /// not the change tracker) and return <c>true</c> if the work of the failed attempt is already persisted, in
+        /// which case no retry happens. A common pattern is to write a unique marker/id inside the action and check
+        /// for it in <paramref name="verifySucceeded"/>.
+        /// This default implementation has no retry support: it ignores <paramref name="verifySucceeded"/> and
+        /// behaves like <see cref="ExecuteInTransactionAsync(Func{CancellationToken, Task}, CancellationToken)"/>.
+        /// </remarks>
+        async Task ExecuteInTransactionAsync(Func<CancellationToken, Task> action, Func<CancellationToken, Task<bool>> verifySucceeded, CancellationToken cancellationToken = default)
+        {
+            if (action == null) throw new ArgumentNullException(nameof(action));
+            if (verifySucceeded == null) throw new ArgumentNullException(nameof(verifySucceeded));
+
+            await ExecuteInTransactionAsync(action, cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Runs <paramref name="action"/>, saves changes and commits, all inside one transaction, returning the
+        /// result of the action. <paramref name="verifySucceeded"/> is used by retrying implementations to detect
+        /// whether a failed attempt actually committed before retrying it.
+        /// </summary>
+        /// <remarks>
+        /// See <see cref="ExecuteInTransactionAsync(Func{CancellationToken, Task}, Func{CancellationToken, Task{bool}}, CancellationToken)"/>.
+        /// When verification succeeds, the result returned by the action in the last attempt is returned.
+        /// </remarks>
+        async Task<TResult> ExecuteInTransactionAsync<TResult>(Func<CancellationToken, Task<TResult>> action, Func<CancellationToken, Task<bool>> verifySucceeded, CancellationToken cancellationToken = default)
+        {
+            if (action == null) throw new ArgumentNullException(nameof(action));
+            if (verifySucceeded == null) throw new ArgumentNullException(nameof(verifySucceeded));
+
+            return await ExecuteInTransactionAsync<TResult>(action, cancellationToken).ConfigureAwait(false);
+        }
     }
 }

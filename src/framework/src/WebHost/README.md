@@ -73,7 +73,7 @@ Namespace: `Light.AspNetCore.Middlewares` (options + middleware), registered via
 | `IncludeRequest` | `bool` | Logs the (minified, if valid JSON) request body. |
 | `IncludeResponse` | `bool` | Logs the response body, captured by a write-through stream (the response is streamed to the client as usual, not buffered). |
 | `ExcludePaths` | `List<string>?` | Additional path substrings to skip logging for. |
-| `MaxBodyLogBytes` | `int` | Max bytes of each body captured for logging (default `32768`); longer bodies are logged with a `...[truncated]` suffix. `0` disables body logging. |
+| `MaxBodyLogBytes` | `int` | Max bytes of each body captured for logging (default `32768`); longer bodies are logged with a `...[truncated]` suffix. `0` disables body logging; values are clamped to 16 MB. |
 
 `RequestLoggingMiddleware` always merges `"hangfire"` and `"swagger"` into the exclude list in addition to
 whatever `ExcludePaths` you configure — a request is skipped if its path *contains* any excluded substring.
@@ -117,6 +117,10 @@ Pick one — they are not meant to be combined:
 - If the response has already started, nothing is written and the status code is not touched: the exception
   is logged (with stack trace) and reported as unhandled — `ExceptionHandler.TryHandleAsync` returns `false`
   and `ExceptionHandlerMiddleware` rethrows, so the server aborts the connection.
+- Otherwise the response is cleared (`Response.Clear()`: status, headers and buffered body) before the error
+  JSON is written, so headers set before the exception (e.g. `ETag`, `Content-Length`, `Cache-Control`) are
+  dropped. CORS headers (`Access-Control-*`) and `Vary` are preserved so browsers can still read the error
+  cross-origin.
 - Walks the `InnerException` chain and stops at the first `Light.Exceptions.ExceptionBase`; if there is none,
   uses the innermost exception.
 - Maps `ValidationException` → its `StatusCode`, joining `ValidationErrors` into a `key: v1,v2|...` message;
