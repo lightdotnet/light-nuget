@@ -90,8 +90,18 @@ Body logging details:
 - The request body is read only up to `MaxBodyLogBytes` (with `HttpContext.RequestAborted`) and rewound for
   downstream middleware. Malformed JSON is logged raw instead of throwing (previously it turned a 400 into a 500).
 
+- With `IncludeResponse`, the response body feature (both `Response.Body` and `Response.BodyWriter`) is
+  replaced by a capturing one for the rest of the pipeline. On an unhandled exception, bytes still buffered in
+  `BodyWriter` (written but not flushed) are discarded, not sent.
+
+Register the exception handler **before** request logging, so exceptions propagate out of the logging
+middleware. If the handler sits *inside* it (registered after `UseLightRequestLogging()`) and the failed endpoint
+had written to `Response.BodyWriter` without flushing, those stale bytes stay buffered in the capturing writer and
+are flushed together with the error JSON.
+
 ```csharp
-app.UseLightRequestLogging(); // no-op unless RequestLoggingOptions.Enable == true
+app.UseLightExceptionHandler(); // or app.UseExceptionHandler() — before request logging
+app.UseLightRequestLogging();   // no-op unless RequestLoggingOptions.Enable == true
 ```
 
 ## Exception handling
@@ -120,7 +130,9 @@ Pick one — they are not meant to be combined:
 - Otherwise the response is cleared (`Response.Clear()`: status, headers and buffered body) before the error
   JSON is written, so headers set before the exception (e.g. `ETag`, `Content-Length`, `Cache-Control`) are
   dropped. CORS headers (`Access-Control-*`) and `Vary` are preserved so browsers can still read the error
-  cross-origin.
+  cross-origin. This preservation only applies to the middleware-based `UseLightExceptionHandler()` path: on the
+  `IExceptionHandler` path, ASP.NET Core's own `ExceptionHandlerMiddleware` already clears the response
+  (including CORS headers) before any `IExceptionHandler` runs, so there is nothing left to preserve.
 - Walks the `InnerException` chain and stops at the first `Light.Exceptions.ExceptionBase`; if there is none,
   uses the innermost exception.
 - Maps `ValidationException` → its `StatusCode`, joining `ValidationErrors` into a `key: v1,v2|...` message;

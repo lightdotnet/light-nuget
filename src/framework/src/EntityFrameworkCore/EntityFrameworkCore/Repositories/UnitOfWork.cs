@@ -109,6 +109,11 @@ public class UnitOfWork(DbContext context, IServiceProvider? serviceProvider = n
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    ///     Note for inheritors: goes straight to the shared private implementation and does not call
+    ///     <see cref="ExecuteInTransactionAsync(Func{CancellationToken, Task}, CancellationToken)"/>; override this
+    ///     overload too when customizing the overloads without <paramref name="verifySucceeded"/>.
+    /// </remarks>
     public virtual async Task ExecuteInTransactionAsync(Func<CancellationToken, Task> action, Func<CancellationToken, Task<bool>> verifySucceeded, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(action);
@@ -130,6 +135,10 @@ public class UnitOfWork(DbContext context, IServiceProvider? serviceProvider = n
     ///     and the result produced by the action in that attempt is returned. Use it whenever re-applying the unit would
     ///     be harmful (e.g. duplicate inserts after a commit whose acknowledgement was lost). It is ignored when joining an
     ///     ambient transaction or with a non-retrying strategy.
+    ///     Note for inheritors: the <paramref name="verifySucceeded"/> overloads do not delegate to the overloads
+    ///     without it; both go straight to the shared private implementation. A subclass that overrides
+    ///     <see cref="ExecuteInTransactionAsync{TResult}(Func{CancellationToken, Task{TResult}}, CancellationToken)"/>
+    ///     (or the non-generic one) to add behavior must override the <paramref name="verifySucceeded"/> overloads too.
     /// </remarks>
     public virtual async Task<TResult> ExecuteInTransactionAsync<TResult>(Func<CancellationToken, Task<TResult>> action, Func<CancellationToken, Task<bool>> verifySucceeded, CancellationToken cancellationToken = default)
     {

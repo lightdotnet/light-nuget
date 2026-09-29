@@ -228,26 +228,44 @@ public class RequestLoggingMiddleware(
         var captureFeature = new CapturingResponseBodyFeature(originalFeature, capture);
         context.Features.Set<IHttpResponseBodyFeature>(captureFeature);
 
-        var completed = false;
+        Exception? failure = null;
         try
         {
             // Continue processing the request; let exceptions propagate to the
             // exception-handling pipeline instead of being swallowed here
             await next(context);
-            completed = true;
+        }
+        catch (Exception ex)
+        {
+            failure = ex;
+            throw;
         }
         finally
         {
+            var writerFailure = failure;
             try
             {
                 // push bytes still buffered in the BodyWriter through to the client before restoring;
                 // skipped on failure so a partial body doesn't start the response ahead of the exception handler
-                if (completed)
+                if (failure is null)
                     await captureFeature.FlushWriterAsync(context.RequestAborted);
+            }
+            catch (Exception ex)
+            {
+                writerFailure = ex;
+                throw;
             }
             finally
             {
-                context.Features.Set(originalFeature);
+                try
+                {
+                    // return the writer's pooled segments; on failure unflushed bytes are discarded, not written
+                    await captureFeature.CompleteWriterAsync(writerFailure);
+                }
+                finally
+                {
+                    context.Features.Set(originalFeature);
+                }
             }
         }
 
@@ -311,6 +329,16 @@ public class RequestLoggingMiddleware(
         {
             if (_writer is not null)
                 await _writer.FlushAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Completes <see cref="Writer"/> so its pooled segments are returned; no-op when the writer was never used.
+        /// When <paramref name="failure"/> is set, data still buffered in the writer is discarded instead of written.
+        /// </summary>
+        public async Task CompleteWriterAsync(Exception? failure)
+        {
+            if (_writer is not null)
+                await _writer.CompleteAsync(failure);
         }
     }
 
