@@ -106,7 +106,9 @@ for modules to register their own consumers.
 - `MassTransitRabbitMQServiceCollectionExtensions.AddModuleConsumers` (private) — scans the assemblies passed to
   `MassTransitConfigurator.AddConsumers(params Assembly[])` for concrete, non-abstract classes assignable to
   `IModuleConsumer` (i.e. deriving from `ModuleConsumer`; if an assembly throws `ReflectionTypeLoadException`, the
-  types that did load are still scanned), instantiates each via `Activator.CreateInstance` (throwing
+  types that did load are still scanned and startup continues, and the load failure is logged as a **Warning** —
+  category `Light.Extensions.DependencyInjection.MassTransitRabbitMQServiceCollectionExtensions`, with the loader
+  exception messages — when the bus is created; without an `ILoggerFactory` it goes to `Trace.TraceWarning`), instantiates each via `Activator.CreateInstance` (throwing
   a descriptive `InvalidOperationException` naming the offending type if it lacks a public parameterless
   constructor), and calls `AddConsumers` on each instance.
 
@@ -206,15 +208,16 @@ internal class ColorChangedConsumerDefinition
 
 To access the `ConsumeContext` (e.g. `context.CancellationToken`, headers), override the protected
 `Handle(TMessage message, ConsumeContext<TMessage> context)` overload instead — `Consume` calls it, and by default it
-forwards to `Handle(TMessage)`. `Handle(TMessage)` is still abstract and must be implemented even when unused (see
-`ColorRemovedConsumer` in the sample):
+forwards to `Handle(TMessage)`. `Handle(TMessage)` is still abstract and must be implemented even when unused —
+implement it as a no-op (`=> Task.CompletedTask`), since the pipeline no longer calls it (see `ColorRemovedConsumer`
+in the sample):
 
 ```csharp
 public class ColorRemovedConsumer(ILogger<ColorRemovedConsumer> logger)
     : Consumer<ColorRemovedIntegrationEvent>(logger)
 {
-    public override Task Handle(ColorRemovedIntegrationEvent message) =>
-        throw new NotSupportedException("Handle(message, context) is used instead.");
+    // required (abstract) but unused: the ConsumeContext overload below doesn't forward to it
+    public override Task Handle(ColorRemovedIntegrationEvent message) => Task.CompletedTask;
 
     protected override async Task Handle(
         ColorRemovedIntegrationEvent message,
@@ -281,7 +284,10 @@ app.MapGet("/changed", async (Color oldColor, Color newColor, IEventBus eventBus
   instances of one service, but wrong when different services each need the event. Give each service its own queue
   with the prefix constructor, e.g. `public MyDefinition() : base("billing") { }` → queue `billing-color-value-changed`
   (or set `EndpointName` yourself in the derived constructor). The parameterless constructor keeps the previous
-  naming.
+  naming. **The prefix only takes effect when the message type itself has a `[BindingName]`** (the attribute is not
+  inherited): otherwise it is silently ignored — no exception, no log — and MassTransit's formatter names the queue
+  from the consumer type as before, so the prefix gives no per-service isolation. Add a `[BindingName]` to the message
+  or set `EndpointName` explicitly in that case.
 - **`ThrowIfError` and retries.** `Consumer<TMessage>.ThrowIfError` defaults to `true`: unhandled `Handle` exceptions
   are logged then re-thrown, so MassTransit's retry/error pipeline sees the fault (`UseMessageRetry`, redelivery, and
   finally the `_error` queue). If you override it to `false`, the exception is logged and swallowed and the message is
@@ -303,3 +309,36 @@ app.MapGet("/changed", async (Color oldColor, Color newColor, IEventBus eventBus
   `Modularity` package in `src/framework`. There is no `ProjectReference` between the two packages, so it does not
   cause a build-time collision, but be aware of it if both packages are referenced by the same consuming project (a
   `using Light.AspNetCore.Modularity;` will pull in whichever assembly resolves the type you asked for).
+
+---
+
+## Breaking / behavior changes
+
+### Unreleased
+
+`Lightsoft.EventBus`:
+
+- **`[BindingName]` is no longer inherited** (`Inherited = false`, attribute lookup uses `inherit: false`). An event
+  deriving from an attributed event now uses MassTransit's default entity name unless it declares its own
+  `[BindingName]` — this can change exchange/queue names for derived event types.
+- `new BindingNameAttribute(null/""/" ")` now throws `ArgumentException`.
+
+`Lightsoft.EventBus.MassTransit.RabbitMQ`:
+
+- **Startup validation:** `AddRabbitMQEventBus` (new entry point) and `AddMassTransit(Action<MassTransitConfigurator>)`
+  (now forwards to it) throw `ArgumentException` at registration when `Host`, `Username` or `Password` is missing,
+  instead of failing later when the bus connects. `ArgumentNullException` for a null `services`/callback, and for null
+  arguments to `MassTransitConfigurator.AddConsumers`/`ConfigRabbitMQ`.
+- Entity-name formatter and publish excludes are now applied **before** `ConfigureEndpoints`, so receive endpoints are
+  bound with the `[BindingName]` topology (previously the default one).
+- `MassTransitConfigurator.AddConsumers` **appends** assemblies across calls (previously the last call replaced them).
+- Assembly scanning tolerates `ReflectionTypeLoadException` (loadable types are still scanned; the error is logged as a
+  Warning) instead of failing startup. A `ModuleConsumer` without a public parameterless constructor throws a
+  descriptive `InvalidOperationException`.
+- `Consumer<TMessage>`: the constructor is now `protected`; `Consume` calls the new overridable
+  `Handle(TMessage, ConsumeContext<TMessage>)` (defaults to `Handle(TMessage)`); cancellation during shutdown is always
+  re-thrown (never swallowed, even with `ThrowIfError => false`); errors are logged with the exception object and
+  message payloads only at Debug (previously payloads were logged at Information/Error).
+- `ConsumerDefinition<TMessage, TConsumer>` is now `abstract` and has an optional endpoint name prefix constructor
+  (validated; ignored when the message has no `[BindingName]`).
+- `RabbitMQEventBus.Publish(null)` throws `ArgumentNullException`.
