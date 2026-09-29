@@ -1,3 +1,5 @@
+using MailKit.Security;
+
 namespace Light.Smtp
 {
     public class SmtpMailOptions
@@ -20,5 +22,11 @@ namespace Light.Smtp
         public string Password { get; set; } = null!;
 
         public bool UseSsl { get; set; }
+
+        /// <summary>
+        /// Optional explicit TLS mode; overrides the mapping derived from <see cref="UseSsl"/>.
+        /// See <see cref="SmtpMailKitSender.SecureSocketOptions"/>.
+        /// </summary>
+        public SecureSocketOptions? SecureSocketOptions { get; set; }
     }
 }

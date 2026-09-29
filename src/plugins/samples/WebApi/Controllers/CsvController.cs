@@ -7,16 +7,32 @@ namespace WebApi.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    public class CsvController(ICsvService csvService) : ControllerBase
+    public class CsvController(
+        ICsvService csvService,
+        IConfiguration configuration,
+        IWebHostEnvironment environment) : ControllerBase
     {
-        private readonly string _path = Path.Combine(@"D:\\", "Files", "Adobe_aswDM50210_20250311182339.csv");
+        // Folder holding the sample CSV files: "Csv:FilesDirectory" (absolute, or relative to the content root),
+        // defaulting to "<content root>/Files".
+        private string FilesDirectory => Path.Combine(
+            environment.ContentRootPath,
+            configuration["Csv:FilesDirectory"] is { Length: > 0 } dir ? dir : "Files");
+
+        // Only a bare file name is accepted from the query string, so "../" cannot escape FilesDirectory.
+        private string GetCsvPath(string fileName) =>
+            Path.Combine(FilesDirectory, $"{Path.GetFileName(fileName)}.csv");
 
         [HttpGet("read")]
         public IActionResult Get(string fileName)
         {
-            var path = Path.Combine(@"D:\\", "Files", $"{fileName}.csv");
+            var path = GetCsvPath(fileName);
 
-            var stream = new StreamReader(path);
+            if (!System.IO.File.Exists(path))
+            {
+                return NotFound($"CSV file not found: {Path.GetFileName(path)}");
+            }
+
+            using var stream = new StreamReader(path);
 
             var dt = csvService.Read(stream);
 
@@ -26,9 +42,14 @@ namespace WebApi.Controllers
         [HttpGet("read_as")]
         public IActionResult ReadAs(string fileName)
         {
-            var path = Path.Combine(@"D:\\", "Files", $"{fileName}.csv");
+            var path = GetCsvPath(fileName);
 
-            var stream = new StreamReader(path);
+            if (!System.IO.File.Exists(path))
+            {
+                return NotFound($"CSV file not found: {Path.GetFileName(path)}");
+            }
+
+            using var stream = new StreamReader(path);
 
             var dt = csvService.Read<CsvObject>(stream);
 
@@ -38,7 +59,15 @@ namespace WebApi.Controllers
         [HttpGet("export")]
         public async Task<IActionResult> Write()
         {
-            var stream = new StreamReader(_path);
+            // Source file for the round-trip export: "Csv:ExportSourceFile" (file name inside FilesDirectory).
+            var path = GetCsvPath(Path.GetFileNameWithoutExtension(configuration["Csv:ExportSourceFile"] ?? "export-source"));
+
+            if (!System.IO.File.Exists(path))
+            {
+                return NotFound($"CSV file not found: {Path.GetFileName(path)}");
+            }
+
+            using var stream = new StreamReader(path);
 
             var list = csvService.ReadAs<CsvObject>(stream);
 

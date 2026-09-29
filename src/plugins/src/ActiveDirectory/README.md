@@ -36,7 +36,7 @@ public interface IActiveDirectoryService
 
 - `IsConfigured()` — whether the directory backend has usable configuration.
 - `CheckPasswordSignInAsync(userName, password)` — verifies credentials against the directory.
-- `ChangePassword(userName, newPassword)` — administrative password reset. **Synchronous**, unlike the other members on this interface, even though the underlying implementations perform I/O.
+- `ChangePassword(userName, newPassword)` — **administrative password reset**, not a user-initiated change: the current password is never verified, and the identity performing the reset must hold reset-password rights on the account. Don't expose it to end users as a "change my password" flow without verifying the old password yourself first. **Synchronous**, unlike the other members on this interface, even though the underlying implementations perform I/O.
 - `GetByUserNameAsync(userName)` — looks up a user and maps it to a `DomainUserDto`. **Not implemented by `LDAPService`** — calling it there throws `NotImplementedException`.
 
 ## Implementations
@@ -45,9 +45,11 @@ public interface IActiveDirectoryService
 
 Uses `System.DirectoryServices.AccountManagement.PrincipalContext`/`UserPrincipal` against a classic Windows AD domain, constructed with `DomainOptions`.
 
-- `IsConfigured()` — `true` when `settings.Name` is non-empty.
+> **Blocking I/O.** `System.DirectoryServices.AccountManagement` has no async API, so `CheckPasswordSignInAsync` and `GetByUserNameAsync` perform synchronous network calls to the domain controller on the calling thread and return an already-completed `Task`. Each call also opens a fresh `PrincipalContext` (no connection reuse), and no `CancellationToken` is supported. Wrap calls in `Task.Run` if blocking a request thread matters.
+
+- `IsConfigured()` — `true` when `settings.Name` is non-empty/non-whitespace **and** is not the `"domain.com"` placeholder default (case-insensitive).
 - `CheckPasswordSignInAsync` — finds the user by identity, checks the account isn't locked out, then validates credentials via `PrincipalContext.ValidateCredentials`.
-- `ChangePassword` — finds the user by identity and calls `UserPrincipal.SetPassword` + `Save()`; returns `false` if the user isn't found.
+- `ChangePassword` — admin reset: finds the user by identity and calls `UserPrincipal.SetPassword` + `Save()`; returns `false` if the user isn't found.
 - `GetByUserNameAsync` — finds the user by identity and maps `UserPrincipalName`/`GivenName`/`Surname`/`VoiceTelephoneNumber`/`EmailAddress` into a `DomainUserDto`; returns `null` if not found.
 
 ### `LDAPService`
@@ -71,8 +73,8 @@ No-op implementation with no `[SupportedOSPlatform]` restriction, intended for l
 ## Options
 
 ### `DomainOptions`
-- `Name` (`string`, default `"domain.com"`) — the AD domain to connect to.
-- `Enable` (`bool`, computed) — `!string.IsNullOrEmpty(Name)`. Note `ActiveDirectoryService.IsConfigured()` re-implements this same check inline rather than calling `Enable`.
+- `Name` (`string`, default `"domain.com"`) — the AD domain to connect to. The default is a placeholder: `ActiveDirectoryService.IsConfigured()` returns `false` until a real domain is set.
+- `Enable` (`bool`, computed) — `!string.IsNullOrEmpty(Name)`. Left unchanged for backward compatibility, so it is still `true` for the `"domain.com"` placeholder; prefer `IActiveDirectoryService.IsConfigured()`.
 
 ### `LdapOptions`
 - `Name` (`string`, default `"domain.com"`) — appended after `userName@` when binding.

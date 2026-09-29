@@ -44,16 +44,44 @@ public class CsvServiceTests
     }
 
     [Test]
-    public void ReadAs_ObjectProperty_FractionalText_ReturnsDouble_NotDecimal()
+    public void ReadAs_ObjectProperty_FractionalText_ReturnsDecimal()
     {
-        // Regression: ObjectConverter checks long -> double -> decimal -> bool -> DateTime, but
-        // double.TryParse succeeds for ordinary decimals first, so the decimal branch is unreachable.
+        // ObjectConverter checks long -> decimal -> double, all with InvariantCulture.
         var csv = new CsvService();
 
         var rows = csv.ReadAs<ObjectValueRow>(ReaderFor("Value\n3.14\n")).ToList();
 
+        Assert.That(rows[0].Value, Is.TypeOf<decimal>());
+        Assert.That(rows[0].Value, Is.EqualTo(3.14m));
+    }
+
+    [Test]
+    public void ReadAs_ObjectProperty_ExponentText_ReturnsDouble()
+    {
+        var csv = new CsvService();
+
+        var rows = csv.ReadAs<ObjectValueRow>(ReaderFor("Value\n1.5E+3\n")).ToList();
+
         Assert.That(rows[0].Value, Is.TypeOf<double>());
-        Assert.That(rows[0].Value, Is.EqualTo(3.14));
+        Assert.That(rows[0].Value, Is.EqualTo(1500d));
+    }
+
+    [Test]
+    public void ReadAs_ObjectProperty_FractionalText_IgnoresCurrentCulture()
+    {
+        var original = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("de-DE");
+
+            var rows = new CsvService().ReadAs<ObjectValueRow>(ReaderFor("Value\n3.14\n")).ToList();
+
+            Assert.That(rows[0].Value, Is.EqualTo(3.14m));
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = original;
+        }
     }
 
     [Test]
@@ -155,5 +183,92 @@ public class CsvServiceTests
         using var reader = new StreamReader(stream);
         var firstLine = await reader.ReadLineAsync();
         Assert.That(firstLine, Is.EqualTo("1,A"));
+    }
+
+    private class TextRow
+    {
+        public string Name { get; set; } = null!;
+
+        public long Amount { get; set; }
+    }
+
+    [Test]
+    public async Task WriteAsync_Generic_EscapesFormulaInjection_ButNotNegativeNumbers()
+    {
+        var csv = new CsvService();
+        var rows = new[]
+        {
+            new TextRow { Name = "=HYPERLINK(\"http://evil\")", Amount = -5 },
+            new TextRow { Name = "@SUM(A1)", Amount = 1 },
+            new TextRow { Name = "normal", Amount = 2 },
+        };
+
+        using var reader = new StreamReader(await csv.WriteAsync(rows, excludeHeader: true));
+        var text = await reader.ReadToEndAsync();
+        var lines = text.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(lines[0], Does.StartWith("\"'=HYPERLINK").Or.StartWith("'=HYPERLINK"));
+            Assert.That(lines[0], Does.EndWith(",-5"));
+            Assert.That(lines[1], Does.StartWith("'@SUM(A1)").Or.StartWith("\"'@SUM(A1)"));
+            Assert.That(lines[2], Is.EqualTo("normal,2"));
+        });
+    }
+
+    [Test]
+    public async Task WriteAsync_DataTable_EscapesFormulaInjection()
+    {
+        var csv = new CsvService();
+        var table = new DataTable();
+        table.Columns.Add("Name");
+        table.Rows.Add("+cmd|' /C calc'!A0");
+
+        using var reader = new StreamReader(await csv.WriteAsync(table, excludeHeader: true));
+        var firstLine = await reader.ReadLineAsync();
+
+        Assert.That(firstLine, Does.Contain("'+cmd"));
+    }
+
+    [Test]
+    public async Task WriteAsync_InjectionOptionsNone_WritesRawValue()
+    {
+        var csv = new CsvService { InjectionOptions = CsvHelper.Configuration.InjectionOptions.None };
+        var rows = new[] { new TextRow { Name = "=1+1", Amount = 1 } };
+
+        using var reader = new StreamReader(await csv.WriteAsync(rows, excludeHeader: true));
+        var firstLine = await reader.ReadLineAsync();
+
+        Assert.That(firstLine, Is.EqualTo("=1+1,1"));
+    }
+
+    [Test]
+    public void StreamOverloads_LeaveCallerStreamOpen()
+    {
+        var csv = new CsvService();
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes("Id,Name\n1,A\n"));
+
+        var headers = csv.ReadHeaders(stream);
+        Assert.That(stream.CanRead, Is.True);
+
+        stream.Position = 0;
+        var typed = csv.ReadAs<TypedRow>(stream).ToList();
+        Assert.That(stream.CanRead, Is.True);
+
+        stream.Position = 0;
+        var generic = csv.Read<TypedRow>(stream);
+        Assert.That(stream.CanRead, Is.True);
+
+        stream.Position = 0;
+        var dictionary = csv.Read(stream);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(stream.CanRead, Is.True);
+            Assert.That(headers, Is.EqualTo(new[] { "Id", "Name" }));
+            Assert.That(typed.Single().Name, Is.EqualTo("A"));
+            Assert.That(generic!.Rows.Single().Name, Is.EqualTo("A"));
+            Assert.That(dictionary!.Rows.Single()["Name"], Is.EqualTo("A"));
+        });
     }
 }

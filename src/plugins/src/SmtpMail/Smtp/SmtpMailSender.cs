@@ -25,7 +25,7 @@ namespace Light.Smtp
             Dictionary<string, byte[]>? attachments = null,
             CancellationToken cancellationToken = default)
         {
-            var message = new System.Net.Mail.MailMessage
+            using var message = new System.Net.Mail.MailMessage
             {
                 From = new MailAddress(from, fromDisplayName),
                 Subject = subject,

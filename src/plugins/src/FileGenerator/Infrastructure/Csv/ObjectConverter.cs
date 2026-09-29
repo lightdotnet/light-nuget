@@ -12,12 +12,14 @@ namespace Light.Infrastructure.Csv
         {
             if (string.IsNullOrEmpty(text)) return null;
 
-            // Try to parse as int, double, bool, or return as string
-            if (long.TryParse(text, out long intValue)) return intValue;
-            if (double.TryParse(text, out double doubleValue)) return doubleValue;
-            if (decimal.TryParse(text, out decimal decimalValue)) return decimalValue;
+            var culture = CultureInfo.InvariantCulture;
+
+            // Try to parse as long, decimal (exact fractional values), double (exponent/out-of-range), bool, DateTime, or return as string
+            if (long.TryParse(text, NumberStyles.Integer, culture, out long intValue)) return intValue;
+            if (decimal.TryParse(text, NumberStyles.Number, culture, out decimal decimalValue)) return decimalValue;
+            if (double.TryParse(text, NumberStyles.Float | NumberStyles.AllowThousands, culture, out double doubleValue)) return doubleValue;
             if (bool.TryParse(text, out bool boolValue)) return boolValue;
-            if (DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeValue)) return dateTimeValue;
+            if (DateTime.TryParse(text, culture, DateTimeStyles.None, out DateTime dateTimeValue)) return dateTimeValue;
 
             return text; // Return as string if no match
         }

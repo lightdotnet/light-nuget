@@ -15,7 +15,8 @@ namespace Light.ActiveDirectory.Interfaces
         Task<bool> CheckPasswordSignInAsync(string userName, string password);
 
         /// <summary>
-        /// Administrative password reset for a user in Active Directory. Synchronous — despite
+        /// Administrative password reset for a user in Active Directory — the current password is
+        /// not verified, and the service account must hold reset-password rights. Synchronous — despite
         /// other members here being async, this does not perform I/O asynchronously.
         /// </summary>
         bool ChangePassword(string userName, string newPassword);

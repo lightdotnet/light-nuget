@@ -1,13 +1,10 @@
-﻿using Elastic.Channels;
-using Elastic.CommonSchema.Serilog;
+﻿using Elastic.CommonSchema.Serilog;
 using Elastic.Ingest.Elasticsearch;
-using Elastic.Ingest.Elasticsearch.DataStreams;
-using Elastic.Serilog.Sinks;
-using Elastic.Transport;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
+using System.IO;
 
 namespace Light.Serilog
 {
@@ -62,7 +59,7 @@ namespace Light.Serilog
 
             var limitFileSize = 52428800; // 50mb to bytes
 
-            logger.WriteTo.Async(c => c.File(@$"{path}\{applicationName}-{environment}-log-.txt",
+            logger.WriteTo.Async(c => c.File(Path.Combine(path, $"{applicationName}-{environment}-log-.txt"),
                 outputTemplate: template,
                 shared: true,
                 rollingInterval: RollingInterval.Day,
@@ -71,49 +68,7 @@ namespace Light.Serilog
 
             return logger;
         }
-        /*
-        private static LoggerConfiguration WriteToMSSQL(this LoggerConfiguration logger, IConfiguration configuration)
-        {
-            var settings = configuration.GetSection("Serilog:MSSQL").Get<MSSQLOptions>();
 
-            if (settings != null && !string.IsNullOrEmpty(settings.Connection))
-            {
-                var sinkOpts = new MSSqlServerSinkOptions
-                {
-                    TableName = settings.TableName ?? "SeriLogs",
-                    AutoCreateSqlTable = true,
-                };
-
-                var columnOpts = new ColumnOptions
-                {
-                    AdditionalColumns = new SqlColumn[]
-                    {
-                    new SqlColumn() {
-                        ColumnName = "MachineName",
-                        DataType = System.Data.SqlDbType.NVarChar,
-                        AllowNull = false,
-                        DataLength = 100,
-                    },
-                    new SqlColumn() {
-                        ColumnName = "ApplicationName",
-                        DataType = System.Data.SqlDbType.NVarChar,
-                        AllowNull = false,
-                        DataLength = 100,
-                        PropertyName = "Application"
-                    }
-                    }
-                };
-
-                logger.WriteTo.Async(a => a.MSSqlServer(
-                    connectionString: settings.Connection,
-                    sinkOptions: sinkOpts,
-                    columnOptions: columnOpts,
-                    restrictedToMinimumLevel: LogEventLevel.Warning));
-            }
-
-            return logger;
-        }
-        */
         private static LoggerConfiguration WriteToElasticsearch(this LoggerConfiguration logger, IConfiguration configuration, string applicationName, string environment)
         {
             var elementName = "ElasticsearchAsync";
@@ -135,23 +90,16 @@ namespace Light.Serilog
                         serviceName = applicationName;
                     }
 
-                    var indexFormat = $"{serviceName}-{environment}-{DateTime.UtcNow:yyyy-MM-dd}";
-
                     var endpoints = new Uri[] { new Uri(endpoint) };
 
-                    logger.WriteTo.Async(w => w.Elasticsearch(endpoints, opts =>
-                    {
-                        opts.DataStream = new DataStreamName(indexFormat);
-                        opts.TextFormatting = new EcsTextFormatterConfiguration<LogEventEcsDocument>();
-                        opts.BootstrapMethod = BootstrapMethod.Failure;
-                        opts.ConfigureChannel = channelOptions =>
-                        {
-                            channelOptions.BufferOptions = new BufferOptions();
-                        };
-                    }, transport =>
-                    {
-                        transport.Authentication(new BasicAuthentication(username, password));
-                    }));
+                    // One plain index per UTC day of each event: {service}-{env}-{yyyy-MM-dd}-generic-default.
+                    var transport = ElasticsearchDailyIndexSink.CreateTransport(endpoints, username!, password!);
+                    var channelOptions = ElasticsearchDailyIndexSink.CreateChannelOptions(transport, serviceName!, environment);
+
+                    logger.WriteTo.Async(w => w.Sink(new ElasticsearchDailyIndexSink(
+                        channelOptions,
+                        new EcsTextFormatterConfiguration<LogEventEcsDocument>(),
+                        BootstrapMethod.Failure)));
                 }
             }
 
@@ -161,13 +109,12 @@ namespace Light.Serilog
         public static Action<HostBuilderContext, LoggerConfiguration> Configure =>
             (context, configuration) =>
             {
-                var applicationName = context.HostingEnvironment.ApplicationName?.ToLower().Replace(".", "-") ?? "UnknownApp";
+                var applicationName = context.HostingEnvironment.ApplicationName?.ToLowerInvariant().Replace(".", "-") ?? "UnknownApp";
                 var environment = context.HostingEnvironment.EnvironmentName ?? "Development";
 
                 configuration
                     .BaseConfig()
                     .WriteToFile(context.Configuration, applicationName, environment)
-                    //.WriteToMSSQL(context.Configuration)
                     .WriteToElasticsearch(context.Configuration, applicationName, environment)
                     .Enrich.FromLogContext()
                     .Enrich.WithMachineName()

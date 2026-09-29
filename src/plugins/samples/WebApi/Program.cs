@@ -15,14 +15,20 @@ builder.Host.ConfigureSerilog();
 builder.Services.AddActiveDirectory(opt => opt.Name = "company.local");
 #pragma warning restore
 
-/*
-builder.Services.AddMicrosoftGraph(opt =>
+// Microsoft Graph is only registered when credentials are supplied (e.g. via user-secrets:
+// Graph:TenantId / Graph:ClientId / Graph:ClientSecret). Otherwise GraphController returns 503.
+var graphSection = builder.Configuration.GetSection("Graph");
+if (!string.IsNullOrWhiteSpace(graphSection["TenantId"])
+    && !string.IsNullOrWhiteSpace(graphSection["ClientId"])
+    && !string.IsNullOrWhiteSpace(graphSection["ClientSecret"]))
 {
-    opt.ClientSecret = "";
-    opt.ClientId = "";
-    opt.TenantId = "";
-});
-*/
+    builder.Services.AddMicrosoftGraph(opt =>
+    {
+        opt.TenantId = graphSection["TenantId"];
+        opt.ClientId = graphSection["ClientId"];
+        opt.ClientSecret = graphSection["ClientSecret"];
+    });
+}
 
 builder.Services.AddFileGenerator();
 

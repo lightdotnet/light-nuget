@@ -20,6 +20,38 @@ namespace Light.Infrastructure.Csv
             MissingFieldFound = null, // Skips missing *fields* in rows
         };
 
+        /// <summary>
+        /// CSV/formula injection protection applied when writing. Defaults to <see cref="CsvHelper.Configuration.InjectionOptions.Escape"/>:
+        /// text fields starting with <c>=</c>, <c>@</c>, <c>+</c>, <c>-</c>, tab or CR are prefixed with <c>'</c> so spreadsheet
+        /// applications don't evaluate them as formulas. Plain numeric fields (e.g. <c>-5</c>, <c>+1.5</c>) are never escaped.
+        /// Set to <see cref="CsvHelper.Configuration.InjectionOptions.None"/> to restore the previous (unescaped) output.
+        /// </summary>
+        public InjectionOptions InjectionOptions { get; set; } = InjectionOptions.Escape;
+
+        // Stream overloads must not close the caller's stream.
+        private static StreamReader CreateReader(Stream stream) =>
+            new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true);
+
+        private CsvWriter CreateWriter(TextWriter writer) =>
+            new InjectionSafeCsvWriter(writer, new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                InjectionOptions = InjectionOptions,
+            });
+
+        private sealed class InjectionSafeCsvWriter : CsvWriter
+        {
+            public InjectionSafeCsvWriter(TextWriter writer, CsvConfiguration configuration)
+                : base(writer, configuration)
+            {
+            }
+
+            // numbers such as "-5" are not formulas; escaping them would corrupt numeric round-trips
+            protected override string? SanitizeForInjection(string? field) =>
+                field is null || double.TryParse(field, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out _)
+                    ? field
+                    : base.SanitizeForInjection(field);
+        }
+
         // ─── Read ────────────────────────────────────────────────────────────────
 
         public string[]? ReadHeaders(StreamReader streamReader)
@@ -32,7 +64,7 @@ namespace Light.Infrastructure.Csv
 
         public string[]? ReadHeaders(Stream stream)
         {
-            using var reader = new StreamReader(stream);
+            using var reader = CreateReader(stream);
             return ReadHeaders(reader);
         }
 
@@ -45,7 +77,7 @@ namespace Light.Infrastructure.Csv
 
         public IEnumerable<T> ReadAs<T>(Stream stream)
         {
-            using var reader = new StreamReader(stream);
+            using var reader = CreateReader(stream);
             return ReadAs<T>(reader);
         }
 
@@ -68,7 +100,7 @@ namespace Light.Infrastructure.Csv
 
         public CsvData<T>? Read<T>(Stream stream)
         {
-            using var reader = new StreamReader(stream);
+            using var reader = CreateReader(stream);
             return Read<T>(reader);
         }
 
@@ -103,7 +135,7 @@ namespace Light.Infrastructure.Csv
 
         public DictionaryData? Read(Stream stream)
         {
-            using var reader = new StreamReader(stream);
+            using var reader = CreateReader(stream);
             return Read(reader);
         }
 
@@ -114,7 +146,7 @@ namespace Light.Infrastructure.Csv
             var memoryStream = new MemoryStream();
 
             await using var writer = new StreamWriter(memoryStream, Encoding.UTF8, bufferSize: 1024, leaveOpen: true);
-            await using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+            await using var csv = CreateWriter(writer);
 
             if (!excludeHeader)
             {
@@ -140,7 +172,7 @@ namespace Light.Infrastructure.Csv
             var memoryStream = new MemoryStream();
 
             await using var writer = new StreamWriter(memoryStream, Encoding.UTF8, bufferSize: 1024, leaveOpen: true);
-            await using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+            await using var csv = CreateWriter(writer);
 
             if (!excludeHeader)
             {
