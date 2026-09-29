@@ -104,3 +104,13 @@ public class TeamsController(IGraphTeams graphTeams) : ControllerBase
 - `GetChatsAsync` was renamed and retyped from an earlier `GetByAsync(string user) : Task<object?>` signature to `GetChatsAsync(string user) : Task<ChatCollectionResponse?>` — callers pattern-matching on `object` will need to update to the concrete `Microsoft.Graph.Models.ChatCollectionResponse` type.
 - `SendAsync` has no built-in retry/throttling handling beyond whatever the underlying `Microsoft.Graph` SDK's default request adapter does; transient Graph errors (e.g. `429`) propagate as exceptions.
 - All Graph calls run under app-only (client-credentials) permissions — there is no delegated/user-token flow in this package, and no interactive consent step; required Graph application permissions (e.g. `Mail.Send`, `Chat.Read.All`) must be granted and admin-consented on the Azure AD app registration ahead of time.
+
+---
+
+## Breaking / behavior changes
+
+### Unreleased
+
+- **Startup validation:** `AddMicrosoftGraph` throws `ArgumentException` at registration when `TenantId`, `ClientId` or `ClientSecret` is missing (previously the failure surfaced on the first Graph call).
+- `GraphServiceClient` is registered with `TryAddSingleton`: a client registered by the consumer **before** `AddMicrosoftGraph` is now kept instead of being overridden.
+- New optional `GraphOptions.AllowedSenders`: when non-empty, `SendAsync` throws `ArgumentException` for a `from` not in the list (case-insensitive). Default `null` = no restriction, as before.

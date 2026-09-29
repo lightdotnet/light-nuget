@@ -246,7 +246,20 @@ public class CsvServiceTests
     }
 
     private static readonly string[] InjectionValues =
-        ["-abc", "=1+1", "@SUM(A1)", "+cmd|' /C calc'!A0", "\tTab", "=a,b", "'-already", "''=twice", "'plain", "normal", "-5"];
+        ["-abc", "=1+1", "@SUM(A1)", "+cmd|' /C calc'!A0", "\tTab", "\t5", "=a,b", "'-already", "''=twice", "'plain", "normal", "-5"];
+
+    [Test]
+    public async Task WriteAsync_TabPrefixedNumber_IsEscaped()
+    {
+        // a leading tab is an injection character even when the rest parses as a number
+        var csv = new CsvService();
+        var rows = new[] { new TextRow { Name = "\t5", Amount = 1 } };
+
+        using var reader = new StreamReader(await csv.WriteAsync(rows, excludeHeader: true));
+        var firstLine = await reader.ReadLineAsync();
+
+        Assert.That(firstLine, Does.StartWith("'\t5").Or.StartWith("\"'\t5"));
+    }
 
     [Test]
     public async Task WriteAsync_Generic_EscapedValues_RoundTripThroughReadAs()

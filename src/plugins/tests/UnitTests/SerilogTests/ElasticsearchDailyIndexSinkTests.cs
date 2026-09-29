@@ -97,6 +97,14 @@ public class ElasticsearchDailyIndexSinkTests
             var stock = BulkRequestDataFactory.CreateBulkOperationHeaderForIndex(
                 new LogEventEcsDocument { Timestamp = timestamp }, options).Index;
             TestContext.Out.WriteLine($"{cultureName} stock index: {stock}");
+            if (cultureName == "th-TH")
+            {
+                Assert.That(
+                    stock,
+                    Is.Not.EqualTo("api-prod-2026-09-29-generic-default"),
+                    "Elastic.Ingest now resolves the index culture-invariantly; the CreateBulkOperationHeader override in "
+                    + "ElasticsearchDailyIndexSink may be removable.");
+            }
 
             IndexFor("api", "prod", timestamp).ShouldBe("api-prod-2026-09-29-generic-default");
         }
