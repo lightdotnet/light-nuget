@@ -27,4 +27,8 @@
     <ProjectReference Include="..\EventBus\EventBus.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="EventBus.Tests" />
+  </ItemGroup>
+
 </Project>

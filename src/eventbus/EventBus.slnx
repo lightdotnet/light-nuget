@@ -7,6 +7,9 @@
     <Project Path="src/EventBus.MassTransit.RabbitMQ/EventBus.MassTransit.RabbitMQ.csproj" />
     <Project Path="src/EventBus/EventBus.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EventBus.Tests/EventBus.Tests.csproj" />
+  </Folder>
   <Project Path="samples/EventBusConsumer/EventBusConsumer.csproj" />
   <Project Path="samples/EventBusSample/EventBusSample.csproj" />
 </Solution>

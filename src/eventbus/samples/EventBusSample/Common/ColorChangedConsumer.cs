@@ -7,7 +7,8 @@ public class ColorChangedConsumer(
     ILogger<ColorChangedConsumer> logger) :
     Consumer<ColorChangedIntegrationEvent>(logger)
 {
-    public override bool ThrowIfError => false;
+    // ThrowIfError is left at its default (true): a failing Handle re-throws, so the UseMessageRetry policy in
+    // ColorChangedConsumerDefinition retries the message and, once retries are exhausted, it goes to the _error queue.
 
     public override async Task Handle(ColorChangedIntegrationEvent message)
     {
@@ -34,6 +35,7 @@ internal class ColorChangedConsumerDefinition :
         IRegistrationContext context)
     {
         // configure message retry with millisecond intervals
+        // (only effective because the consumer re-throws - see Consumer<TMessage>.ThrowIfError)
         configurator.UseMessageRetry(r => r.Intervals(100, 200, 5000, 8000, 10000));
 
         // use the outbox to prevent duplicate events from being published
