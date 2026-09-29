@@ -25,15 +25,15 @@ Permission-based authorization building blocks for ASP.NET Core. The package let
 
 ## How `PermissionPolicyProvider` works
 
-`GetPolicyAsync(policyName)` is called by the framework for every `[Authorize(Policy = "...")]` policy name it hasn't seen registered explicitly:
+`GetPolicyAsync(policyName)` is called by the framework for every `[Authorize(Policy = "...")]` policy name:
 
-1. If a built policy for that name is already cached, it is returned immediately (see [Notes](#notes)).
-2. Otherwise it calls the virtual `CheckPermissionValidAsync(policyName)`. **The base implementation always returns `true`** — by default, every policy name is treated as a valid permission and gets wrapped into a policy with a single `PermissionRequirement(policyName)`.
-3. Only if `CheckPermissionValidAsync` returns `false` does it fall back to `FallbackPolicyProvider.GetPolicyAsync(policyName)` (an internal `DefaultAuthorizationPolicyProvider`), which resolves normally-registered named policies (`AddAuthorization(o => o.AddPolicy(...))`).
+1. If a built permission policy for that name is already cached, it is returned immediately (see [Notes](#notes)).
+2. Otherwise it asks `FallbackPolicyProvider.GetPolicyAsync(policyName)` (an internal `DefaultAuthorizationPolicyProvider`). **Normally-registered named policies (`AddAuthorization(o => o.AddPolicy(...))`) always take precedence** over permissions.
+3. If no such policy exists, it calls the virtual `CheckPermissionValidAsync(policyName)`. **The base implementation always returns `true`** — every remaining policy name is treated as a valid permission and wrapped into a policy with a single `PermissionRequirement(policyName)`. Override it to restrict which names are accepted as permissions; returning `false` makes `GetPolicyAsync` return `null` (authorization fails for that name).
 
-Because the default `CheckPermissionValidAsync` always returns `true`, **out of the box every policy name is resolved as a permission and the fallback path is effectively unreachable**. If you need some policy names to remain "ordinary" named policies (not permissions), derive from `PermissionPolicyProvider` and override `CheckPermissionValidAsync` to return `false` for those names — that's what makes the fallback to `DefaultAuthorizationPolicyProvider` actually trigger.
+`GetDefaultPolicyAsync()` and `GetFallbackPolicyAsync()` delegate to the standard default provider, so `AuthorizationOptions.DefaultPolicy` and `AuthorizationOptions.FallbackPolicy` configured by the consumer are honored.
 
-`GetDefaultPolicyAsync()` and `GetFallbackPolicyAsync()` delegate to the standard default provider / return `null`, matching normal ASP.NET Core policy-provider semantics for endpoints without an explicit policy.
+> **Behavior change (Authorization 2.0.x → next):** previously `GetFallbackPolicyAsync()` always returned `null`, silently ignoring a configured `FallbackPolicy`, and named policies registered via `AddPolicy` were shadowed by `PermissionRequirement` unless `CheckPermissionValidAsync` was overridden.
 
 You must also register at least one `IAuthorizationHandler` for `PermissionRequirement` — this package only provides the abstract `PermissionAuthorizationHandler` base class; the actual permission-evaluation logic (e.g. checking claims, a DB, etc.) is up to the consumer.
 
@@ -115,4 +115,4 @@ This catalog is purely descriptive/discovery-oriented — it plays no role in `P
 ## Notes
 
 - `PermissionPolicyProvider.GetPolicyAsync` now caches built `AuthorizationPolicy` instances per policy name in a `ConcurrentDictionary<string, AuthorizationPolicy>`, instead of constructing a new `AuthorizationPolicyBuilder`/policy on every request for the same policy name.
-- The fallback call `FallbackPolicyProvider.GetPolicyAsync(policyName)` is now active. Previously this call was commented out, so once `PermissionPolicyProvider` was registered, any normally-registered named policy (`AddAuthorization(o => o.AddPolicy(...))`) that wasn't treated as a permission would resolve to `null` and silently fail authorization. This is a correctness fix, not just a performance change — but note it only has an effect for consumers that override `CheckPermissionValidAsync` to return `false` for non-permission policy names, since the default implementation always returns `true`.
+- Named policies registered via `AddPolicy(...)` are resolved first through `FallbackPolicyProvider.GetPolicyAsync(policyName)`; only unregistered names are treated as permissions. Only permission policies are cached.

@@ -46,8 +46,8 @@ services.AddSmtpMailKit(options =>
 {
     options.Host = "smtp.ethereal.email";
     options.Port = 587;
-    options.UserName = "jermain.torphy@ethereal.email";
-    options.Password = "GHMdV12nF7zfFhqG7Z";
+    options.UserName = "<your-smtp-user>";
+    options.Password = "<your-smtp-password>";
     options.UseSsl = false;
 });
 ```
@@ -79,7 +79,7 @@ Only register one of `AddSmtpMail`/`AddSmtpMailKit` per `ISmtpMailSender` consum
 Both senders can also be constructed directly, e.g. from a controller or background job:
 
 ```csharp
-var smtpClient = new SmtpMailKitSender("smtp.ethereal.email", "jermain.torphy@ethereal.email", "GHMdV12nF7zfFhqG7Z")
+var smtpClient = new SmtpMailKitSender("smtp.ethereal.email", "<your-smtp-user>", "<your-smtp-password>")
 {
     UseSsl = false
 };

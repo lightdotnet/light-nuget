@@ -8,18 +8,21 @@ namespace WebApi.Controllers
     public class MailController : ControllerBase
     {
         private readonly ILogger<MailController> _logger;
+        private readonly IConfiguration _configuration;
 
-        public MailController(ILogger<MailController> logger)
+        public MailController(ILogger<MailController> logger, IConfiguration configuration)
         {
             _logger = logger;
+            _configuration = configuration;
         }
 
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            var host = "smtp.ethereal.email";
-            var userName = "jermain.torphy@ethereal.email";
-            var password = "GHMdV12nF7zfFhqG7Z";
+            // credentials come from the "SMTP" section (use user-secrets / env vars, never commit them)
+            var host = _configuration["SMTP:Host"]!;
+            var userName = _configuration["SMTP:UserName"]!;
+            var password = _configuration["SMTP:Password"]!;
 
             var smtpClient = new SmtpMailKitSender(host, userName, password)
             {
@@ -27,8 +30,8 @@ namespace WebApi.Controllers
             };
 
             await smtpClient.SendAsync(
-                "leslie.bailey@ethereal.email",
-                "leslie.bailey@ethereal.email",
+                userName,
+                userName,
                 ["test@yopmail.com"],
                 "Test...." + DateTime.Now,
                 "Hello,.......... this test mail");

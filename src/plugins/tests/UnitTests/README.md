@@ -21,9 +21,8 @@ Exercises `Light.Smtp.SmtpNetMailSender.SendAsync`. One test, `Must_Send_Email_W
 ### `SmtpMailTests/SmtpMailKitTests.cs`
 
 Exercises `Light.Smtp.SmtpMailKitSender.SendAsync`. One test, `Must_Send_Email_With_No_Exceptions`:
-- Constructs a `SmtpMailKitSender` against host `smtp.ethereal.email` with a hardcoded username `waino.kuhlman@ethereal.email` and password `RUMp811zYYVkPuvcdY`, `UseSsl = false`.
-- Calls `SendAsync(from, fromDisplayName, recipients, subject, content)` (from `waino.kuhlman@ethereal.email`, to `user@domain.local`) and passes if it completes without throwing.
-- The constructor carries a doc comment: "Please config new ethereal before Tests" — i.e. these credentials are expected to need periodic refreshing against ethereal.email, and the test will start failing once they expire/rotate.
+- Integration test (`[Category("Integration")]`): reads `SMTP_TEST_USERNAME` / `SMTP_TEST_PASSWORD` (optional `SMTP_TEST_HOST`, default `smtp.ethereal.email`) from environment variables and is ignored when they are not set; `UseSsl = false`.
+- Calls `SendAsync(from, fromDisplayName, recipients, subject, content)` (from the configured user name, to `user@domain.local`) and passes if it completes without throwing.
 
 **Important — these are not mocked.** Both tests perform real network I/O against live, external, third-party test SMTP servers (`smtp.freesmtpservers.com` and `smtp.ethereal.email`). Consequences:
 - They are **flaky and slow** relative to typical unit tests — pass/fail depends on those external services being reachable and healthy at the time the suite runs.

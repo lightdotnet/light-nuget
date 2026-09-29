@@ -55,8 +55,8 @@ Uses `System.DirectoryServices.AccountManagement.PrincipalContext`/`UserPrincipa
 Uses `Novell.Directory.Ldap` for the credential-check path and `System.DirectoryServices.DirectoryEntry`/`DirectorySearcher` for password changes, constructed with `LdapOptions`.
 
 - `IsConfigured()` — always `true`.
-- `CheckPasswordSignInAsync` — returns `false` immediately for an empty/whitespace password; otherwise opens an `LdapConnection` (`SecureSocketLayer = false`) to `settings.Address`/`settings.Port` and binds as `"{userName}@{settings.Name}"` with the supplied password. A successful bind (no exception) is treated as a valid sign-in.
-- `ChangePassword` — binds to `settings.Connection` as `settings.UserName`/`settings.Password` via `DirectoryEntry`, searches for `sAMAccountName = userName`, and invokes `SetPassword` + `CommitChanges` on the match. Returns `false` if no matching entry is found.
+- `CheckPasswordSignInAsync` — returns `false` immediately for an empty/whitespace user name or password; otherwise opens an `LdapConnection` (`SecureSocketLayer = settings.UseSsl`) to `settings.Address`/`settings.Port` and binds as `"{userName}@{settings.Name}"` with the supplied password. A successful bind is a valid sign-in; an `InvalidCredentials` bind error returns `false` (other LDAP errors still throw).
+- `ChangePassword` — binds to `settings.Connection` as `settings.UserName`/`settings.Password` via `DirectoryEntry`, searches for `sAMAccountName = userName` (the value is escaped per RFC 4515, so `*`, `(`, `)`, `\` cannot alter the filter), and invokes `SetPassword` + `CommitChanges` on the match. Returns `false` if no matching entry is found.
 - `GetByUserNameAsync` — **throws `NotImplementedException`** unconditionally.
 
 ### `FakeActiveDirectoryService`
@@ -78,9 +78,10 @@ No-op implementation with no `[SupportedOSPlatform]` restriction, intended for l
 - `Name` (`string`, default `"domain.com"`) — appended after `userName@` when binding.
 - `Address` (`string`, default `"10.0.10.2"`) — LDAP server host.
 - `Port` (`int`, default `389`).
+- `UseSsl` (`bool`, default `false`) — use LDAPS for the sign-in bind. **Enable in production** (usually with `Port = 636`); with `false` user passwords travel to the server in cleartext.
 - `Connection` (`string`, default `"LDAP://127.0.0.1/DC=company,DC=local"`) — bind path used by `ChangePassword`.
 - `NewUserConnection` (`string`, default `"LDAP://127.0.0.1/ou=new_users,DC=company,DC=local"`) — declared but not read by any method in this package.
-- `UserName` / `Password` (`string`, defaults `"admin"` / `"AdminP@ssword"`) — admin credentials used to bind for `ChangePassword`.
+- `UserName` / `Password` (`string`, defaults empty strings) — admin credentials used to bind for `ChangePassword`.
 
 ## `DomainUserDto`
 
@@ -130,7 +131,7 @@ builder.Services.AddLdapActiveDirectory(opt =>
     opt.Name = "company.local";
     opt.Connection = "LDAP://10.0.10.2/DC=company,DC=local";
     opt.UserName = "admin";
-    opt.Password = "AdminP@ssword";
+    opt.Password = "<your-admin-password>";
 });
 #pragma warning restore CA1416
 ```
