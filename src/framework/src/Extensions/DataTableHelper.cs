@@ -14,19 +14,23 @@ namespace Light.Extensions
         /// </summary>
         public static IEnumerable<T> ConvertToType<T>(DataTable dt)
         {
+            // Resolve matching properties per column once, instead of per row x column.
+            PropertyInfo[] typeProperties = typeof(T).GetProperties();
+            var columnProperties = dt.Columns
+                .Cast<DataColumn>()
+                .Select(column => (Column: column, Properties: typeProperties.Where(p => p.Name == column.ColumnName).ToArray()))
+                .Where(x => x.Properties.Length > 0)
+                .ToArray();
+
             foreach (DataRow dr in dt.Rows)
             {
-                Type temp = typeof(T);
                 T obj = Activator.CreateInstance<T>();
 
-                foreach (DataColumn column in dr.Table.Columns)
+                foreach (var (column, properties) in columnProperties)
                 {
-                    foreach (PropertyInfo pro in temp.GetProperties())
+                    foreach (PropertyInfo pro in properties)
                     {
-                        if (pro.Name == column.ColumnName)
-                            pro.SetValue(obj, dr[column.ColumnName], null);
-                        else
-                            continue;
+                        pro.SetValue(obj, dr[column], null);
                     }
                 }
 

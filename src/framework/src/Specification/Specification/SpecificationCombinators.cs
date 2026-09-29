@@ -8,8 +8,10 @@ namespace Light.Specification
     {
         public static ISpecification<T> And<T>(this ISpecification<T> left, ISpecification<T> right) where T : class
         {
-            if (left.Expression == null) return right;
-            if (right.Expression == null) return left;
+            // Route single-sided cases through CombineOrdering too (as Or/Not do), so ordering/paging carried by
+            // the operand without an expression is not silently dropped.
+            if (left.Expression == null) return CombineOrdering(right.Expression, left, right);
+            if (right.Expression == null) return CombineOrdering(left.Expression, left, right);
             var p = left.Expression.Parameters[0];
             var rb = new ParameterReplacer(right.Expression.Parameters[0], p).Visit(right.Expression.Body);
             var expression = Expression.Lambda<Func<T, bool>>(Expression.AndAlso(left.Expression.Body, rb), p);

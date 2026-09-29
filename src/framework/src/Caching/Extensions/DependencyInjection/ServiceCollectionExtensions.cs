@@ -21,10 +21,11 @@ namespace Light.Extensions.DependencyInjection
         {
             ArgumentNullException.ThrowIfNull(settings);
 
-            if (settings.Provider == "redis")
+            if (string.Equals(settings.Provider, "redis", StringComparison.OrdinalIgnoreCase))
             {
                 if (string.IsNullOrEmpty(settings.RedisHost))
-                    throw new Exception("Redis host is not configured");
+                    throw new InvalidOperationException(
+                        $"Cache provider is 'redis' but {nameof(CacheOptions)}.{nameof(CacheOptions.RedisHost)} is not configured.");
 
                 var redisConfigurationOptions = new ConfigurationOptions()
                 {

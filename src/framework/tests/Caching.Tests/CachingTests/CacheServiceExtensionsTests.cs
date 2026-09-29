@@ -97,6 +97,93 @@ public class CacheServiceExtensionsTests
         var cache = CreateService();
 
         Assert.ThrowsAsync<ArgumentNullException>(() =>
-            cache.GetOrSetAsync<string>("key", null!));
+            cache.GetOrSetAsync<string>("key", (Func<Task<string?>>)null!));
+    }
+
+    [Test]
+    public async Task GetOrSetAsync_ConcurrentMissesForSameKey_InvokesFactoryOnce()
+    {
+        var cache = CreateService();
+        var key = "stampede-" + Guid.NewGuid();
+        var factoryCalls = 0;
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var tasks = Enumerable.Range(0, 20)
+            .Select(_ => Task.Run(() => cache.GetOrSetAsync<string>(key, async () =>
+            {
+                Interlocked.Increment(ref factoryCalls);
+                await release.Task;
+                return "computed";
+            })))
+            .ToArray();
+
+        // give every caller time to miss the cache and queue on the per-key lock
+        await Task.Delay(100);
+        release.SetResult();
+
+        var results = await Task.WhenAll(tasks);
+
+        factoryCalls.ShouldBe(1);
+        Assert.That(results, Is.All.EqualTo("computed"));
+    }
+
+    [Test]
+    public async Task GetOrSetAsync_LockPerKeyDisabled_EachConcurrentMissInvokesFactory()
+    {
+        var cache = CreateService();
+        var key = "nolock-" + Guid.NewGuid();
+        var factoryCalls = 0;
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var tasks = Enumerable.Range(0, 5)
+            .Select(_ => cache.GetOrSetAsync<string>(key, async _ =>
+            {
+                Interlocked.Increment(ref factoryCalls);
+                await release.Task;
+                return "computed";
+            }, slidingExpiration: null, lockPerKey: false))
+            .ToArray();
+
+        release.SetResult();
+        await Task.WhenAll(tasks);
+
+        factoryCalls.ShouldBe(5);
+    }
+
+    [Test]
+    public async Task GetOrSetAsync_CancellationTokenOverload_PassesTokenToFactory()
+    {
+        var cache = CreateService();
+        using var cts = new CancellationTokenSource();
+        CancellationToken received = default;
+
+        await cache.GetOrSetAsync<string>("key", ct =>
+        {
+            received = ct;
+            return Task.FromResult<string?>("computed");
+        }, cancellationToken: cts.Token);
+
+        Assert.That(received, Is.EqualTo(cts.Token));
+    }
+
+    [Test]
+    public async Task GetOrSetAsync_CanceledWhileWaitingForKeyLock_ThrowsOperationCanceledException()
+    {
+        var cache = CreateService();
+        var key = "cancel-" + Guid.NewGuid();
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var first = cache.GetOrSetAsync<string>(key, async () =>
+        {
+            await release.Task;
+            return "computed";
+        });
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+        Assert.CatchAsync<OperationCanceledException>(() =>
+            cache.GetOrSetAsync<string>(key, () => Task.FromResult<string?>("other"), cancellationToken: cts.Token));
+
+        release.SetResult();
+        (await first).ShouldBe("computed");
     }
 }

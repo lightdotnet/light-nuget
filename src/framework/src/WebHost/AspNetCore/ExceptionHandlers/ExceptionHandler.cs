@@ -11,8 +11,7 @@ public class ExceptionHandler(ILogger<ExceptionHandler> logger) : IExceptionHand
         Exception exception,
         CancellationToken cancellationToken)
     {
-        await httpContext.HandleExceptionAsync(exception, logger, cancellationToken);
-
-        return true;
+        // false when the response has already started: let the framework handle/rethrow it
+        return await httpContext.HandleExceptionAsync(exception, logger, cancellationToken);
     }
 }

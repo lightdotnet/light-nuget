@@ -13,7 +13,7 @@ public abstract class DynamicEntity : Entity, IHasAuditTime
 
     public virtual string? PropValue { get; set; }
 
-    public virtual DateTimeOffset Created { get; set; } = DateTimeOffset.Now;
+    public virtual DateTimeOffset Created { get; set; } = DateTimeOffset.UtcNow;
 
     public virtual DateTimeOffset? LastModified { get; set; }
 }

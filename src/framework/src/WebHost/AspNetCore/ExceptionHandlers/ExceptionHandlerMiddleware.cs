@@ -17,7 +17,11 @@ public class ExceptionHandlerMiddleware(
         }
         catch (Exception ex)
         {
-            await context.HandleExceptionAsync(ex, logger);
+            var handled = await context.HandleExceptionAsync(ex, logger);
+
+            // response already started: rethrow so the server aborts the connection
+            if (!handled)
+                throw;
         }
     }
 }

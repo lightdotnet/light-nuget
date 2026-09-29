@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -9,7 +10,17 @@ namespace Light.Extensions
 {
     public class EnumData
     {
+        /// <summary>
+        /// Numeric value of the enum member. For enums whose underlying type is wider than <see cref="int"/>
+        /// (long, uint, ulong) values outside the <see cref="int"/> range are truncated; use <see cref="LongValue"/>.
+        /// </summary>
         public int Value { get; internal set; }
+
+        /// <summary>
+        /// Numeric value of the enum member as <see cref="long"/> (ulong values above <see cref="long.MaxValue"/> wrap).
+        /// </summary>
+        public long LongValue { get; internal set; }
+
         public string StringValue { get; internal set; } = default!;
         public string Description { get; internal set; } = default!;
     }
@@ -32,13 +43,23 @@ namespace Light.Extensions
             return RegexReplace(result);
         }
 
+        // Undefined or combined [Flags] values have no matching field: return no attributes instead of throwing.
+        private static object[] GetEnumAttributes(Enum enumValue, Type attributeType) =>
+            enumValue.GetType().GetField(enumValue.ToString())?.GetCustomAttributes(attributeType, false)
+            ?? Array.Empty<object>();
+
+        private static long ToInt64(object enumValue) =>
+            Type.GetTypeCode(Enum.GetUnderlyingType(enumValue.GetType())) == TypeCode.UInt64
+                ? unchecked((long)Convert.ToUInt64(enumValue, CultureInfo.InvariantCulture))
+                : Convert.ToInt64(enumValue, CultureInfo.InvariantCulture);
+
         /// <summary>
         /// Get description attribute value of Enum
         /// </summary>
+        /// <remarks>Returns null for undefined or combined [Flags] values.</remarks>
         public static string? GetDescription(this Enum enumValue)
         {
-            object[] attr = enumValue.GetType().GetField(enumValue.ToString())
-                .GetCustomAttributes(typeof(DescriptionAttribute), false);
+            object[] attr = GetEnumAttributes(enumValue, typeof(DescriptionAttribute));
 
             if (attr.Length > 0)
                 return ((DescriptionAttribute)attr[0]).Description;
@@ -49,11 +70,10 @@ namespace Light.Extensions
         /// <summary>
         /// Get name value from display attribute of Enum
         /// </summary>
-
+        /// <remarks>Returns null for undefined or combined [Flags] values.</remarks>
         public static string? GetNameOfDisplay(this Enum enumValue)
         {
-            object[] attr = enumValue.GetType().GetField(enumValue.ToString())
-                .GetCustomAttributes(typeof(DisplayAttribute), false);
+            object[] attr = GetEnumAttributes(enumValue, typeof(DisplayAttribute));
 
             if (attr.Length > 0)
             {
@@ -69,10 +89,10 @@ namespace Light.Extensions
         /// <summary>
         /// Get description value from display attribute of Enum
         /// </summary>
+        /// <remarks>Returns null for undefined or combined [Flags] values.</remarks>
         public static string? GetDescriptionOfDisplay(this Enum enumValue)
         {
-            object[] attr = enumValue.GetType().GetField(enumValue.ToString())
-                .GetCustomAttributes(typeof(DisplayAttribute), false);
+            object[] attr = GetEnumAttributes(enumValue, typeof(DisplayAttribute));
 
             if (attr.Length > 0)
             {
@@ -98,14 +118,15 @@ namespace Light.Extensions
 
             List<EnumData> enumValList = new List<EnumData>();
 
-            foreach (var e in Enum.GetValues(enumType))
+            foreach (Enum e in Enum.GetValues(enumType))
             {
-                var fi = e.GetType().GetField(e.ToString());
-                var attributes = (DescriptionAttribute[])fi.GetCustomAttributes(typeof(DescriptionAttribute), false);
+                var attributes = GetEnumAttributes(e, typeof(DescriptionAttribute)).OfType<DescriptionAttribute>().ToArray();
+                var longValue = ToInt64(e);
 
                 var data = new EnumData
                 {
-                    Value = (int)e,
+                    Value = unchecked((int)longValue),
+                    LongValue = longValue,
                     StringValue = e.ToString(),
                     Description = attributes.Length > 0 ? attributes[0].Description : "",
                 };

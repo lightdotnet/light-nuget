@@ -1,13 +1,16 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Light.Extensions.Json;
 
+[Obsolete("Use a DefaultJsonTypeInfoResolver modifier from JsonPropertyOrderModifiers instead (e.g. resolver.WithAddedModifier(JsonPropertyOrderModifiers.BaseFirst)).")]
 public abstract class OrderedConverterBase<T> : JsonConverter<T> where T : class
 {
     private readonly JsonSerializerOptions _safeOptions;
-    private PropertyInfo[]? _cachedOrderedProps;
+    private WritableProperty[]? _cachedProps;
+
+    private sealed record WritableProperty(PropertyInfo Property, string Name, JsonIgnoreCondition? IgnoreCondition);
 
     public OrderedConverterBase(JsonSerializerOptions options)
     {
@@ -34,19 +37,54 @@ public abstract class OrderedConverterBase<T> : JsonConverter<T> where T : class
     {
         // GetPropertyInfos() reflects + orders once; cache the materialized result since STJ
         // creates one converter instance per type and reuses it for every Write() call.
-        var orderedProps = _cachedOrderedProps ??= [.. GetPropertyInfos()];
+        var props = _cachedProps ??= BuildWritableProperties();
 
         writer.WriteStartObject();
 
-        foreach (var prop in orderedProps)
+        foreach (var prop in props)
         {
-            var propValue = prop.GetValue(value, null);
-            var propName = _safeOptions.PropertyNamingPolicy?.ConvertName(prop.Name) ?? prop.Name;
+            var propValue = prop.Property.GetValue(value, null);
 
-            writer.WritePropertyName(propName);
-            JsonSerializer.Serialize(writer, propValue, prop.PropertyType, _safeOptions);
+            if (ShouldSkip(prop, propValue))
+                continue;
+
+            writer.WritePropertyName(prop.Name);
+            JsonSerializer.Serialize(writer, propValue, prop.Property.PropertyType, _safeOptions);
         }
 
         writer.WriteEndObject();
+    }
+
+    private WritableProperty[] BuildWritableProperties()
+    {
+        return GetPropertyInfos()
+            // skip indexers and properties without a public getter
+            .Where(p => p.GetIndexParameters().Length == 0 && p.GetMethod?.IsPublic == true)
+            .Select(p =>
+            {
+                var ignore = p.GetCustomAttribute<JsonIgnoreAttribute>();
+                var name = p.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name
+                    ?? _safeOptions.PropertyNamingPolicy?.ConvertName(p.Name)
+                    ?? p.Name;
+
+                return new WritableProperty(p, name, ignore?.Condition);
+            })
+            .Where(p => p.IgnoreCondition != JsonIgnoreCondition.Always)
+            .ToArray();
+    }
+
+    private bool ShouldSkip(WritableProperty prop, object? propValue)
+    {
+        // [JsonIgnore(Condition = ...)] wins over the options-level DefaultIgnoreCondition
+        var condition = prop.IgnoreCondition ?? _safeOptions.DefaultIgnoreCondition;
+
+        return condition switch
+        {
+            JsonIgnoreCondition.WhenWritingNull => propValue is null,
+            JsonIgnoreCondition.WhenWritingDefault => propValue is null
+                || (prop.Property.PropertyType.IsValueType
+                    && propValue.Equals(Activator.CreateInstance(prop.Property.PropertyType))),
+            _ => false,
+        };
     }
 }

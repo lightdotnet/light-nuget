@@ -33,6 +33,11 @@ Namespaces: `Light.AspNetCore.Modularity`, `Light.AspNetCore.Builder`, `Light.Ex
 
 All three scanning APIs delegate to the internal `AssemblyTypeExtensions.GetAssignableFrom<T>` helper.
 
+**Each phase creates its own module instances.** `AddModules`, `UseModules` and `MapModuleEndpoints` each
+call `Activator.CreateInstance` independently, so a field set in `Add` is not visible in `Use` or `Map`.
+Modules must therefore have a public parameterless constructor and should share state through DI (or
+static members), not instance fields.
+
 ### Usage
 
 ```csharp
@@ -104,6 +109,11 @@ builder.Services.AutoAddDependencies();
   wrong interface when a class implemented multiple interfaces whose names all contained the class name.
   If no interface named `I<ClassName>` exists on the class, it is registered by concrete type only (no
   interface mapping).
+- Open generic implementations are supported: `Repository<T> : IRepository<T>, IScopedDependency` is
+  registered as `IRepository<>` → `Repository<>` when the interface uses the class's generic parameters in
+  the same order; otherwise the open generic class is registered by concrete type only.
+- Assembly scanning (both features) tolerates `ReflectionTypeLoadException`: when some types in an
+  assembly can't be loaded (e.g. a missing optional dependency), the loadable types are still scanned.
 - The internal `AssemblyTypeExtensions.GetAssignableFrom<T>` helper (used by the module-scanning APIs)
   falls back to scanning all currently-loaded `AppDomain` assemblies when the caller passes an empty or
   `null` assembly array.

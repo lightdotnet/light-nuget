@@ -14,9 +14,8 @@ public static class SwaggerServiceCollectionExtensions
 
         services.Configure<SwaggerOptions>(configuration.GetSection(sectionName));
 
-        var settings = configuration.GetSection(sectionName).Get<SwaggerOptions>();
-
-        ArgumentNullException.ThrowIfNull(settings, nameof(settings));
+        // the section is optional: Swagger is disabled by default
+        var settings = configuration.GetSection(sectionName).Get<SwaggerOptions>() ?? new SwaggerOptions();
 
         if (settings.Enable)
         {

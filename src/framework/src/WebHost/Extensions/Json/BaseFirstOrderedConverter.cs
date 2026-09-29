@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Light.Extensions.Json;
 
+[Obsolete("Use JsonPropertyOrderModifiers.BaseFirst as a DefaultJsonTypeInfoResolver modifier instead. AddDefaultJsonOptions() no longer registers this factory.")]
 public class BaseFirstOrderedConverterFactory : JsonConverterFactory
 {
     public override bool CanConvert(Type typeToConvert)
@@ -25,6 +26,7 @@ public class BaseFirstOrderedConverterFactory : JsonConverterFactory
     }
 }
 
+[Obsolete("Use JsonPropertyOrderModifiers.BaseFirst as a DefaultJsonTypeInfoResolver modifier instead.")]
 public class BaseFirstOrderedConverter<T>(JsonSerializerOptions options) : OrderedConverterBase<T>(options)
     where T : class
 {

@@ -23,6 +23,12 @@ public static class ModelBuilderExtensions
     /// registered filter for that interface (same key) rather than AND-ing the two together — this mirrors
     /// <c>HasQueryFilter</c>'s own "last call wins per key" semantics and matches the documented single-call-per-interface
     /// usage (see README).
+    /// <para>
+    /// Only entity types already present in the model when this method runs are affected, so call it at the end of
+    /// <c>OnModelCreating</c>, after all entities/configurations (e.g. <c>ApplyConfigurationsFromAssembly</c>) have
+    /// been registered. Owned types are skipped: EF Core does not allow query filters on owned entity types (they
+    /// are filtered through their owner).
+    /// </para>
     /// </remarks>
     public static ModelBuilder AppendGlobalQueryFilter<TInterface>(this ModelBuilder modelBuilder, Expression<Func<TInterface, bool>> filter)
     {
@@ -33,7 +39,8 @@ public static class ModelBuilderExtensions
         // first introduced (root type, or the first derived type in TPH/TPT/TPC to implement it). This avoids
         // redundantly re-declaring the same filter on every further-derived type — EF Core propagates it automatically.
         var entities = modelBuilder.Model.GetEntityTypes()
-            .Where(e => interfaceType.IsAssignableFrom(e.ClrType)
+            .Where(e => !e.IsOwned()
+                     && interfaceType.IsAssignableFrom(e.ClrType)
                      && (e.BaseType is null || !interfaceType.IsAssignableFrom(e.BaseType.ClrType)))
             .Select(e => e.ClrType);
 

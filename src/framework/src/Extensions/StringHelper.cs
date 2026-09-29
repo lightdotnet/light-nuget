@@ -44,7 +44,7 @@ namespace Light.Extensions
                 return value;
 
             // get poisition of char in value
-            int idx = value.IndexOf(c);
+            int idx = value.IndexOf(c, StringComparison.Ordinal);
 
             if (idx < 0) // < 0 is not contain char in value
                 return value;
@@ -61,12 +61,12 @@ namespace Light.Extensions
                 return value;
 
             // get poisition of char in value
-            int idx = value.LastIndexOf(c);
+            int idx = value.LastIndexOf(c, StringComparison.Ordinal);
 
             if (idx < 0) // < 0 is not contain char in value
                 return value;
 
-            return value[(idx + 1)..];
+            return value[(idx + c.Length)..];
         }
 
         /// <summary>

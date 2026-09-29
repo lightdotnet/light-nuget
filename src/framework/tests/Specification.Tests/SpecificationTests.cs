@@ -434,6 +434,34 @@ public class SpecificationTests
 
     #endregion
 
+    #region [Combinators — And with one expression-less operand]
+
+    [Test]
+    public void And_Should_Keep_Ordering_From_Left_When_Left_Has_No_Expression()
+    {
+        ISpecification<Product> left = new ProductOrderByIdDescSpec();
+        ISpecification<Product> right = new ProductHaveIdGreaterThanSpec(1);
+        var combined = left.And(right);
+        var result = Products.AsQueryable().Apply(combined).ToList();
+        result.Count.ShouldBe(3); // Id 4, 3, 2
+        result[0].Id.ShouldBe(4);
+        result[2].Id.ShouldBe(2);
+    }
+
+    [Test]
+    public void And_Should_Keep_Ordering_From_Right_When_Right_Has_No_Expression()
+    {
+        ISpecification<Product> left = new ProductHaveIdGreaterThanSpec(1);
+        ISpecification<Product> right = new ProductOrderByIdDescSpec();
+        var combined = left.And(right);
+        var result = Products.AsQueryable().Apply(combined).ToList();
+        result.Count.ShouldBe(3); // Id 4, 3, 2
+        result[0].Id.ShouldBe(4);
+        result[2].Id.ShouldBe(2);
+    }
+
+    #endregion
+
     // Helper empty spec for tests
     private class EmptyProductSpec : Specification<Product> { }
 

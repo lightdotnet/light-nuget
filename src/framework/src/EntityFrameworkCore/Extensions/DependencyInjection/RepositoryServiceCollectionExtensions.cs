@@ -1,6 +1,7 @@
 using Light.EntityFrameworkCore.Repositories;
 using Light.Repositories;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Light.Extensions.DependencyInjection;
 
@@ -19,14 +20,19 @@ public static class RepositoryServiceCollectionExtensions
     /// <summary>
     /// Add UnitOfWork with specific DbContext
     /// </summary>
+    /// <remarks>
+    /// Registers <see cref="IUnitOfWork{TContext}"/> (scoped) and forwards the non-generic <see cref="IUnitOfWork"/>
+    /// to that same scoped instance. The non-generic <see cref="IUnitOfWork"/> is registered with TryAdd semantics, so
+    /// when this method is called for several contexts, <see cref="IUnitOfWork"/> resolves to the <b>first</b>
+    /// registered context; inject <see cref="IUnitOfWork{TContext}"/> to target a specific context.
+    /// </remarks>
     public static IServiceCollection AddUnitOfWork<TContext>(this IServiceCollection services)
         where TContext : DbContext
     {
         services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
-        services.AddScoped<IUnitOfWork>(sp =>
-            new UnitOfWork<TContext>(sp.GetRequiredService<TContext>(), sp, ownsContext: false));
         services.AddScoped<IUnitOfWork<TContext>>(sp =>
             new UnitOfWork<TContext>(sp.GetRequiredService<TContext>(), sp, ownsContext: false));
+        services.TryAddScoped<IUnitOfWork>(sp => sp.GetRequiredService<IUnitOfWork<TContext>>());
         return services;
     }
 

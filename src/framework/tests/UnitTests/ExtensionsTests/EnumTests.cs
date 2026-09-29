@@ -32,5 +32,45 @@ namespace UnitTests.ExtensionsTests
                 option.Description.ShouldBe($"Description {option.Value}");
             }
         }
+
+        private enum LongEnum : long
+        {
+            [System.ComponentModel.Description("Big")]
+            Big = 5_000_000_000,
+            Small = 1,
+        }
+
+        private enum ByteEnum : byte
+        {
+            One = 1,
+        }
+
+        [Flags]
+        private enum FlagsEnum
+        {
+            [System.ComponentModel.Description("A")]
+            A = 1,
+            B = 2,
+        }
+
+        [Test]
+        public void GetOptions_Should_Support_Non_Int_Underlying_Types()
+        {
+            var longOptions = EnumHelper.GetOptions<LongEnum>().ToList();
+            var big = longOptions.Single(x => x.StringValue == nameof(LongEnum.Big));
+            big.LongValue.ShouldBe(5_000_000_000L);
+            big.Description.ShouldBe("Big");
+            longOptions.Single(x => x.StringValue == nameof(LongEnum.Small)).Value.ShouldBe(1);
+
+            EnumHelper.GetOptions<ByteEnum>().Single().Value.ShouldBe(1);
+        }
+
+        [Test]
+        public void Attribute_Getters_Should_Return_Null_For_Undefined_Or_Combined_Values()
+        {
+            (FlagsEnum.A | FlagsEnum.B).GetDescription().ShouldBe(null);
+            ((FlagsEnum)64).GetNameOfDisplay().ShouldBe(null);
+            ((TestEnum)99).GetDescriptionOfDisplay().ShouldBe(null);
+        }
     }
 }
