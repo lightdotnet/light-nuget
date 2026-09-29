@@ -62,6 +62,19 @@ internal static class ExceptionHandlerExtensions
             return false;
         }
 
+        // discard whatever the failed pipeline already set (status, headers such as Content-Length/ETag,
+        // buffered body) so it doesn't leak into or corrupt the error response;
+        // CORS headers (Access-Control-*, Vary) are kept so browsers can still read the error cross-origin
+        var preservedHeaders = response.Headers
+            .Where(h => h.Key.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(h.Key, "Vary", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        response.Clear();
+
+        foreach (var header in preservedHeaders)
+            response.Headers[header.Key] = header.Value;
+
         exception = Unwrap(exception);
 
         string message = exception.Message.Trim();

@@ -1,4 +1,5 @@
 using Light.Repositories;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.Collections.Concurrent;
 
 namespace Light.EntityFrameworkCore.Repositories;
@@ -104,6 +105,45 @@ public class UnitOfWork(DbContext context, IServiceProvider? serviceProvider = n
     {
         ArgumentNullException.ThrowIfNull(action);
 
+        return await ExecuteInTransactionCoreAsync(action, verifySucceeded: null, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public virtual async Task ExecuteInTransactionAsync(Func<CancellationToken, Task> action, Func<CancellationToken, Task<bool>> verifySucceeded, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        ArgumentNullException.ThrowIfNull(verifySucceeded);
+
+        await ExecuteInTransactionCoreAsync<object?>(async ct =>
+        {
+            await action(ct).ConfigureAwait(false);
+            return null;
+        }, verifySucceeded, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    ///     Same as <see cref="ExecuteInTransactionAsync{TResult}(Func{CancellationToken, Task{TResult}}, CancellationToken)"/>,
+    ///     but when an attempt fails with an error the execution strategy would retry on, <paramref name="verifySucceeded"/>
+    ///     is invoked first (mirrors EF Core's <c>ExecutionStrategyExtensions.ExecuteInTransactionAsync</c> with
+    ///     <c>verifySucceeded</c>). If it returns <c>true</c> the failed attempt is treated as committed, no retry happens
+    ///     and the result produced by the action in that attempt is returned. Use it whenever re-applying the unit would
+    ///     be harmful (e.g. duplicate inserts after a commit whose acknowledgement was lost). It is ignored when joining an
+    ///     ambient transaction or with a non-retrying strategy.
+    /// </remarks>
+    public virtual async Task<TResult> ExecuteInTransactionAsync<TResult>(Func<CancellationToken, Task<TResult>> action, Func<CancellationToken, Task<bool>> verifySucceeded, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        ArgumentNullException.ThrowIfNull(verifySucceeded);
+
+        return await ExecuteInTransactionCoreAsync(action, verifySucceeded, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<TResult> ExecuteInTransactionCoreAsync<TResult>(
+        Func<CancellationToken, Task<TResult>> action,
+        Func<CancellationToken, Task<bool>>? verifySucceeded,
+        CancellationToken cancellationToken)
+    {
         if (context.Database.CurrentTransaction is not null)
         {
             var result = await action(cancellationToken).ConfigureAwait(false);
@@ -112,15 +152,37 @@ public class UnitOfWork(DbContext context, IServiceProvider? serviceProvider = n
         }
 
         var strategy = context.Database.CreateExecutionStrategy();
-        return await strategy.ExecuteAsync(async ct =>
-        {
-            // Disposing an uncommitted transaction rolls it back, covering failures in the action, save or commit.
-            await using var transaction = await context.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
-            var result = await action(ct).ConfigureAwait(false);
-            await SaveChangesAsync(ct).ConfigureAwait(false);
-            await transaction.CommitAsync(ct).ConfigureAwait(false);
-            return result;
-        }, cancellationToken).ConfigureAwait(false);
+        var state = new TransactionState<TResult>(action, verifySucceeded);
+
+        return await strategy.ExecuteAsync(
+            state,
+            async (_, s, ct) =>
+            {
+                // reset per attempt so verifySucceeded never returns a previous attempt's result
+                s.Result = default;
+
+                // Disposing an uncommitted transaction rolls it back, covering failures in the action, save or commit.
+                await using var transaction = await context.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
+                s.Result = await s.Action(ct).ConfigureAwait(false);
+                await SaveChangesAsync(ct).ConfigureAwait(false);
+                await transaction.CommitAsync(ct).ConfigureAwait(false);
+                return s.Result;
+            },
+            verifySucceeded is null
+                ? null
+                : async (_, s, ct) => new ExecutionResult<TResult>(await s.VerifySucceeded!(ct).ConfigureAwait(false), s.Result!),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private sealed class TransactionState<TResult>(
+        Func<CancellationToken, Task<TResult>> action,
+        Func<CancellationToken, Task<bool>>? verifySucceeded)
+    {
+        public Func<CancellationToken, Task<TResult>> Action { get; } = action;
+
+        public Func<CancellationToken, Task<bool>>? VerifySucceeded { get; } = verifySucceeded;
+
+        public TResult? Result { get; set; }
     }
 
     public void Dispose()

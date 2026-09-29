@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Buffers;
 using System.Diagnostics;
+using System.IO.Pipelines;
 using System.Text;
 using System.Text.Json;
 
@@ -26,7 +28,13 @@ public class RequestLoggingMiddleware(
         return excludePath;
     }
 
-    private int MaxBodyBytes => Math.Max(0, _settings.MaxBodyLogBytes);
+    /// <summary>
+    /// Hard upper bound for <see cref="RequestLoggingOptions.MaxBodyLogBytes"/>: keeps buffer sizes (and the
+    /// <c>+1</c> used for truncation detection) far away from <see cref="int.MaxValue"/>.
+    /// </summary>
+    internal const int MaxBodyLogBytesLimit = 16 * 1024 * 1024;
+
+    private int MaxBodyBytes => Math.Clamp(_settings.MaxBodyLogBytes, 0, MaxBodyLogBytesLimit);
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -123,14 +131,20 @@ public class RequestLoggingMiddleware(
         // (for the next middlewares in the pipeline).
         request.EnableBuffering();
 
-        // read at most maxBytes (+1 to detect truncation) instead of the whole body
-        var buffer = ArrayPool<byte>.Shared.Rent(maxBytes + 1);
+        // read at most maxBytes (+1 to detect truncation) instead of the whole body;
+        // maxBytes is clamped to MaxBodyLogBytesLimit so the +1 can't overflow.
+        // when Content-Length is known and smaller, only rent what is needed
+        var capacity = request.ContentLength is long contentLength && contentLength < maxBytes
+            ? (int)contentLength + 1
+            : maxBytes + 1;
+
+        var buffer = ArrayPool<byte>.Shared.Rent(capacity);
         try
         {
             var read = 0;
             int n;
-            while (read < maxBytes + 1
-                && (n = await request.Body.ReadAsync(buffer.AsMemory(read, maxBytes + 1 - read), cancellationToken)) > 0)
+            while (read < capacity
+                && (n = await request.Body.ReadAsync(buffer.AsMemory(read, capacity - read), cancellationToken)) > 0)
             {
                 read += n;
             }
@@ -206,21 +220,35 @@ public class RequestLoggingMiddleware(
         }
 
         // Tee the response: write through to the client while capturing the first bytes for logging
-        // (no full buffering, streaming responses keep working)
-        var originalBody = context.Response.Body;
+        // (no full buffering, streaming responses keep working).
+        // Swap the whole body feature (not just Response.Body) so writes via Response.BodyWriter are captured too.
+        var originalFeature = context.Features.GetRequiredFeature<IHttpResponseBodyFeature>();
 
-        using var capture = new CapturingStream(originalBody, MaxBodyBytes);
-        context.Response.Body = capture;
+        using var capture = new CapturingStream(originalFeature.Stream, MaxBodyBytes);
+        var captureFeature = new CapturingResponseBodyFeature(originalFeature, capture);
+        context.Features.Set<IHttpResponseBodyFeature>(captureFeature);
 
+        var completed = false;
         try
         {
             // Continue processing the request; let exceptions propagate to the
             // exception-handling pipeline instead of being swallowed here
             await next(context);
+            completed = true;
         }
         finally
         {
-            context.Response.Body = originalBody;
+            try
+            {
+                // push bytes still buffered in the BodyWriter through to the client before restoring;
+                // skipped on failure so a partial body doesn't start the response ahead of the exception handler
+                if (completed)
+                    await captureFeature.FlushWriterAsync(context.RequestAborted);
+            }
+            finally
+            {
+                context.Features.Set(originalFeature);
+            }
         }
 
         try
@@ -246,17 +274,61 @@ public class RequestLoggingMiddleware(
     }
 
     /// <summary>
-    /// Write-through stream that keeps a copy of the first <c>limit</c> bytes written.
+    /// Response body feature routing both <see cref="Stream"/> and <see cref="Writer"/> through the capturing stream.
+    /// </summary>
+    private sealed class CapturingResponseBodyFeature(IHttpResponseBodyFeature inner, CapturingStream stream) : IHttpResponseBodyFeature
+    {
+        private PipeWriter? _writer;
+
+        public Stream Stream => stream;
+
+        public PipeWriter Writer => _writer ??= PipeWriter.Create(stream, new StreamPipeWriterOptions(leaveOpen: true));
+
+        public void DisableBuffering() => inner.DisableBuffering();
+
+        public async Task StartAsync(CancellationToken cancellationToken = default)
+        {
+            await FlushWriterAsync(cancellationToken);
+            await inner.StartAsync(cancellationToken);
+        }
+
+        public async Task SendFileAsync(string path, long offset, long? count, CancellationToken cancellationToken = default)
+        {
+            await FlushWriterAsync(cancellationToken);
+            await SendFileFallback.SendFileAsync(stream, path, offset, count, cancellationToken);
+        }
+
+        public async Task CompleteAsync()
+        {
+            await FlushWriterAsync(default);
+            await inner.CompleteAsync();
+        }
+
+        /// <summary>
+        /// Flushes data buffered in <see cref="Writer"/>; no-op when the writer was never used.
+        /// </summary>
+        public async Task FlushWriterAsync(CancellationToken cancellationToken)
+        {
+            if (_writer is not null)
+                await _writer.FlushAsync(cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Write-through stream that keeps a copy of the first <c>limit</c> bytes written,
+    /// in a pooled buffer that grows on demand (no up-front <c>limit</c>-sized allocation per request).
     /// </summary>
     private sealed class CapturingStream(Stream inner, int limit) : Stream
     {
-        private readonly byte[] _buffer = new byte[limit];
+        private const int InitialBufferSize = 4 * 1024;
+
+        private byte[]? _buffer;
 
         public int CapturedLength { get; private set; }
 
         public bool Truncated { get; private set; }
 
-        public byte[] GetCapturedBuffer() => _buffer;
+        public byte[] GetCapturedBuffer() => _buffer ?? [];
 
         private void Capture(ReadOnlySpan<byte> data)
         {
@@ -267,9 +339,39 @@ public class RequestLoggingMiddleware(
             var count = Math.Min(free, data.Length);
             if (count > 0)
             {
+                EnsureCapacity(CapturedLength + count);
                 data[..count].CopyTo(_buffer.AsSpan(CapturedLength));
                 CapturedLength += count;
             }
+        }
+
+        private void EnsureCapacity(int required)
+        {
+            if (_buffer is not null && _buffer.Length >= required)
+                return;
+
+            // grow geometrically, never beyond the limit (required <= limit, long math avoids overflow)
+            var size = (int)Math.Min(limit, Math.Max(required, Math.Max(InitialBufferSize, 2L * (_buffer?.Length ?? 0))));
+
+            var newBuffer = ArrayPool<byte>.Shared.Rent(size);
+            if (_buffer is not null)
+            {
+                _buffer.AsSpan(0, CapturedLength).CopyTo(newBuffer);
+                ArrayPool<byte>.Shared.Return(_buffer);
+            }
+
+            _buffer = newBuffer;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && _buffer is not null)
+            {
+                ArrayPool<byte>.Shared.Return(_buffer);
+                _buffer = null;
+            }
+
+            base.Dispose(disposing);
         }
 
         public override void Write(byte[] buffer, int offset, int count)

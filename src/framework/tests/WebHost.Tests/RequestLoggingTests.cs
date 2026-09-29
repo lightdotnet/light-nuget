@@ -104,6 +104,54 @@ public class RequestLoggingTests
     }
 
     [Test]
+    public async Task BodyWriterResponse_IsCapturedAndFullyForwarded()
+    {
+        var (middleware, logger) = Create(async ctx =>
+        {
+            ctx.Response.ContentType = "application/json";
+            // write through the PipeWriter without flushing: the middleware must flush it before restoring
+            var bytes = Encoding.UTF8.GetBytes("{\"ok\":true}");
+            bytes.CopyTo(ctx.Response.BodyWriter.GetSpan(bytes.Length));
+            ctx.Response.BodyWriter.Advance(bytes.Length);
+            await Task.CompletedTask;
+        });
+
+        var context = CreateContext("{}");
+        var originalFeature = context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseBodyFeature>();
+
+        await middleware.InvokeAsync(context);
+
+        var responseBody = Encoding.UTF8.GetString(((MemoryStream)context.Response.Body).ToArray());
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(responseBody, Is.EqualTo("{\"ok\":true}"));
+            Assert.That(logger.Entries.Any(e => e.Message.EndsWith("response {\"ok\":true}")), Is.True);
+            Assert.That(context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseBodyFeature>(), Is.SameAs(originalFeature));
+        });
+    }
+
+    [Test]
+    public async Task MaxBodyLogBytes_IntMaxValue_DoesNotOverflow()
+    {
+        var (middleware, logger) = Create(async ctx =>
+        {
+            ctx.Response.ContentType = "text/plain";
+            await ctx.Response.WriteAsync("pong");
+        }, new RequestLoggingOptions { Enable = true, IncludeRequest = true, IncludeResponse = true, MaxBodyLogBytes = int.MaxValue });
+
+        var context = CreateContext("ping", "text/plain");
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(logger.Entries.Any(e => e.Message.EndsWith("request ping")), Is.True);
+            Assert.That(logger.Entries.Any(e => e.Message.EndsWith("response pong")), Is.True);
+        });
+    }
+
+    [Test]
     public async Task BinaryBodies_AreNotLogged()
     {
         var (middleware, logger) = Create(_ => Task.CompletedTask);
