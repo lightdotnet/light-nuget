@@ -2,13 +2,24 @@
 
 namespace UnitTests.SmtpMailTests;
 
+/// <summary>
+/// Integration test against the public smtp.freesmtpservers.com server (network I/O).
+/// Set SMTP_PUBLIC_TEST=1 to run; ignored otherwise.
+/// </summary>
+[Category("Integration")]
 public class SmtpMailTests
 {
-    private readonly SmtpMailSender _smtpMail;
-    private readonly string _fromMail;
+    private SmtpMailSender _smtpMail = null!;
+    private string _fromMail = null!;
 
-    public SmtpMailTests()
+    [SetUp]
+    public void SetUp()
     {
+        if (Environment.GetEnvironmentVariable("SMTP_PUBLIC_TEST") != "1")
+        {
+            Assert.Ignore("SMTP_PUBLIC_TEST=1 not set.");
+        }
+
         _fromMail = "user@domain.local";
 
         var host = "smtp.freesmtpservers.com";

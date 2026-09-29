@@ -50,7 +50,7 @@ builder.Services.AddMicrosoftGraph(opt =>
 });
 ```
 
-`AddMicrosoftGraph` first validates that `TenantId`, `ClientId` and `ClientSecret` are all non-empty — otherwise it throws an `ArgumentException` naming the missing properties, at registration time. It then builds a `ClientSecretCredential` (scoped to `AzureAuthorityHosts.AzurePublicCloud`), registers a `GraphServiceClient` with `TryAddSingleton` (so a `GraphServiceClient` you registered **before** calling `AddMicrosoftGraph` is kept rather than replaced), `IGraphMailService` as `AddScoped` (passing `GraphOptions.AllowedSenders`), and `IGraphTeams` as `AddTransient`.
+`AddMicrosoftGraph` first validates that `TenantId`, `ClientId` and `ClientSecret` are all non-empty — otherwise it throws an `ArgumentException` naming the missing properties, at registration time. It then builds a `ClientSecretCredential` (scoped to `AzureAuthorityHosts.AzurePublicCloud`), registers a `GraphServiceClient` with `TryAddSingleton` (so a `GraphServiceClient` you registered **before** calling `AddMicrosoftGraph` is kept rather than replaced), `IGraphMailService` as `AddScoped` (passing `GraphOptions.AllowedSenders`), and `IGraphTeams` as `AddTransient`. If you register `GraphMailService` yourself, note it has two public constructors: the single-argument (unrestricted) one is marked `[ActivatorUtilitiesConstructor]`; to use `AllowedSenders`, construct it in a factory (as `AddMicrosoftGraph` does).
 
 Optional sender allow-list:
 

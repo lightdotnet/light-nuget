@@ -79,6 +79,22 @@ public class GraphMailServiceTests
     }
 
     [Test]
+    public void ActivatorUtilities_PicksUnrestrictedConstructor_EvenWithStringServicesRegistered()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(new GraphServiceClient(new HttpClient()));
+        services.AddSingleton("noreply@contoso.com"); // must not be bound to allowedSenders
+        using var provider = services.BuildServiceProvider();
+
+        var sut = ActivatorUtilities.CreateInstance<GraphMailService>(provider);
+
+        var allowed = typeof(GraphMailService)
+            .GetField("_allowedSenders", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .GetValue(sut);
+        Assert.That(allowed, Is.Null);
+    }
+
+    [Test]
     public void AddMicrosoftGraph_AllowedSenders_AreEnforcedByResolvedService()
     {
         var services = new ServiceCollection();

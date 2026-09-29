@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Elastic.CommonSchema.Serilog;
 using Elastic.Ingest.Elasticsearch.Serialization;
@@ -17,10 +18,10 @@ public class ElasticsearchDailyIndexSinkTests
     private static string IndexFor(string service, string environment, DateTimeOffset timestamp)
     {
         var options = ElasticsearchDailyIndexSink.CreateChannelOptions(Transport, service, environment);
-        var document = new LogEventEcsDocument { Timestamp = timestamp };
+        using var channel = new ElasticsearchDailyIndexSink.DailyEcsIndexChannel(options);
 
-        // Same routine IndexChannel uses to build each bulk operation's target index.
-        return BulkRequestDataFactory.CreateBulkOperationHeaderForIndex(document, options).Index!;
+        // Same routine the channel uses to build each bulk operation's target index.
+        return channel.GetBulkOperationHeader(new LogEventEcsDocument { Timestamp = timestamp }).Index!;
     }
 
     [Test]
@@ -77,6 +78,48 @@ public class ElasticsearchDailyIndexSinkTests
         }
     }
 
+    [TestCase("th-TH")] // Buddhist calendar (2026 -> 2569)
+    [TestCase("ar-SA")] // Um Al Qura (Hijri) calendar
+    [TestCase("fa-IR")] // Persian calendar
+    public void IndexName_IsGregorianInvariant_RegardlessOfCurrentCulture(string cultureName)
+    {
+        var culture = new System.Globalization.CultureInfo(cultureName);
+        var timestamp = new DateTimeOffset(2026, 9, 29, 23, 59, 0, TimeSpan.Zero);
+        var previousCulture = CultureInfo.CurrentCulture;
+        var previousUiCulture = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = culture;
+
+            // the stock Elastic.Ingest resolution is culture-dependent (the reason for the override)
+            var options = ElasticsearchDailyIndexSink.CreateChannelOptions(Transport, "api", "prod");
+            var stock = BulkRequestDataFactory.CreateBulkOperationHeaderForIndex(
+                new LogEventEcsDocument { Timestamp = timestamp }, options).Index;
+            TestContext.Out.WriteLine($"{cultureName} stock index: {stock}");
+
+            IndexFor("api", "prod", timestamp).ShouldBe("api-prod-2026-09-29-generic-default");
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previousCulture;
+            CultureInfo.CurrentUICulture = previousUiCulture;
+        }
+    }
+
+    [Test]
+    public void BulkHeader_KeepsCreateOperationMode()
+    {
+        var options = ElasticsearchDailyIndexSink.CreateChannelOptions(Transport, "api", "prod");
+        using var channel = new ElasticsearchDailyIndexSink.DailyEcsIndexChannel(options);
+
+        var header = channel.GetBulkOperationHeader(
+            new LogEventEcsDocument { Timestamp = new DateTimeOffset(2026, 1, 2, 3, 4, 5, TimeSpan.Zero) });
+
+        Assert.That(header, Is.TypeOf<CreateOperation>());
+        header.Index.ShouldBe("api-prod-2026-01-02-generic-default");
+    }
+
     [Test]
     public void ToDocument_MapsLogEventToEcs_WithoutElasticsearch()
     {
@@ -115,5 +158,20 @@ public class ElasticsearchDailyIndexSinkTests
             .ShouldBe(stock.GetProperty("priority").GetInt64() + 1);
         ours.RootElement.GetProperty("index_patterns")[0].GetString()
             .ShouldBe("wtcvn-api-production-*-generic-default");
+
+        // everything else (mappings, composed_of, ...) is kept as-is
+        ours.RootElement.GetProperty("composed_of").GetArrayLength()
+            .ShouldBe(stock.GetProperty("composed_of").GetArrayLength());
+        Assert.That(ours.RootElement.TryGetProperty("template", out _), Is.True);
+    }
+
+    [Test]
+    public void IndexTemplate_FallbackPriority_IsAboveStockEcsPriority()
+    {
+        var stock = JsonDocument.Parse(Elastic.CommonSchema.Elasticsearch.IndexTemplates
+            .GetIndexTemplateForElasticsearchComposable("x-*")).RootElement;
+
+        Assert.That(ElasticsearchDailyIndexSink.DailyEcsIndexChannel.FallbackPriority,
+            Is.GreaterThan(stock.GetProperty("priority").GetInt64()));
     }
 }

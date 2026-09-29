@@ -131,6 +131,9 @@ namespace Light.Infrastructure.Excel
 
                 foreach (var (name, column) in headers)
                 {
+                    // duplicated header text: the first column wins, same as ReadAs<T>
+                    if (dict.ContainsKey(name)) continue;
+
                     // convert prop value to correct type from the cell's typed value (culture independent)
                     dict[name] = Extensions.GetLooseValue(row.Cell(column));
                 }

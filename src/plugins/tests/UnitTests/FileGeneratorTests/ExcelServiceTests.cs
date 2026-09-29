@@ -361,6 +361,126 @@ public class ExcelServiceTests
         Assert.That(row.Name, Is.EqualTo("first"));
     }
 
+    [Test]
+    public void ReadAsObjects_DuplicateHeaders_FirstColumnWins_LikeReadAs()
+    {
+        var excel = new ExcelService();
+        var stream = BuildWorkbook("Data", ["Id", "Name", "Name"], [1, "first", "second"]);
+
+        var row = excel.ReadAsObjects(stream, "Data").Single();
+
+        Assert.That(row["Name"], Is.EqualTo("first"));
+        Assert.That(row, Has.Count.EqualTo(2));
+    }
+
+    private class EdgeRow
+    {
+        public DateTimeOffset Offset { get; set; }
+
+        public DateTimeOffset? MaybeOffset { get; set; }
+
+        public int Count { get; set; }
+
+        public byte Small { get; set; }
+
+        public DayOfWeek Day { get; set; }
+
+        public TimeSpan Duration { get; set; }
+
+        public double Fraction { get; set; }
+
+        public object? Loose { get; set; }
+    }
+
+    [Test]
+    public void ReadAs_DateTimeOffset_FromDateOrNumber_UsesMachineLocalOffset()
+    {
+        var excel = new ExcelService();
+        var date = new DateTime(2026, 4, 3, 10, 30, 0);
+        var stream = BuildWorkbook("Data", ["Offset", "MaybeOffset"], [date, date.ToOADate()]);
+
+        var row = excel.ReadAs<EdgeRow>(stream, "Data").Single();
+
+        var localOffset = TimeZoneInfo.Local.GetUtcOffset(date);
+        Assert.That(row.Offset.DateTime, Is.EqualTo(date));
+        Assert.That(row.Offset.Offset, Is.EqualTo(localOffset));
+        Assert.That(row.MaybeOffset!.Value.Offset, Is.EqualTo(localOffset));
+        Assert.That(row.MaybeOffset.Value.DateTime, Is.EqualTo(date).Within(TimeSpan.FromMilliseconds(1)));
+    }
+
+    [TestCase("Count", 3e10)]
+    [TestCase("Small", 300)]
+    [TestCase("Small", -1)]
+    [TestCase("Day", 1e20)]
+    public void ReadAs_NumberOutOfRangeForIntegralTarget_ThrowsOverflowNamingCell(string header, double value)
+    {
+        var excel = new ExcelService();
+        var stream = BuildWorkbook("Data", [header], [value]);
+
+        var ex = Assert.Throws<OverflowException>(() => excel.ReadAs<EdgeRow>(stream, "Data").ToList());
+
+        Assert.That(ex!.Message, Does.Contain("A2").And.Contain(header == "Day" ? "DayOfWeek" : header == "Small" ? "Byte" : "Int32"));
+    }
+
+    [Test]
+    public void ReadAs_TextOutOfRangeForIntegralTarget_ThrowsOverflowNamingCell()
+    {
+        var excel = new ExcelService();
+        var stream = BuildWorkbook("Data", ["Small"], ["1000"]);
+
+        var ex = Assert.Throws<OverflowException>(() => excel.ReadAs<EdgeRow>(stream, "Data").ToList());
+
+        Assert.That(ex!.Message, Does.Contain("A2"));
+    }
+
+    [Test]
+    public void ReadAs_FractionalNumberIntoEnum_StillThrowsFormatException()
+    {
+        var excel = new ExcelService();
+        var stream = BuildWorkbook("Data", ["Day"], [1.5]);
+
+        Assert.Throws<FormatException>(() => excel.ReadAs<EdgeRow>(stream, "Data").ToList());
+    }
+
+    private static Stream BuildTimeWorkbook(string header, TimeSpan value)
+    {
+        using var wb = new XLWorkbook();
+        var ws = wb.Worksheets.Add("Data");
+        ws.Cell(1, 1).Value = header;
+        ws.Cell(2, 1).Value = value;
+        var stream = new MemoryStream();
+        wb.SaveAs(stream);
+        stream.Position = 0;
+        return stream;
+    }
+
+    [Test]
+    public void ReadAs_TimeCell_IntoTimeSpanAndDouble_Converts()
+    {
+        var excel = new ExcelService();
+        var time = TimeSpan.FromHours(6);
+
+        var duration = excel.ReadAs<EdgeRow>(BuildTimeWorkbook("Duration", time), "Data").Single().Duration;
+        var fraction = excel.ReadAs<EdgeRow>(BuildTimeWorkbook("Fraction", time), "Data").Single().Fraction;
+        var loose = excel.ReadAs<EdgeRow>(BuildTimeWorkbook("Loose", time), "Data").Single().Loose;
+
+        Assert.That(duration, Is.EqualTo(time));
+        Assert.That(fraction, Is.EqualTo(0.25).Within(1e-9));
+        Assert.That(loose, Is.TypeOf<string>());
+    }
+
+    [TestCase("Count")]
+    [TestCase("Offset")]
+    public void ReadAs_TimeCell_IntoUnsupportedTarget_ThrowsFormatNamingCell(string header)
+    {
+        var excel = new ExcelService();
+
+        var ex = Assert.Throws<FormatException>(() =>
+            excel.ReadAs<EdgeRow>(BuildTimeWorkbook(header, TimeSpan.FromHours(6)), "Data").ToList());
+
+        Assert.That(ex!.Message, Does.Contain("A2"));
+    }
+
     private class ReadOnlyPropRow
     {
         public long Id { get; set; }
