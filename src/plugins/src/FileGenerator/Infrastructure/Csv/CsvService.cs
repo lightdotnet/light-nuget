@@ -53,6 +53,9 @@ namespace Light.Infrastructure.Csv
 
         private sealed class InjectionSafeCsvWriter : CsvWriter
         {
+            private const NumberStyles NumericFieldStyles =
+                (NumberStyles.Float | NumberStyles.AllowThousands) & ~NumberStyles.AllowLeadingWhite;
+
             public InjectionSafeCsvWriter(TextWriter writer, CsvConfiguration configuration)
                 : base(writer, configuration)
             {
@@ -60,8 +63,9 @@ namespace Light.Infrastructure.Csv
 
             protected override string? SanitizeForInjection(string? field)
             {
-                // numbers such as "-5" are not formulas; escaping them would corrupt numeric round-trips
-                if (field is null || double.TryParse(field, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out _))
+                // numbers such as "-5" are not formulas; escaping them would corrupt numeric round-trips.
+                // NumberStyles.Float minus AllowLeadingWhite: a leading tab/CR is itself an injection character ("\t5" is escaped).
+                if (field is null || double.TryParse(field, NumericFieldStyles, CultureInfo.InvariantCulture, out _))
                 {
                     return field;
                 }

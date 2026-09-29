@@ -168,3 +168,14 @@ Because everything is behind `IActiveDirectoryService`, controllers/services nev
 - `AddActiveDirectory()` (the no-argument overload) silently wires up `FakeActiveDirectoryService`. There is no compile-time signal distinguishing it from the real overloads other than the argument list — double-check which overload is actually being called in a given environment's startup code.
 - None of the three registration methods use `Microsoft.Extensions.Options`; `DomainOptions`/`LdapOptions` instances are private to the closure created inside each extension method and are not resolvable elsewhere via DI.
 - `LdapOptions.NewUserConnection` is defined but not consumed anywhere in this package's current code.
+
+---
+
+## Breaking / behavior changes
+
+### Unreleased
+
+- **LDAP credential defaults removed:** `LdapOptions.UserName`/`Password` now default to empty (previously `"admin"`/`"AdminP@ssword"`); set them explicitly for `ChangePassword`.
+- New `LdapOptions.UseSsl` (default `false`, as before) enables LDAPS for the `LDAPService.CheckPasswordSignInAsync` bind — recommended with `Port = 636`.
+- `LDAPService.CheckPasswordSignInAsync` returns `false` on invalid credentials (previously threw `LdapException`) and for a blank user name; `ChangePassword` returns `false` for a blank user name and escapes the user name in the LDAP filter (RFC 4515).
+- `ActiveDirectoryService.IsConfigured()` returns `false` for the `"domain.com"` placeholder default and for a whitespace name (previously `true` for any non-empty name). `DomainOptions.Enable` is unchanged.

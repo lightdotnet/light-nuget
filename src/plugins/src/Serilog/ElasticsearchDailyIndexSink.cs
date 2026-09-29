@@ -212,7 +212,10 @@ namespace Light.Serilog
             {
                 // swapping the culture (rather than rebuilding the header) keeps every other header field produced by the base
                 var previous = CultureInfo.CurrentCulture;
-                if (ReferenceEquals(previous, CultureInfo.InvariantCulture))
+
+                // the date part is a custom "yyyy-MM-dd" pattern ('-' is a literal, digits are never localized), so only a
+                // non-Gregorian calendar changes the output; skip the per-event culture swap in the common case
+                if (ReferenceEquals(previous, CultureInfo.InvariantCulture) || previous.DateTimeFormat.Calendar is GregorianCalendar)
                 {
                     return base.CreateBulkOperationHeader(@event);
                 }

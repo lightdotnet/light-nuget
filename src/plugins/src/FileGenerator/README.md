@@ -138,3 +138,25 @@ services.AddFileGenerator(o => o.CsvInjectionOptions = InjectionOptions.None);
 - `ExcelService.Export` only wraps data in a one-row sheet when it's neither a `DataTable` nor `IEnumerable` (a `string` is treated as a single value, not as a sequence of characters) — passing a single plain object (not a list) still produces a one-record sheet, with a header row generated from its public properties.
 - `CsvService.WriteAsync(DataTable)` writes each `DataRow.ItemArray` value via `csv.WriteField(item)` (typed `object`); no explicit formatting is applied beyond CsvHelper's own conversion, all under `CultureInfo.InvariantCulture`.
 - `CsvService.ReadAs<T>` and `Read<T>` eagerly materialize results to a `List<T>` before returning (`GetRecords<T>().ToList()`), because the underlying `CsvReader`/`StreamReader` is disposed at the end of the method — these are not deferred/streaming enumerations despite the `IEnumerable<T>` return type.
+
+---
+
+## Breaking / behavior changes
+
+### Unreleased
+
+CSV (`CsvService`):
+
+- **Formula-injection escaping is on by default** (`InjectionOptions.Escape`): on write, text fields starting with `=`, `@`, `+`, `-`, tab or CR get a leading `'` (plain numbers such as `-5` are not escaped; a tab-prefixed number such as `"\t5"` is). Opt out with `InjectionOptions.None` / `AddFileGenerator(o => o.CsvInjectionOptions = InjectionOptions.None)`.
+- **Reads strip the escaping quote:** in `Escape` mode all `Read*` methods (headers included) remove one leading `'` from fields that start with `'` (one or more) followed by one of those characters — a foreign `'=x` is now read as `=x`.
+- `ObjectConverter` (for `object` properties) parses with `CultureInfo.InvariantCulture` and tries `decimal` before `double`: `"3.14"` now comes back as `decimal` (previously `double`, current culture).
+- The `Stream` overloads no longer close the caller's stream.
+
+Excel (`ExcelService`):
+
+- `ReadAs<T>` conversion errors name the cell: bad text for an enum now throws `FormatException` (was `ArgumentException`); non-convertible values throw `FormatException` (was `InvalidCastException`/`FormatException`); out-of-range values throw `OverflowException` naming the cell; a fractional number into an integral or enum property throws `FormatException` instead of being converted.
+- `ReadAs<T>` converts from the cell's typed value with `CultureInfo.InvariantCulture` (was the current culture); blank cells leave non-nullable value-type properties at their default (previously a conversion exception).
+- Duplicate header text: the first column wins in both `ReadAs<T>` (previously `InvalidOperationException`) and `ReadAsObjects` (previously the last column overwrote it).
+- `ReadAsObjects` returns fractional numbers as `double` (previously `FormatException`) and reads date/boolean cells independent of the current culture.
+- All read methods map by actual column number: blank header cells no longer shift later columns.
+- `Export` treats a `string` as a single value, not as a sequence of characters.

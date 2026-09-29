@@ -100,3 +100,15 @@ This is exactly how the sample `WebApi` project wires it up (`src/plugins/sample
 - `Serilogger` is a `public class`, not `public static class`, even though both its members are `static`; it can technically be instantiated, though there's no reason to (making it `static` would be a breaking change).
 - The package targets `netstandard2.1` but references `Serilog.AspNetCore` 10.x, which on that TFM pulls in the legacy ASP.NET Core 2.x abstractions packages; consumers on modern .NET get the framework versions instead.
 - `logger.json` in this project is a reference/sample file only — it is not loaded by any code here and is not packaged into consuming projects.
+
+---
+
+## Breaking / behavior changes
+
+### Unreleased
+
+- **Plain daily indices, not data streams:** the Elasticsearch sink writes each event to the plain index `{serviceName}-{environment}-{yyyy-MM-dd}-generic-default` for the event's own UTC date (previously one data stream dated at app start). Service and environment are lower-cased (invariant) and forbidden index characters become `_`.
+- The index date is always Gregorian `yyyy-MM-dd` (invariant culture), whatever the process culture (a th-TH/fa-IR/ar-SA host previously got a Buddhist/Persian/Hijri date).
+- **New index template:** `{serviceName}-{environment}-template-generic-default-{ecsVersion}` for `{serviceName}-{environment}-*-generic-default`, without `data_stream`, at the stock ECS priority **+1**. Old per-date data-stream templates can be deleted.
+- The rolling-file sink path uses `Path.Combine` (previously a hard-coded `\`, which on non-Windows put a file named `logs\...` in the working directory instead of under `logs/`).
+- `Serilogger.EnsureInitialized()` is now thread-safe (lock + volatile flag).

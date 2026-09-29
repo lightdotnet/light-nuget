@@ -139,3 +139,13 @@ await smtpClient.SendAsync(
 - Each call to `SendAsync` on either sender opens a fresh `SmtpClient`/connection and disposes/disconnects it at the end of the call — connections are not pooled or reused across calls.
 - `AddSmtpMail`/`AddSmtpMailKit` invoke the options `Action` once at registration time (not per resolution), so all `ISmtpMailSender` instances produced by a given registration share the same `Host`/`Port`/credentials/`UseSsl`. Registration is `AddTransient`, so a new sender instance is created per resolution, but from the same fixed options.
 - `SmtpConnection.Host`/`Port` and `SmtpMailKitSender.UserName`/`Password` are `protected set` — settable only via the constructor by design; only `UseSsl` can be changed after construction (as in the DI extensions and the direct-instantiation examples above).
+
+---
+
+## Breaking / behavior changes
+
+### Unreleased
+
+- **Startup validation:** `AddSmtpMail`/`AddSmtpMailKit` throw `ArgumentNullException` for a null options callback and `ArgumentException` at registration when `Host` is empty or `Port` is outside 1-65535 (previously the failure surfaced on the first send).
+- `SmtpMailKitSender` TLS mapping changed: `UseSsl = true` now means `SslOnConnect` only on port 465 and `StartTls` (TLS required) on any other port (previously `SslOnConnect` on every port); `UseSsl = false` stays `StartTlsWhenAvailable`. The new `SecureSocketOptions` option (sender and `SmtpMailKitOptions`) overrides the mapping.
+- `SmtpMailKitSender` only authenticates when `UserName` is set (anonymous relays work; previously `AuthenticateAsync` was always called), and sets the `From` header as well as `Sender`.
