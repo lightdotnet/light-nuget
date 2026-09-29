@@ -58,7 +58,7 @@ Uses `Novell.Directory.Ldap` for the credential-check path and `System.Directory
 
 - `IsConfigured()` — always `true`.
 - `CheckPasswordSignInAsync` — returns `false` immediately for an empty/whitespace user name or password; otherwise opens an `LdapConnection` (`SecureSocketLayer = settings.UseSsl`) to `settings.Address`/`settings.Port` and binds as `"{userName}@{settings.Name}"` with the supplied password. A successful bind is a valid sign-in; an `InvalidCredentials` bind error returns `false` (other LDAP errors still throw).
-- `ChangePassword` — binds to `settings.Connection` as `settings.UserName`/`settings.Password` via `DirectoryEntry`, searches for `sAMAccountName = userName` (the value is escaped per RFC 4515, so `*`, `(`, `)`, `\` cannot alter the filter), and invokes `SetPassword` + `CommitChanges` on the match. Returns `false` if no matching entry is found.
+- `ChangePassword` — returns `false` immediately for an empty/whitespace user name; otherwise binds to `settings.Connection` as `settings.UserName`/`settings.Password` via `DirectoryEntry` (`AuthenticationTypes.Secure`), searches for `sAMAccountName = userName` (the value is escaped per RFC 4515 — `\`, `*`, `(`, `)` and NUL — so it cannot alter the filter), and invokes `SetPassword` + `CommitChanges` on the match. Returns `false` if no matching entry is found.
 - `GetByUserNameAsync` — **throws `NotImplementedException`** unconditionally.
 
 ### `FakeActiveDirectoryService`

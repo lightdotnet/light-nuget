@@ -28,7 +28,7 @@ project that references `Specification`.
 | `ISaveChanges` | `Light.Repositories` | `SaveChanges`, `SaveChangesAsync` |
 | `IQueryRepository<T>` | `Light.Repositories` | `Include`, `Where`, `WhereIf`, `Apply` (default interface method: filter + ordering + paging), `ToListAsync`, `FindAsync`, `CountAsync`, `AnyAsync` |
 | `IRepository<T>` | `Light.Repositories` | Inherits `IQueryRepository<T>` + `Add`, `AddRange`, `Update`, `UpdateRange`, `Remove`, `RemoveRange`, `AddAsync`, `AddRangeAsync` |
-| `IUnitOfWork` | `Light.Repositories` | Inherits `ISaveChanges` + `Set<T>`, `BeginTransactionAsync`, `CommitAsync`, `RollbackAsync`, `ExecuteInTransactionAsync` (default interface method; overridden with execution-strategy support by the EF Core `UnitOfWork`) |
+| `IUnitOfWork` | `Light.Repositories` | Inherits `ISaveChanges` + `Set<T>`, `BeginTransactionAsync`, `CommitAsync`, `RollbackAsync`, `ExecuteInTransactionAsync` — four default interface method overloads: `(action)`, `<TResult>(action)`, and the same two with a `Func<CancellationToken, Task<bool>> verifySucceeded` parameter. The defaults compose Begin/Save/Commit (Rollback on failure) with no retry support and ignore `verifySucceeded`; the EF Core `UnitOfWork` overrides them with execution-strategy support |
 
 ---
 
@@ -172,6 +172,7 @@ IUnitOfWork : ISaveChanges, IDisposable, IAsyncDisposable
   ├── CommitAsync
   ├── RollbackAsync
   └── ExecuteInTransactionAsync      → begin + action + save + commit
+                                       (overloads: with/without TResult, with/without verifySucceeded)
 ```
 
 ---

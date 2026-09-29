@@ -75,9 +75,9 @@ This is exactly how the sample `WebApi` project wires it up (`src/plugins/sample
         "Name": "ElasticsearchAsync",
         "Args": {
           "ServiceName": "test-service",
-          "Endpoint": "http://10.114.1.27:9200",
-          "Username": "elastic",
-          "Password": "elastic"
+          "Endpoint": "http://<your-elasticsearch-host>:9200",
+          "Username": "<your-elastic-user>",
+          "Password": "<your-elastic-password>"
         }
       },
       {
