@@ -1,4 +1,4 @@
-﻿using Light.Contracts;
+using Light.Contracts;
 using Light.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,13 +12,25 @@ namespace Light.AspNetCore.ExceptionHandlers;
 
 internal static class ExceptionHandlerExtensions
 {
+    /// <summary>
+    /// Non-standard status code (nginx convention) used when the client closed the connection.
+    /// </summary>
+    internal const int ClientClosedRequestStatusCode = 499;
+
     private static readonly JsonSerializerOptions ErrorResponseJsonOptions = new()
     {
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
-    public static async Task HandleExceptionAsync(
+    /// <summary>
+    /// Handles the exception and writes an error <see cref="Result"/> to the response.
+    /// </summary>
+    /// <returns>
+    /// <c>false</c> when the exception could not be handled because the response has already started;
+    /// the caller should rethrow so the server aborts the connection.
+    /// </returns>
+    public static async Task<bool> HandleExceptionAsync(
         this HttpContext httpContext,
         Exception exception,
         ILogger logger,
@@ -27,18 +39,30 @@ internal static class ExceptionHandlerExtensions
         // exclude trace exception from Hangfire
         var isHangfireException = IsHangfireException(httpContext, exception);
         if (isHangfireException)
-            return;
+            return true;
 
         var traceId = httpContext.TraceIdentifier;
         var response = httpContext.Response;
 
-        if (exception is not ExceptionBase && exception.InnerException != null)
+        // client disconnected: not a server error, nothing to write
+        if (exception is OperationCanceledException && httpContext.RequestAborted.IsCancellationRequested)
         {
-            while (exception.InnerException != null)
-            {
-                exception = exception.InnerException;
-            }
+            logger.LogInformation("{traceId} request aborted by client", traceId);
+
+            if (!response.HasStarted)
+                response.StatusCode = ClientClosedRequestStatusCode;
+
+            return true;
         }
+
+        // headers are already sent: can't change status code or write an error body
+        if (response.HasStarted)
+        {
+            logger.LogError(exception, "{traceId} can't write error response. Response has already started.", traceId);
+            return false;
+        }
+
+        exception = Unwrap(exception);
 
         string message = exception.Message.Trim();
 
@@ -91,26 +115,36 @@ internal static class ExceptionHandlerExtensions
         };
 
         var errorContent = $"{traceId} error {response.StatusCode}";
-        logger.LogError("{errorContent} {@errorModel}", errorContent, errorModel);
+        logger.LogError(exception, "{errorContent} {@errorModel}", errorContent, errorModel);
 
         // Write exception as Result
-        if (!response.HasStarted)
+        var result = new Result
         {
-            var result = new Result
-            {
-                Code = response.StatusCode.ToString(),
-                Message = message,
-                RequestId = traceId,
-            };
+            Code = response.StatusCode.ToString(),
+            Message = message,
+            RequestId = traceId,
+        };
 
-            response.ContentType = MediaTypeNames.Application.Json;
+        response.ContentType = MediaTypeNames.Application.Json;
 
-            await response.WriteAsJsonAsync(result, ErrorResponseJsonOptions, cancellationToken: cancellationToken);
-        }
-        else
+        await response.WriteAsJsonAsync(result, ErrorResponseJsonOptions, cancellationToken: cancellationToken);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Returns the first <see cref="ExceptionBase"/> in the inner-exception chain,
+    /// or the innermost exception when there is none.
+    /// </summary>
+    internal static Exception Unwrap(Exception exception)
+    {
+        var current = exception;
+        while (current is not ExceptionBase && current.InnerException is not null)
         {
-            logger.LogError("Can't write error response. Response has already started.");
+            current = current.InnerException;
         }
+
+        return current;
     }
 
     private static bool IsHangfireException(HttpContext httpContext, Exception exception)

@@ -21,7 +21,7 @@ Cache abstraction and provider implementations for services that need a swappabl
 | `CacheDataExtensions` *(internal)* | `Light.Infrastructure` | `JsonSerialize<T>` / `ReadFromJson<T>` helpers used internally by `DistributedCacheService`, backed by a shared camelCase `JsonSerializerOptions`. |
 | `CacheDeserializationException` | `Light.Exceptions` | Thrown by `Get<T>`/`GetAsync<T>` on a type mismatch (see Notes below). Does **not** derive from `SharedKernel`'s `Light.Exceptions.ExceptionBase` hierarchy — this project has no `ProjectReference` to `SharedKernel`, it just happens to share the namespace. |
 | `ServiceCollectionExtensions` | `Light.Extensions.DependencyInjection` | `AddCache(Action<CacheOptions>)` and `AddCache(CacheOptions?)` registration helpers. |
-| `CacheServiceExtensions` | `Light.Extensions` | `GetOrSetAsync<T>(ICacheService, string, Func<Task<T?>>, TimeSpan? slidingExpiration = null, ...)` — returns the cached value, or invokes the factory, caches, and returns the result on a miss. |
+| `CacheServiceExtensions` | `Light.Extensions` | `GetOrSetAsync<T>(ICacheService, string, Func<Task<T?>> or Func<CancellationToken, Task<T?>>, TimeSpan? slidingExpiration = null, ...)` (plus an overload with `bool lockPerKey`) — returns the cached value, or invokes the factory, caches, and returns the result on a miss, with in-process per-key stampede protection. |
 
 ### ⚠️ Namespace layout
 
@@ -36,7 +36,7 @@ This is a known, intentional trade-off (not a build error — C# allows a namesp
 
 `AddCache(CacheOptions? settings)` (the `Action<CacheOptions>` overload just builds a `CacheOptions` and delegates to this one) branches on `settings.Provider`:
 
-- **`"redis"`** — throws a plain `Exception` if `settings.RedisHost` is null/empty. Otherwise builds a `StackExchange.Redis.ConfigurationOptions` (`AbortOnConnectFail = true`, single endpoint = `RedisHost`, `Password` set only if `RedisPassword` is non-empty), calls `services.AddStackExchangeRedisCache(...)` with it, and registers `ICacheService` → `DistributedCacheService` via `AddTransient`.
+- **`"redis"` (compared case-insensitively, so `"Redis"`/`"REDIS"` also match)** — throws `InvalidOperationException` if `settings.RedisHost` is null/empty. Otherwise builds a `StackExchange.Redis.ConfigurationOptions` (`AbortOnConnectFail = true`, single endpoint = `RedisHost`, `Password` set only if `RedisPassword` is non-empty), calls `services.AddStackExchangeRedisCache(...)` with it, and registers `ICacheService` → `DistributedCacheService` via `AddTransient`.
 - **Anything else (including null/empty)** — treated as the default: calls `services.AddMemoryCache()` and registers `ICacheService` → `MemoryCacheService` via `AddTransient`.
 
 Both branches register the `ICacheService` interface — consumers should inject `ICacheService` (or `IAsyncCacheService` if only the async members are needed).
@@ -109,16 +109,18 @@ var user = await cacheService.GetOrSetAsync(
 ```
 
 Notes:
+- **Stampede protection:** concurrent misses for the same key within the current process are serialized by a per-key `SemaphoreSlim` (reference-counted and removed once no caller holds it), so the factory runs once and the other callers read the freshly cached value. This does not coordinate across processes/servers. The lock is not re-entrant — a factory must not call `GetOrSetAsync` for the same key; use the `GetOrSetAsync(key, ct => ..., slidingExpiration, lockPerKey: false, ...)` overload to opt out.
+- The `Func<CancellationToken, Task<T?>>` overloads pass the call's `CancellationToken` to the factory.
 - For a value type `T`, a cached value equal to `default(T)` is indistinguishable from a cache miss (same limitation as `Get<T>`), so the factory runs again in that case.
 - If the factory returns `null` (e.g. a repository lookup that found nothing), that `null` is returned as-is and is **not** cached — the next call invokes the factory again rather than caching the negative result.
 
 ## Notes
 
-- `Try*` methods (`TryGet`, `TrySet`, `TryGetAsync`, `TrySetAsync`) catch all exceptions, log via the injected `ILogger<MemoryCacheService>`/`ILogger<DistributedCacheService>` (`LogError` with the key and exception message), and return `default`/complete silently. The plain `Get`/`Set`/`GetAsync`/`SetAsync` methods do **not** catch anything and propagate exceptions to the caller.
+- `Try*` methods (`TryGet`, `TrySet`, `TryGetAsync`, `TrySetAsync`) catch all exceptions (except that `TryGetAsync`/`TrySetAsync` let `OperationCanceledException` propagate so cancellation is honored), log via the injected `ILogger<MemoryCacheService>`/`ILogger<DistributedCacheService>` (`LogError` with the key and exception message), and return `default`/complete silently. The plain `Get`/`Set`/`GetAsync`/`SetAsync` methods do **not** catch anything and propagate exceptions to the caller.
 - A missing key generally does not throw on its own: `MemoryCacheService.Get<T>` delegates to `Microsoft.Extensions.Caching.Memory.IMemoryCache.Get<T>`, which returns `default(T)` for an absent key, and `DistributedCacheService.Get<T>` treats a null/empty `GetString` result as `default(T)` before attempting JSON deserialization (`CacheDataExtensions.ReadFromJson<T>`). The `Try*` variants mainly guard against other failures — e.g. a stored value that doesn't match the requested `T`, or the underlying cache provider (e.g. Redis connection) throwing. `Get<T>`/`TryGet<T>`/`GetAsync<T>`/`TryGetAsync<T>` all return `T?` to reflect this.
 - A stored value that doesn't match the requested `T` throws `Light.Exceptions.CacheDeserializationException` (wrapping the provider-specific cause — `InvalidCastException` for `MemoryCacheService`, `JsonException` for `DistributedCacheService` — as `InnerException`) from both `Get<T>`/`GetAsync<T>` implementations, so code written against `ICacheService` can catch one exception type regardless of the backing provider. `TryGet<T>`/`TryGetAsync<T>` swallow it like any other failure and return `default`.
 - Only sliding expiration is exposed (`Set<T>(key, value, slidingExpiration)` → `MemoryCacheEntryOptions.SlidingExpiration` or `DistributedCacheEntryOptions.SetSlidingExpiration`; omit/pass `null` for no expiration). There is no parameter for absolute expiration.
 - `AddCache` registers `ICacheService` with `AddTransient`, so a new `MemoryCacheService`/`DistributedCacheService` wrapper is created per resolution — cheap, since the wrapped `Microsoft.Extensions.Caching.*` cache itself is registered as a singleton by `AddMemoryCache`/`AddStackExchangeRedisCache`.
-- `AddCache` throws a plain `System.Exception` (not a more specific exception type) when `Provider == "redis"` and `RedisHost` is missing — catch `Exception` broadly if you need to handle this at startup, or validate `CacheOptions` yourself beforehand.
+- `AddCache` throws `InvalidOperationException` when `Provider` is `"redis"` (case-insensitive) and `RedisHost` is missing.
 - The `CacheOptions` overload's parameter is annotated `CacheOptions?` (nullable-aware signature), but it still throws `ArgumentNullException` via `ArgumentNullException.ThrowIfNull(settings)` when `null` is passed — the annotation documents nullability for callers/analyzers, it doesn't make `null` a valid input.
 - The project has `<Nullable>enable</Nullable>` (inherited from `Directory.Build.props`).

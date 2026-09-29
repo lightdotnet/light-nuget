@@ -105,11 +105,16 @@ name / property type / property value) rather than columns.
 - **`DynamicEntity`** — abstract base (derives from `Entity`, implements `IHasAuditTime`) with
   `ObjectName`, `PropName`, `PropType`, `PropValue`, `Created`, `LastModified`.
 - **`DynamicColumnExporter.ConvertToDynamicColumns<T, TEntity>(obj, objectName)`** — reflects
-  over `T`'s properties and produces a `List<TEntity>` of `DynamicEntity` rows (`PropValue` is
-  stored as `.ToString()`, `PropType` as a coarse string tag such as `"int"`, `"datetime"`, etc.).
+  over `T`'s readable, non-indexer properties and produces a `List<TEntity>` of `DynamicEntity` rows
+  (`PropValue` is formatted with `CultureInfo.InvariantCulture`, dates with the round-trip `"O"`
+  format; `PropType` is a coarse string tag such as `"int"`, `"datetime"`, etc., using the underlying
+  type for nullables, so `int?` → `"int"`).
 - **`DynamicMapper.MapToObject<T, TEntity>(columns)`** — the inverse: takes a `List<TEntity>` of
   `DynamicEntity` rows and populates a new `T` by matching `PropName` to `T`'s writable
-  properties, parsing `PropValue` back into the property's CLR type.
+  properties, parsing `PropValue` (invariant culture) back into the property's CLR type, including
+  nullable types (`int?`, `bool?`, `decimal?`, ...), enums and `Guid`. Dates that are not in an
+  invariant/round-trip format fall back to current-culture parsing for legacy rows.
+- `DynamicEntity.Created` defaults to `DateTimeOffset.UtcNow`.
 
   ```csharp
   var rows = DynamicColumnExporter.ConvertToDynamicColumns<Product, ProductColumn>(product, "Product");

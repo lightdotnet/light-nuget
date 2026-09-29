@@ -92,7 +92,7 @@ namespace Light.Infrastructure
             {
                 return await GetAsync<T>(key, cancellationToken);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogError("Cache {key} GET error: {error}", key, ex.Message);
                 return default;
@@ -118,7 +118,7 @@ namespace Light.Infrastructure
             {
                 await SetAsync(key, value, slidingExpiration, cancellationToken);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogError("Cache {key} SET error: {error}", key, ex.Message);
             }

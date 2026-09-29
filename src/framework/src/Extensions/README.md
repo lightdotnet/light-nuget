@@ -78,7 +78,7 @@ Renamed from `String`/`Number`. Both now draw from a single shared `Random` inst
 
 ### `StringHelper`
 - `Left(this string value, int length)` / `Right(this string value, int length)` — first/last N characters (length is `Math.Abs`'d; returns the whole string if shorter than `length`).
-- `Left(this string value, string c)` / `Right(this string value, string c)` — substring up to the first/after the last occurrence of `c`; returns the original string unchanged if `c` is not found.
+- `Left(this string value, string c)` / `Right(this string value, string c)` — substring up to the first/after the last occurrence of `c` (ordinal match; multi-character separators are fully excluded, e.g. `"a::b".Right("::")` → `"b"`); returns the original string unchanged if `c` is not found.
 
 ### `TextHelper`
 - `ConvertToUnSign3(string s)` — strips diacritics (e.g. `"Tiếng Việt"` → `"Tieng Viet"`), including special-cased Đ/đ.
@@ -101,13 +101,13 @@ Renamed from `String`/`Number`. Both now draw from a single shared `Random` inst
 - `GetNameOfDisplay`, `GetDescriptionOfDisplay` — `Name`/`Description` from `[Display]`.
 
 ### `EnumHelper`
-- `GetDescription(this Enum)`, `GetNameOfDisplay(this Enum)`, `GetDescriptionOfDisplay(this Enum)` — reads `[Description]`/`[Display]` off the matching enum field.
-- `GetOptions<T>()` — returns `IEnumerable<EnumData>` (`Value`, `StringValue`, `Description`) for every value of enum `T`.
+- `GetDescription(this Enum)`, `GetNameOfDisplay(this Enum)`, `GetDescriptionOfDisplay(this Enum)` — reads `[Description]`/`[Display]` off the matching enum field; returns `null` for undefined or combined `[Flags]` values.
+- `GetOptions<T>()` — returns `IEnumerable<EnumData>` (`Value`, `LongValue`, `StringValue`, `Description`) for every value of enum `T`. Works for any underlying type (`byte`, `long`, `uint`, ...); `Value` is truncated to `int` for out-of-range values, so use `LongValue` for wide enums.
 - `GetAll<T>()` — all values of enum `T` as `IEnumerable<T>`.
 
 ### `ValueHandler`
 - `MaximumCharHandler<T>(this T data, int length)` — truncates every non-empty `string` property of `data` to `length` chars (via `StringHelper.Left`), mutating and returning `data`.
-- `NullDateTimeHandler<T>(this T data, DateTime? defaultTime = null)` — sets every `DateTime` property that is `<= 1753-01-01` (SQL Server's minimum date) to `defaultTime` (defaults to `1753-01-01`).
+- `NullDateTimeHandler<T>(this T data, DateTime? defaultTime = null)` — sets every `DateTime` / `DateTime?` property that is `null` or `<= 1753-01-01` (SQL Server's minimum date) to `defaultTime` (defaults to `1753-01-01`).
 - `NullStringHandler<T>(this T data)` — sets every null/empty `string` property to `string.Empty`.
 
 All three now cache each type's `Type.GetProperties()` result in a `ConcurrentDictionary<Type, PropertyInfo[]>` instead of re-reflecting on every call.
@@ -119,7 +119,7 @@ var dto = repository.Get(id)
     .MaximumCharHandler(255);
 ```
 
-Note: these three methods mutate via reflection and assume `T` has settable properties (`pi.SetValue`); they will throw for read-only properties or records with init-only setters.
+Note: these three methods mutate via reflection. They return `null` input unchanged, and only touch properties that are readable, have a setter and are not indexers (read-only properties are skipped; init-only setters are still assigned via reflection).
 
 ## JSON
 
@@ -136,12 +136,14 @@ Uses a shared `JsonSerializerOptions` with `PropertyNamingPolicy = JsonNamingPol
 ## Web / Misc
 
 ### `UriQueryBuilder`
-- `ToQueryString<T>(T data)` — builds a `key=value&...` query string (URL-encoded) from an object's public properties, skipping `null` values.
-- `ToQueryString(Dictionary<string, string> queryParams)` / `ToQueryString(Dictionary<string, object> queryParams)` — same, from a dictionary.
+- `ToQueryString<T>(T data)` — builds a `key=value&...` query string (URL-encoded) from an object's public properties, skipping `null` values and indexers; returns `""` for a `null` object.
+- `ToQueryString(Dictionary<string, string> queryParams)` / `ToQueryString(Dictionary<string, object> queryParams)` — same, from a dictionary; `null` values are emitted as `key=`.
+
+Keys and values are URL-encoded; `IFormattable` values (numbers, dates) are formatted with `CultureInfo.InvariantCulture`.
 
 ### `XmlHelper`
 - `LoadXml(string xml)` → `XmlDocument`.
-- `GetFirstElementByTagName(this XmlDocument xmlDocument, string tagName)` — returns the first matching node (throws `IndexOutOfRangeException`-equivalent if none found, since it indexes `[0]` directly).
+- `GetFirstElementByTagName(this XmlDocument xmlDocument, string tagName)` — returns the first matching node, or `null` if none is found (return type is `XmlNode?`).
 
 ### `Scheduler`
 Computes the next run time for a recurring job confined to a daily time window.

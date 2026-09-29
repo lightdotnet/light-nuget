@@ -113,4 +113,56 @@ public class DistributedCacheServiceTests
 
         Assert.DoesNotThrow(() => cache.TrySet(null!, "value"));
     }
+
+    [Test]
+    public void TryGetAsync_CanceledToken_PropagatesOperationCanceledException()
+    {
+        var cache = new DistributedCacheService(new CancellationAwareDistributedCache(),
+            NullLogger<DistributedCacheService>.Instance);
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        Assert.CatchAsync<OperationCanceledException>(() => cache.TryGetAsync<string>("key", cts.Token));
+    }
+
+    [Test]
+    public void TrySetAsync_CanceledToken_PropagatesOperationCanceledException()
+    {
+        var cache = new DistributedCacheService(new CancellationAwareDistributedCache(),
+            NullLogger<DistributedCacheService>.Instance);
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        Assert.CatchAsync<OperationCanceledException>(() => cache.TrySetAsync("key", "value", cancellationToken: cts.Token));
+    }
+
+    // MemoryDistributedCache ignores the token, so use a stub that honors it (like a real Redis cache would)
+    private sealed class CancellationAwareDistributedCache : IDistributedCache
+    {
+        private readonly MemoryDistributedCache _inner = new(Options.Create(new MemoryDistributedCacheOptions()));
+
+        public byte[]? Get(string key) => _inner.Get(key);
+
+        public Task<byte[]?> GetAsync(string key, CancellationToken token = default)
+        {
+            token.ThrowIfCancellationRequested();
+            return _inner.GetAsync(key, token);
+        }
+
+        public void Set(string key, byte[] value, DistributedCacheEntryOptions options) => _inner.Set(key, value, options);
+
+        public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default)
+        {
+            token.ThrowIfCancellationRequested();
+            return _inner.SetAsync(key, value, options, token);
+        }
+
+        public void Refresh(string key) => _inner.Refresh(key);
+
+        public Task RefreshAsync(string key, CancellationToken token = default) => _inner.RefreshAsync(key, token);
+
+        public void Remove(string key) => _inner.Remove(key);
+
+        public Task RemoveAsync(string key, CancellationToken token = default) => _inner.RemoveAsync(key, token);
+    }
 }

@@ -73,7 +73,9 @@ services.AddUnitOfWork<IAppUnitOfWork, AppUnitOfWork>();
 
 > **Note:** `UnitOfWork` never disposes a `DbContext` it doesn't own when resolved through `AddUnitOfWork()`/`AddUnitOfWork<TContext>()` — those registrations resolve a scoped, container-owned context, so disposing the `IUnitOfWork` early is safe and won't break other scoped services sharing that context. If you construct `UnitOfWork` directly (`new UnitOfWork(context)`), it owns and disposes the context by default; pass `ownsContext: false` to opt out.
 >
-> `BeginTransactionAsync`/`CommitAsync`/`RollbackAsync` run inside `Database.CreateExecutionStrategy().ExecuteAsync(...)`, so they work correctly with retry-enabled providers (e.g. `EnableRetryOnFailure()`).
+> **Transactions and retrying execution strategies:** `BeginTransactionAsync`/`CommitAsync`/`RollbackAsync` call the `DbContext` directly and are **not** retriable. They require a non-retrying execution strategy — with a retry-enabled provider (e.g. `EnableRetryOnFailure()`) EF Core rejects `SaveChanges` inside a user-initiated transaction. Use `ExecuteInTransactionAsync(...)` instead: it runs begin → your action → `SaveChangesAsync` → commit as **one** `CreateExecutionStrategy().ExecuteAsync(...)` operation, rolling back on failure and re-running the whole unit on a transient error (so the action must be safe to re-run). If a transaction is already active on the context, `ExecuteInTransactionAsync` joins it (runs the action + save, no commit).
+>
+> `AddUnitOfWork<TContext>()` resolves `IUnitOfWork` and `IUnitOfWork<TContext>` to the **same** scoped instance. The non-generic `IUnitOfWork` is registered with `TryAdd`, so with several contexts it maps to the **first** registered one — inject `IUnitOfWork<TContext>` to target a specific context.
 >
 > **Never share a single `UnitOfWork`/`DbContext` instance across concurrent threads** (e.g. fan-out with `Task.WhenAll` over the same injected `IUnitOfWork`). This is a standing EF Core constraint, not something `UnitOfWork` can fully guard against: `Set<T>()` serializes concurrent *first* access for the *same* `T`, but concurrent first access for *different* entity types (e.g. one thread calling `Set<Product>()` while another calls `Set<Order>()`) still reaches the underlying `DbContext` unsynchronized and can corrupt its internal state. Give each concurrent unit of work its own scope/`DbContext` instead.
 
@@ -87,6 +89,8 @@ services.AddScoped<IRepository<Product>, ProductRepository>();
 var repo = uow.Set<Product>(); // → ProductRepository instance
 ```
 
+> **Note:** `UnitOfWork` cannot verify that a custom repository resolved from DI uses the *same* `DbContext` instance as the unit of work. Register it as scoped and inject the same scoped `TContext`; otherwise its changes are not saved by `uow.SaveChangesAsync()` nor enlisted in the unit of work's transaction.
+
 ### Usage
 
 ```csharp
@@ -94,16 +98,27 @@ public class OrderService(IUnitOfWork uow)
 {
     public async Task CreateOrder(Order order)
     {
-        await uow.BeginTransactionAsync();
-
-        uow.Set<Order>().Add(order);
-        uow.Set<OrderItem>().AddRange(order.Items);
-
-        await uow.SaveChangesAsync();
-        await uow.CommitAsync();
+        // begin + action + SaveChangesAsync + commit, retriable as one unit
+        await uow.ExecuteInTransactionAsync(ct =>
+        {
+            uow.Set<Order>().Add(order);
+            uow.Set<OrderItem>().AddRange(order.Items);
+            return Task.CompletedTask;
+        });
     }
 }
 ```
+
+With a non-retrying execution strategy you can still drive the transaction manually:
+
+```csharp
+await uow.BeginTransactionAsync();
+uow.Set<Order>().Add(order);
+await uow.SaveChangesAsync();
+await uow.CommitAsync();
+```
+
+Repositories also expose `Apply(spec)` / `Apply(spec, tracking)` (filter + ordering + paging); `Where(spec)` applies the filter only.
 
 ---
 
@@ -158,6 +173,8 @@ var products = await dbContext.QueryAsync<Product>(
     new { Price = 100m });
 ```
 
+Use the `QueryAsync<T>(query, param, commandType, cancellationToken)` overload to pass a `CancellationToken`. All overloads enlist in the context's current transaction (`Database.CurrentTransaction`) when one is active.
+
 A second overload, `QueryAsync<T>(this DbContext, string query, Func<DbDataReader, T> map, CancellationToken)`,
 skips Dapper's own mapping and lets you map each row yourself from a raw `DbDataReader` — useful when Dapper's
 convention-based mapping doesn't fit. It opens/closes the underlying connection around the read itself, rather
@@ -180,6 +197,10 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 > The filter is applied once per entity hierarchy, at the point where `TInterface` is first implemented — EF Core
 > propagates it to derived types automatically. `AppendGlobalQueryFilterIf<TInterface>(condition, filter)` is a
 > conditional wrapper that only calls `AppendGlobalQueryFilter` when `condition` is `true`.
+>
+> Call it **at the end** of `OnModelCreating` (after `ApplyConfigurationsFromAssembly` etc.) — it only sees entity types already in the model. Owned types are skipped (EF Core does not allow filters on them; they are filtered via their owner).
+
+> **No audit / soft-delete interceptor is included.** `AppendGlobalQueryFilter<ISoftDelete>` only *hides* soft-deleted rows; `Repository.Remove`/`RemoveRange` on an `ISoftDelete` entity performs a **hard delete**, and audit fields are not populated automatically. Consumers must add their own `SaveChangesInterceptor` (or `SaveChanges` override) to convert deletes into `IsDeleted = true` updates and to stamp audit data.
 
 ---
 
@@ -190,12 +211,13 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 | `RepositoryTests` | 22 |
 | `SpecificationExtensionsTests` | 21 |
 | `UnitOfWorkTests` | 8 |
+| `UnitOfWorkTransactionTests` | 6 |
 | `AppendGlobalQueryFilterExtensionTests` | 4 |
 | `QueryableWithNoLockExtensionsTests` | 2 |
-| `UnitOfWorkDependencyInjectionTests` | 1 |
+| `UnitOfWorkDependencyInjectionTests` | 2 |
 | `UnitOfWorkConcurrencyTests` | 1 |
 | `SpecificationSqliteTests` | 1 |
-| **Total** | **60** |
+| **Total** | **67** |
 
 `EntityFrameworkCore.Tests` runs against the EF Core InMemory provider by default; `SpecificationSqliteTests` uses
 an in-memory Sqlite database instead, specifically to verify real SQL translation for boxed value-type `OrderBy`

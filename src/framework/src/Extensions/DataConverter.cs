@@ -11,6 +11,12 @@ namespace Light.Extensions
         /// <summary>
         /// Split string to array
         /// </summary>
+        /// <remarks>
+        /// Because <see cref="string"/> implements <see cref="IEnumerable{T}"/> of <see cref="char"/>, this extension
+        /// takes precedence over LINQ's <c>Enumerable.ToArray</c> for string receivers whenever the
+        /// <c>Light.Extensions</c> namespace is imported: <c>"abc".ToArray()</c> returns <c>["abc"]</c> (split by "|"),
+        /// not <c>['a','b','c']</c>. Call <c>Enumerable.ToArray(value)</c> or <c>value.ToCharArray()</c> for characters.
+        /// </remarks>
         public static string[] ToArray(this string? value, string splitChar = DefaultSplitChar)
         {
             if (string.IsNullOrEmpty(value))
@@ -22,6 +28,12 @@ namespace Light.Extensions
         /// <summary>
         /// Split string to list
         /// </summary>
+        /// <remarks>
+        /// Because <see cref="string"/> implements <see cref="IEnumerable{T}"/> of <see cref="char"/>, this extension
+        /// takes precedence over LINQ's <c>Enumerable.ToList</c> for string receivers whenever the
+        /// <c>Light.Extensions</c> namespace is imported: <c>"abc".ToList()</c> returns <c>["abc"]</c> (split by "|"),
+        /// not a list of characters. Call <c>Enumerable.ToList(value)</c> for characters.
+        /// </remarks>
         public static IEnumerable<string> ToList(this string? value, string splitChar = DefaultSplitChar)
         {
             if (string.IsNullOrEmpty(value))

@@ -26,9 +26,9 @@ project that references `Specification`.
 | `CollectionExtensions` | `Light.Specification` | `Where<T>(ISpecification)`, `WhereIf<T>` — for `IEnumerable<T>` |
 | `QueryableExtensions` | `Light.Specification` | `Where<T>(ISpecification)`, `WhereIf<T>`, `Apply<T>` — for `IQueryable<T>` |
 | `ISaveChanges` | `Light.Repositories` | `SaveChanges`, `SaveChangesAsync` |
-| `IQueryRepository<T>` | `Light.Repositories` | `Include`, `Where`, `WhereIf`, `ToListAsync`, `FindAsync`, `CountAsync`, `AnyAsync` |
+| `IQueryRepository<T>` | `Light.Repositories` | `Include`, `Where`, `WhereIf`, `Apply` (default interface method: filter + ordering + paging), `ToListAsync`, `FindAsync`, `CountAsync`, `AnyAsync` |
 | `IRepository<T>` | `Light.Repositories` | Inherits `IQueryRepository<T>` + `Add`, `AddRange`, `Update`, `UpdateRange`, `Remove`, `RemoveRange`, `AddAsync`, `AddRangeAsync` |
-| `IUnitOfWork` | `Light.Repositories` | Inherits `ISaveChanges` + `Set<T>`, `BeginTransactionAsync`, `CommitAsync`, `RollbackAsync` |
+| `IUnitOfWork` | `Light.Repositories` | Inherits `ISaveChanges` + `Set<T>`, `BeginTransactionAsync`, `CommitAsync`, `RollbackAsync`, `ExecuteInTransactionAsync` (default interface method; overridden with execution-strategy support by the EF Core `UnitOfWork`) |
 
 ---
 
@@ -102,6 +102,9 @@ public class LatestProductsSpec : Specification<Product>
 var result = products.AsQueryable().Apply(spec).ToList();
 ```
 
+> **Always order when paging.** `Apply` applies `Skip`/`Take` even if the spec declares no `OrderBy`; the result order is then
+> unspecified and can change between executions (EF Core logs `RowLimitingOperationWithoutOrderByWarning`).
+
 ### Combinators — And / Or / Not
 
 ```csharp
@@ -118,7 +121,7 @@ var results = products.AsQueryable().Where(activeAndPremium).ToList();
 ```
 
 > **Note:** Combinators require `T : class` (matching `Specification<T>`) and preserve ordering/paging from
-> whichever operand carries it (left-biased for `And`/`Or`; `Not` preserves its source spec's ordering/paging).
+> whichever operand carries it (left-biased for `And`/`Or`, including when one `And` operand has no filter expression; `Not` preserves its source spec's ordering/paging).
 > The underlying `ISpecification<T>` interface itself has no such constraint, so custom specifications for
 > value types can still be authored outside the combinator/`Apply` pipeline.
 
@@ -167,12 +170,13 @@ IUnitOfWork : ISaveChanges, IDisposable, IAsyncDisposable
   ├── Set<T>()                       → resolves custom or default repo
   ├── BeginTransactionAsync
   ├── CommitAsync
-  └── RollbackAsync
+  ├── RollbackAsync
+  └── ExecuteInTransactionAsync      → begin + action + save + commit
 ```
 
 ---
 
 ## 🧪 Tests
 
-`Specification.Tests` — 42 tests covering `Specification<T>`, combinators, and the
+`Specification.Tests` — 44 tests covering `Specification<T>`, combinators, and the
 collection/queryable extension methods.

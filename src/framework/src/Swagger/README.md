@@ -36,7 +36,9 @@ In the middleware pipeline:
 app.UseSwagger();
 ```
 
-Both extension methods are no-ops when `Swagger:Enable` is `false` (or the `Swagger` config section is missing values), so they are safe to call unconditionally, including in production.
+Both extension methods are no-ops when `Swagger:Enable` is `false` (or the `Swagger` config section is missing entirely), so they are safe to call unconditionally, including in production.
+
+> **Name clash with Swashbuckle.** `UseSwagger(this IApplicationBuilder)` and `SwaggerOptions` have the same names as Swashbuckle's `Microsoft.AspNetCore.Builder.SwaggerBuilderExtensions.UseSwagger` and `Swashbuckle.AspNetCore.Swagger.SwaggerOptions`. Import `Light.AspNetCore.Swagger` to get this package's config-driven `UseSwagger()`; if Swashbuckle's namespaces are also imported, the call can resolve to Swashbuckle's overload (which ignores `Swagger:Enable`) or be ambiguous — call `SwaggerApplicationBuilderExtensions.UseSwagger(app)` explicitly or fully qualify `Light.AspNetCore.Swagger.SwaggerOptions` in that case.
 
 ## Configuration (`SwaggerOptions`)
 
@@ -70,7 +72,7 @@ Bound from the `"Swagger"` configuration section:
 When `Enable = true`:
 
 - `SwaggerOptions` bound and available as `IOptions<SwaggerOptions>`.
-- If `VersionDefinition = true`: `VersionDefinitionSwaggerOptions` (`IConfigureOptions<SwaggerGenOptions>`) — adds a Swagger document per discovered API version and applies the `SwaggerDefaultValues` operation filter (marks deprecated operations, backfills missing parameter descriptions from model metadata).
+- If `VersionDefinition = true`: `VersionDefinitionSwaggerOptions` (`IConfigureOptions<SwaggerGenOptions>`) — adds a Swagger document per discovered API version and applies the `SwaggerDefaultValues` operation filter (marks deprecated operations, backfills missing parameter descriptions from model metadata; parameters added by other filters that have no ApiExplorer description are left untouched).
 - `AddSwaggerGen(...)` with:
   - Security scheme(s) per `SecurityScheme` (see above).
   - `CustomSchemaIds(x => x.FullName)` — avoids schema id collisions when multiple types share the same short name.
