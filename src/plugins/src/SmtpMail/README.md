@@ -124,7 +124,7 @@ await smtpClient.SendAsync(
     attachments: attachments);
 ```
 
-`SmtpMailSender` wraps each attachment's byte array in a `MemoryStream` and adds it as a `System.Net.Mail.Attachment`; `SmtpMailKitSender` adds each one to a MailKit `BodyBuilder.Attachments` collection via `bodyBuilder.Attachments.Add(name, bytes)`. `cc`/`bcc`/`attachments` are all optional (`null`-safe — skipped when `null`); `recipients` is not — it must be a non-null, non-empty list or `SendAsync` throws when iterating it.
+`SmtpMailSender` wraps each attachment's byte array in a `MemoryStream` and adds it as a `System.Net.Mail.Attachment`; `SmtpMailKitSender` adds each one to a MailKit `BodyBuilder.Attachments` collection via `bodyBuilder.Attachments.Add(name, bytes)`. `cc`/`bcc`/`attachments` are all optional (`null`-safe — skipped when `null`); `recipients` is not — it must be a non-null, non-empty list, otherwise `SendAsync` throws (a `null` list when iterated, an empty one when the underlying client refuses to send without recipients).
 
 ## Notes
 
@@ -132,6 +132,7 @@ await smtpClient.SendAsync(
 - `SmtpMailKitSender` authenticates only when `UserName` is non-empty; with an empty `UserName` it sends anonymously (useful for internal relays that still support STARTTLS).
 - `SmtpMailKitSender` sets both the `From` header and the `Sender` header to `fromDisplayName <from>`. (Before this fix only `Sender` was set, so messages had no `From` header and were often rejected or flagged as spam.)
 - TLS mode for `SmtpMailKitSender` (`MailKit.Security.SecureSocketOptions`): when `SecureSocketOptions` is set it is used as-is; otherwise `UseSsl = false` → `StartTlsWhenAvailable` (unchanged from before: STARTTLS is used if the server offers it), `UseSsl = true` on port `465` → `SslOnConnect`, `UseSsl = true` on any other port (e.g. `587`) → `StartTls` (TLS required). **Behavior change:** previously `UseSsl = true` always meant SSL-on-connect, which fails against STARTTLS ports such as 587. Set `SecureSocketOptions` explicitly (e.g. `SslOnConnect`, `None`) to override.
+- `SmtpMailSender` maps `UseSsl` straight to `System.Net.Mail.SmtpClient.EnableSsl` (explicit STARTTLS; `System.Net.Mail` does not support implicit TLS on port 465). `SecureSocketOptions` exists only on the MailKit sender/options.
 - `SmtpMailSender` now disposes the `MailMessage` (and therefore its attachment streams) after sending.
 - `SmtpMailKitSender.Password` has a public getter; this is kept for backward compatibility, so avoid logging/serializing sender instances.
 - `SmtpMailSender`'s cancellation support is indirect: it registers `SmtpClient.SendAsyncCancel` against the token rather than passing the token into a native async overload (none exists for `SmtpClient.SendMailAsync` on netstandard2.1). Cancelling aborts the in-flight send, but the exception surfaced comes from `SmtpClient` itself and is not guaranteed to be a clean `OperationCanceledException`.

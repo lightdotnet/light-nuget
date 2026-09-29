@@ -31,7 +31,7 @@ Builds a Graph `Message` from the supplied parameters:
 
 The message is sent via `_graphServiceClient.Users[from].SendMail.PostAsync(...)` with `SaveToSentItems = true` — i.e. it is sent **as** the mailbox identified by the `from` address.
 
-> **Security: restrict which mailboxes the app can send as.** The app-only `Mail.Send` application permission lets the app send as **any** mailbox in the tenant, so whoever controls `from` controls the sender. Scope the app registration server-side with an Exchange Online [`ApplicationAccessPolicy`](https://learn.microsoft.com/graph/auth-limit-mailbox-access) (or RBAC for Applications), and never pass untrusted input as `from`. As an optional client-side guard, set `GraphOptions.AllowedSenders`; when non-empty, `SendAsync` throws `ArgumentException` (param `from`) for any other sender before calling Graph. It is off (`null`) by default.
+> **Security: restrict which mailboxes the app can send as.** The app-only `Mail.Send` application permission lets the app send as **any** mailbox in the tenant, so whoever controls `from` controls the sender. Scope the app registration server-side with an Exchange Online [`ApplicationAccessPolicy`](https://learn.microsoft.com/graph/auth-limit-mailbox-access) (or RBAC for Applications), and never pass untrusted input as `from`. As an optional client-side guard, set `GraphOptions.AllowedSenders`; when non-empty, `SendAsync` throws `ArgumentException` (param `from`) for any other sender before calling Graph (comparison is case-insensitive on trimmed values; blank entries are ignored, so a list of only blanks means no restriction). It is off (`null`) by default. The list is copied at registration, so later changes to the `GraphOptions` instance have no effect.
 
 ## `GraphTeamsService.GetChatsAsync` behavior
 
@@ -99,7 +99,7 @@ public class TeamsController(IGraphTeams graphTeams) : ControllerBase
 
 ## Notes
 
-- Both service lifetimes wrap a single, application-wide `GraphServiceClient` (`AddSingleton`) — the `AddScoped`/`AddTransient` registrations for `IGraphMailService`/`IGraphTeams` don't create new Graph connections per request, they just wrap the shared client in a thin, stateless service. The differing lifetimes (scoped vs transient) are historical and harmless; both are safe to inject anywhere a scoped service can be.
+- Both service lifetimes wrap a single, application-wide `GraphServiceClient` (`TryAddSingleton`) — the `AddScoped`/`AddTransient` registrations for `IGraphMailService`/`IGraphTeams` don't create new Graph connections per request, they just wrap the shared client in a thin, stateless service. The differing lifetimes (scoped vs transient) are historical and harmless; both are safe to inject anywhere a scoped service can be.
 - `GraphTeamsService` is `internal`; the only supported entry point is `IGraphTeams`, resolved through DI.
 - `GetChatsAsync` was renamed and retyped from an earlier `GetByAsync(string user) : Task<object?>` signature to `GetChatsAsync(string user) : Task<ChatCollectionResponse?>` — callers pattern-matching on `object` will need to update to the concrete `Microsoft.Graph.Models.ChatCollectionResponse` type.
 - `SendAsync` has no built-in retry/throttling handling beyond whatever the underlying `Microsoft.Graph` SDK's default request adapter does; transient Graph errors (e.g. `429`) propagate as exceptions.

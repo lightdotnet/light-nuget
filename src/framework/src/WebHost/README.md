@@ -4,7 +4,7 @@
 
 NuGet package ID: **`Lightsoft.AspNetCore.Extensions`** (see `WebHost.csproj`; the `.csproj` file itself
 is still named `WebHost.csproj` and the project folder is `WebHost`, but the assembly/package name is
-`Lightsoft.AspNetCore.Extensions`). Version `2.0.1` at the time of writing (tracks `$(NugetVersion)` in `src/framework/Directory.Build.props`).
+`Lightsoft.AspNetCore.Extensions`). Version `2.0.2-preview.1` at the time of writing (`<Version>$(WebHostVersion)</Version>`, which tracks `$(NugetVersion)` in `src/framework/Directory.Build.props`).
 
 This is the largest and most complex project in the `Framework` solution (`src/framework/Framework.slnx`),
 and the only one with an internal `ProjectReference` to another project in the solution
@@ -136,7 +136,7 @@ Pick one — they are not meant to be combined:
 - Walks the `InnerException` chain and stops at the first `Light.Exceptions.ExceptionBase`; if there is none,
   uses the innermost exception.
 - Maps `ValidationException` → its `StatusCode`, joining `ValidationErrors` into a `key: v1,v2|...` message;
-  any other `ExceptionBase` → its own `StatusCode`; `KeyNotFoundException` → 404; anything else → 500, with
+  any other `ExceptionBase` → its own `StatusCode`; `KeyNotFoundException` → 404 (message `"Not Found"`); anything else → 500, with
   the message replaced by `"Internal Server Error"` when `ExceptionHandlerOptions.HideUnidentifiedException`
   is `true` (default `true`).
 - Logs the exception object (so the stack trace is kept) plus source type + message, then writes a

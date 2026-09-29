@@ -70,9 +70,18 @@ Within this solution, `WebHost` is the only project that references `SharedKerne
 ### JSON support (`Light.Extensions.Json`)
 
 - **`PropertyOrderAttribute`** — `[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]`
-  attribute carrying an `int Order`. Consumed by `WebHost`'s `PropertyOrderedConverter<T>` (via
-  `ProjectReference`) to control JSON property serialization order; lives here rather than in
-  `WebHost` so it's available without pulling in the rest of that package.
+  attribute carrying an `int Order`. Consumed by `WebHost`'s `JsonPropertyOrderModifiers.PropertyOrder`
+  resolver modifier (and the `[Obsolete]` `PropertyOrderedConverter<T>`) to control JSON property
+  serialization order; lives here rather than in `WebHost` so it's available without pulling in the
+  rest of that package.
+- **`JsonHelper`** — static helpers over a shared camelCase `JsonSerializerOptions`:
+  `Serialize<T>(T obj)` / `Deserialize<T>(string json)`, and `ConvertToBase64<T>(T obj)` /
+  `ReadFromBase64As<T>(string value)` (JSON as UTF-8, Base64-encoded, and back).
+- **Unix-timestamp converters** — `UnixSecondsToDateTimeConverter` / `UnixMilliSecondsToDateTimeConverter`
+  (both derive from the abstract `UnixTimeToDateTimeConverter : JsonConverter<DateTime>`), applied via
+  `[UnixSecondsDateTime]` / `[UnixMilliSecondsDateTime]`. **Asymmetric:** reading parses a numeric Unix
+  timestamp (seconds/ms since `DateTime.UnixEpoch`); writing calls `WriteStringValue(DateTime)`, i.e. an
+  ISO-8601 string, not a Unix number.
 
 ### Exceptions (`Light.Exceptions`)
 

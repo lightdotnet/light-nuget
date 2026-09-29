@@ -73,7 +73,9 @@ services.AddUnitOfWork<IAppUnitOfWork, AppUnitOfWork>();
 
 > **Note:** `UnitOfWork` never disposes a `DbContext` it doesn't own when resolved through `AddUnitOfWork()`/`AddUnitOfWork<TContext>()` — those registrations resolve a scoped, container-owned context, so disposing the `IUnitOfWork` early is safe and won't break other scoped services sharing that context. If you construct `UnitOfWork` directly (`new UnitOfWork(context)`), it owns and disposes the context by default; pass `ownsContext: false` to opt out.
 >
-> **Transactions and retrying execution strategies:** `BeginTransactionAsync`/`CommitAsync`/`RollbackAsync` call the `DbContext` directly and are **not** retriable. They require a non-retrying execution strategy — with a retry-enabled provider (e.g. `EnableRetryOnFailure()`) EF Core rejects `SaveChanges` inside a user-initiated transaction. Use `ExecuteInTransactionAsync(...)` instead: it runs begin → your action → `SaveChangesAsync` → commit as **one** `CreateExecutionStrategy().ExecuteAsync(...)` operation, rolling back on failure and re-running the whole unit on a transient error (so the action must be safe to re-run). If a transaction is already active on the context, `ExecuteInTransactionAsync` joins it (runs the action + save, no commit).
+> **Transactions and retrying execution strategies:** `BeginTransactionAsync`/`CommitAsync`/`RollbackAsync` call the `DbContext` directly and are **not** retriable. They require a non-retrying execution strategy — with a retry-enabled provider (e.g. `EnableRetryOnFailure()`) EF Core rejects `SaveChanges` inside a user-initiated transaction. Use `ExecuteInTransactionAsync(...)` instead: it runs begin → your action → `SaveChangesAsync` → commit as **one** `CreateExecutionStrategy().ExecuteAsync(...)` operation, rolling back on failure and re-running the whole unit on a transient error (so the action must be safe to re-run). If a transaction is already active on the context, `ExecuteInTransactionAsync` joins it (runs the action + save, no commit, no strategy wrapping). Entities tracked by a failed attempt stay in the change tracker — call `ChangeTracker.Clear()` at the start of the action if that matters.
+>
+> **Overloads:** `ExecuteInTransactionAsync(action)` and `ExecuteInTransactionAsync<TResult>(action)` (returns the action's result), plus the same two with a `Func<CancellationToken, Task<bool>> verifySucceeded` parameter. When an attempt fails with an error the strategy would retry, `verifySucceeded` is invoked first (mirrors EF Core's `ExecuteInTransactionAsync(..., verifySucceeded)`); returning `true` treats the attempt as committed — no retry, and the result from that attempt is returned. Use it when re-applying the unit would be harmful (e.g. duplicate inserts after a commit whose acknowledgement was lost); it should do a fresh store read (e.g. check for a unique marker written by the action), not consult the change tracker. It is ignored when joining an ambient transaction or with a non-retrying strategy. Inheritors: the `verifySucceeded` overloads do not delegate to the other overloads — override both sets when customizing.
 >
 > `AddUnitOfWork<TContext>()` resolves `IUnitOfWork` and `IUnitOfWork<TContext>` to the **same** scoped instance. The non-generic `IUnitOfWork` is registered with `TryAdd`, so with several contexts it maps to the **first** registered one — inject `IUnitOfWork<TContext>` to target a specific context.
 >
@@ -211,13 +213,13 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 | `RepositoryTests` | 22 |
 | `SpecificationExtensionsTests` | 21 |
 | `UnitOfWorkTests` | 8 |
-| `UnitOfWorkTransactionTests` | 6 |
+| `UnitOfWorkTransactionTests` | 8 |
 | `AppendGlobalQueryFilterExtensionTests` | 4 |
 | `QueryableWithNoLockExtensionsTests` | 2 |
 | `UnitOfWorkDependencyInjectionTests` | 2 |
 | `UnitOfWorkConcurrencyTests` | 1 |
 | `SpecificationSqliteTests` | 1 |
-| **Total** | **67** |
+| **Total** | **69** |
 
 `EntityFrameworkCore.Tests` runs against the EF Core InMemory provider by default; `SpecificationSqliteTests` uses
 an in-memory Sqlite database instead, specifically to verify real SQL translation for boxed value-type `OrderBy`

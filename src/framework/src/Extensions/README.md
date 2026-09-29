@@ -2,9 +2,9 @@
 
 # Lightsoft.Extensions
 
-`Light.Extensions` namespace. Targets **netstandard2.1** (unlike the rest of the `Framework` solution, which targets `net10.0`) — this is intentional, to keep the package usable by older/broader .NET runtimes. It has no `ProjectReference`s to other projects in this repo; it only depends on `System.ComponentModel.Annotations` and `System.Text.Json` (see `Extensions.csproj`).
+`Light.Extensions` namespace. Targets **netstandard2.1** (unlike the rest of the `Framework` solution, which targets `net10.0`) — this is intentional, to keep the package usable by older/broader .NET runtimes. It has no `ProjectReference`s to other projects in this repo; its only package dependency is `System.ComponentModel.Annotations` (see `Extensions.csproj`).
 
-A grab-bag of static helper/extension classes for common data-shaping tasks: argument guards, date/time checks, random generation, string/number conversion, reflection-based object helpers, JSON (including Unix-timestamp converters), and small utilities for streams, XML, query strings, and enums.
+A grab-bag of static helper/extension classes for common data-shaping tasks: argument guards, date/time helpers, random generation, string/number conversion, reflection-based object helpers, and small utilities for streams, XML, query strings, and enums. JSON helpers (`JsonHelper`, the Unix-timestamp converters/attributes) are **not** in this package — they live in `Lightsoft.SharedKernel` (same `Light.Extensions.Json` namespace; see the [SharedKernel README](../SharedKernel/README.md)).
 
 > **Public API changes (this session):** several methods below were renamed as breaking changes, and a few had incorrect behavior fixed. If you're upgrading, check the "Renamed" callouts under each class.
 
@@ -21,23 +21,11 @@ int id = requestId.ThrowIfNull(nameof(requestId)); // throws if requestId == 0
 ## Date & Time
 
 ### `DateTimeHelper`
-- `IsNearlyInMinutes/Seconds/Hours/Days(this DateTime dateTime, int amount)` — true only when `dateTime` is **in the future** and within `amount` units from now (`diff >= 0 && diff <= amount`, where `diff = dateTime - DateTime.Now`). A `dateTime` in the past now correctly returns `false` (previously any past `DateTime` returned `true`, which was a bug).
-- `ToUnixTimeSeconds()` / `ToUnixTimeMilliseconds()` — `DateTime` → Unix timestamp.
-- `GetDateTimeFromSeconds(long)` / `GetDateTimeFromMilliseconds(long)` — Unix timestamp → `DateTime`.
+- `ToUnixTimeSeconds()` / `ToUnixTimeMilliseconds()` — `DateTime` → Unix timestamp (via `new DateTimeOffset(value)`).
+- `GetDateTimeFromSeconds(long)` / `GetDateTimeFromMilliseconds(long)` — Unix timestamp → `DateTimeOffset` (UTC offset; `DateTimeOffset.FromUnixTimeSeconds/Milliseconds`).
 
 ### `Month`
 - `Month.ByDate(DateTime date)` — readonly struct exposing `FirstDay`, `LastDay` (last tick of the month), and `TotalDays` for the month containing `date`.
-
-### `Light.Extensions.Json` — Unix timestamp JSON converters
-- `UnixSecondsToDateTimeConverter` / `UnixMilliSecondsToDateTimeConverter` (`System.Text.Json.Serialization.JsonConverter<DateTime>`), applied via `[UnixSecondsDateTime]` / `[UnixMilliSecondsDateTime]` attributes. **Asymmetric behavior**: on read, they parse a numeric Unix timestamp (seconds/ms since `DateTime.UnixEpoch`) into a `DateTime`; on write, they call `WriteStringValue(DateTime)`, i.e. they serialize back out as an ISO-8601 string, not as a Unix number.
-
-```csharp
-public class Event
-{
-    [UnixSecondsDateTime]
-    public DateTime CreatedAt { get; set; }
-}
-```
 
 ## Random
 
@@ -79,6 +67,7 @@ Renamed from `String`/`Number`. Both now draw from a single shared `Random` inst
 ### `StringHelper`
 - `Left(this string value, int length)` / `Right(this string value, int length)` — first/last N characters (length is `Math.Abs`'d; returns the whole string if shorter than `length`).
 - `Left(this string value, string c)` / `Right(this string value, string c)` — substring up to the first/after the last occurrence of `c` (ordinal match; multi-character separators are fully excluded, e.g. `"a::b".Right("::")` → `"b"`); returns the original string unchanged if `c` is not found.
+- `IsNullOrEmptyOrWhiteSpace(string? input)` — static (not an extension method); `true` for null, empty, or whitespace-only input (annotated `[NotNullWhen(false)]`).
 
 ### `TextHelper`
 - `ConvertToUnSign3(string s)` — strips diacritics (e.g. `"Tiếng Việt"` → `"Tieng Viet"`), including special-cased Đ/đ.
@@ -120,13 +109,6 @@ var dto = repository.Get(id)
 ```
 
 Note: these three methods mutate via reflection. They return `null` input unchanged, and only touch properties that are readable, have a setter and are not indexers (read-only properties are skipped; init-only setters are still assigned via reflection).
-
-## JSON
-
-### `JsonHelper`
-Uses a shared `JsonSerializerOptions` with `PropertyNamingPolicy = JsonNamingPolicy.CamelCase`.
-- `Serialize<T>(T obj)` / `Deserialize<T>(string json)`.
-- `ConvertToBase64<T>(T obj)` / `ReadFromBase64As<T>(string value)` — JSON serialized as UTF-8 then Base64-encoded, and back.
 
 ## Claims
 

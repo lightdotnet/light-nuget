@@ -39,7 +39,7 @@ This is a known, intentional trade-off (not a build error — C# allows a namesp
 - **`"redis"` (compared case-insensitively, so `"Redis"`/`"REDIS"` also match)** — throws `InvalidOperationException` if `settings.RedisHost` is null/empty. Otherwise builds a `StackExchange.Redis.ConfigurationOptions` (`AbortOnConnectFail = true`, single endpoint = `RedisHost`, `Password` set only if `RedisPassword` is non-empty), calls `services.AddStackExchangeRedisCache(...)` with it, and registers `ICacheService` → `DistributedCacheService` via `AddTransient`.
 - **Anything else (including null/empty)** — treated as the default: calls `services.AddMemoryCache()` and registers `ICacheService` → `MemoryCacheService` via `AddTransient`.
 
-Both branches register the `ICacheService` interface — consumers should inject `ICacheService` (or `IAsyncCacheService` if only the async members are needed).
+Both branches register only the `ICacheService` interface — consumers should inject `ICacheService`. `IAsyncCacheService` is **not** registered in DI by `AddCache`; resolving it directly fails unless the consumer adds its own forwarding registration (e.g. `services.AddTransient<IAsyncCacheService>(sp => sp.GetRequiredService<ICacheService>())`).
 
 ## Usage
 
