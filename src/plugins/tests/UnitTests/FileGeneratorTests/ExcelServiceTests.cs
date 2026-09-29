@@ -2,6 +2,7 @@ using ClosedXML.Excel;
 using Light.File.Excel;
 using Light.Infrastructure.Excel;
 using System.Data;
+using System.Globalization;
 
 namespace UnitTests.FileGeneratorTests;
 
@@ -179,15 +180,213 @@ public class ExcelServiceTests
     }
 
     [Test]
-    public void ReadAsObjects_FractionalCell_ThrowsFormatException()
+    public void ReadAsObjects_FractionalCell_ReturnsDouble()
     {
-        // Regression: any IsNumber cell is converted with Convert.ToInt64(cell.Value.ToString()),
-        // which requires an exact integer string — a fractional value like "3.7" throws
-        // FormatException rather than being rounded or truncated.
+        // Previously Convert.ToInt64(cell.Value.ToString()) threw FormatException for fractional numbers.
         var excel = new ExcelService();
         var stream = BuildWorkbook("Data", ["Value"], [3.7]);
 
-        Assert.Throws<FormatException>(() => excel.ReadAsObjects(stream, "Data"));
+        var rows = excel.ReadAsObjects(stream, "Data");
+
+        Assert.That(rows[0]["Value"], Is.TypeOf<double>());
+        Assert.That(rows[0]["Value"], Is.EqualTo(3.7));
+    }
+
+    [Test]
+    public void ReadAsObjects_DateAndBoolCells_ReturnTypedValues_CultureIndependent()
+    {
+        var original = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("de-DE");
+            var excel = new ExcelService();
+            var date = new DateTime(2026, 4, 3, 10, 30, 0);
+            var stream = BuildWorkbook("Data", ["When", "Flag"], [date, true]);
+
+            var rows = excel.ReadAsObjects(stream, "Data");
+
+            Assert.That(rows[0]["When"], Is.EqualTo(date));
+            Assert.That(rows[0]["Flag"], Is.EqualTo(true));
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = original;
+        }
+    }
+
+    private class TypedExcelRow
+    {
+        public decimal Price { get; set; }
+
+        public double Ratio { get; set; }
+
+        public int Count { get; set; }
+
+        public int? Optional { get; set; }
+
+        public DateTime When { get; set; }
+
+        public DateTime? MaybeWhen { get; set; }
+
+        public bool Active { get; set; }
+
+        public string? Name { get; set; }
+    }
+
+    [Test]
+    public void ReadAs_TypedCells_ConvertToTargetTypes()
+    {
+        var original = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("de-DE");
+            var excel = new ExcelService();
+            var date = new DateTime(2026, 4, 3);
+            var stream = BuildWorkbook("Data",
+                ["Price", "Ratio", "Count", "Optional", "When", "MaybeWhen", "Active", "Name"],
+                [12.5, 0.25, 7, 3, date, date, true, "A"]);
+
+            var row = excel.ReadAs<TypedExcelRow>(stream, "Data").Single();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(row.Price, Is.EqualTo(12.5m));
+                Assert.That(row.Ratio, Is.EqualTo(0.25));
+                Assert.That(row.Count, Is.EqualTo(7));
+                Assert.That(row.Optional, Is.EqualTo(3));
+                Assert.That(row.When, Is.EqualTo(date));
+                Assert.That(row.MaybeWhen, Is.EqualTo(date));
+                Assert.That(row.Active, Is.True);
+                Assert.That(row.Name, Is.EqualTo("A"));
+            });
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = original;
+        }
+    }
+
+    [Test]
+    public void ReadAs_TextCells_ParseWithInvariantCulture()
+    {
+        var excel = new ExcelService();
+        var stream = BuildWorkbook("Data", ["Price", "When"], ["12.5", "2026-04-03"]);
+
+        var row = excel.ReadAs<TypedExcelRow>(stream, "Data").Single();
+
+        Assert.That(row.Price, Is.EqualTo(12.5m));
+        Assert.That(row.When, Is.EqualTo(new DateTime(2026, 4, 3)));
+    }
+
+    [TestCase("Count")]
+    [TestCase("Optional")]
+    public void ReadAs_FractionalNumberIntoIntegralProperty_Throws(string header)
+    {
+        var excel = new ExcelService();
+        var stream = BuildWorkbook("Data", [header], [3.7]);
+
+        var ex = Assert.Throws<FormatException>(() => excel.ReadAs<TypedExcelRow>(stream, "Data").ToList());
+
+        Assert.That(ex!.Message, Does.Contain("A2").And.Contain("3.7"));
+    }
+
+    [Test]
+    public void ReadAs_WholeNumberIntoIntegralProperty_AndFractionIntoDouble_Succeed()
+    {
+        var excel = new ExcelService();
+        var stream = BuildWorkbook("Data", ["Count", "Ratio"], [7.0, 3.7]);
+
+        var row = excel.ReadAs<TypedExcelRow>(stream, "Data").Single();
+
+        Assert.That(row.Count, Is.EqualTo(7));
+        Assert.That(row.Ratio, Is.EqualTo(3.7));
+    }
+
+    [Test]
+    public void ReadAs_BlankCells_LeaveNonNullableDefault_AndNullableNull()
+    {
+        var excel = new ExcelService();
+        using var wb = new XLWorkbook();
+        var ws = wb.Worksheets.Add("Data");
+        ws.Cell(1, 1).Value = "Name";
+        ws.Cell(1, 2).Value = "Count";
+        ws.Cell(1, 3).Value = "Optional";
+        ws.Cell(2, 1).Value = "A"; // Count/Optional left blank
+        var stream = new MemoryStream();
+        wb.SaveAs(stream);
+        stream.Position = 0;
+
+        var row = excel.ReadAs<TypedExcelRow>(stream, "Data").Single();
+
+        Assert.That(row.Count, Is.EqualTo(0));
+        Assert.That(row.Optional, Is.Null);
+    }
+
+    [Test]
+    public void BlankHeaderCell_DoesNotShiftColumnMapping()
+    {
+        var excel = new ExcelService();
+        using var wb = new XLWorkbook();
+        var ws = wb.Worksheets.Add("Data");
+        ws.Cell(1, 1).Value = "Id";
+        // B1 header left blank
+        ws.Cell(1, 3).Value = "Name";
+        ws.Cell(2, 1).Value = 1;
+        ws.Cell(2, 2).Value = "ignored";
+        ws.Cell(2, 3).Value = "A";
+        var bytes = new MemoryStream();
+        wb.SaveAs(bytes);
+
+        var typed = excel.ReadAs<ExcelRow>(new MemoryStream(bytes.ToArray()), "Data").Single();
+        var loose = excel.ReadAsObjects(new MemoryStream(bytes.ToArray()), "Data").Single();
+        var table = excel.ReadAsDataTable(new MemoryStream(bytes.ToArray()), "Data");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(typed.Id, Is.EqualTo(1));
+            Assert.That(typed.Name, Is.EqualTo("A"));
+            Assert.That(loose["Name"], Is.EqualTo("A"));
+            Assert.That(table.Rows[0]["Name"], Is.EqualTo("A"));
+        });
+    }
+
+    [Test]
+    public void ReadAs_DuplicateHeaders_FirstColumnWins()
+    {
+        var excel = new ExcelService();
+        var stream = BuildWorkbook("Data", ["Id", "Name", "Name"], [1, "first", "second"]);
+
+        var row = excel.ReadAs<ExcelRow>(stream, "Data").Single();
+
+        Assert.That(row.Name, Is.EqualTo("first"));
+    }
+
+    private class ReadOnlyPropRow
+    {
+        public long Id { get; set; }
+
+        public string Computed => $"#{Id}";
+    }
+
+    [Test]
+    public void ReadAs_ReadOnlyProperty_IsSkipped()
+    {
+        var excel = new ExcelService();
+        var stream = BuildWorkbook("Data", ["Id", "Computed"], [5, "x"]);
+
+        var row = excel.ReadAs<ReadOnlyPropRow>(stream, "Data").Single();
+
+        Assert.That(row.Id, Is.EqualTo(5));
+        Assert.That(row.Computed, Is.EqualTo("#5"));
+    }
+
+    [Test]
+    public void Export_String_IsNotTreatedAsCharSequence()
+    {
+        var excel = new ExcelService();
+
+        // previously a string was treated as IEnumerable<char>; it must now be wrapped as a single value
+        Assert.DoesNotThrow(() => excel.Export(("abc", "Data")));
     }
 
     [Test]

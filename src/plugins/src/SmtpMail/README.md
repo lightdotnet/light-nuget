@@ -16,15 +16,15 @@ SMTP email-sending implementations behind a single shared contract, `ISmtpMailSe
 | `ISmtpMailSender` | `Light.Smtp` | Shared contract: `Task SendAsync(string from, string fromDisplayName, List<string> recipients, string subject, string content, List<string>? cc = null, List<string>? bcc = null, Dictionary<string, byte[]>? attachments = null, CancellationToken cancellationToken = default)`. Implemented by both senders below. |
 | `SmtpConnection` | `Light.Smtp` | Abstract base exposing `Host` (protected set), `Port` (protected set), and `UseSsl` (public set) — common connection state for both senders. |
 | `SmtpMailSender` | `Light.Smtp` | `SmtpConnection` + `ISmtpMailSender` implementation using the built-in `System.Net.Mail.SmtpClient`. No authentication support. |
-| `SmtpMailKitSender` | `Light.Smtp` | `SmtpConnection` + `ISmtpMailSender` implementation using MailKit's `SmtpClient`. Supports authentication (`UserName`/`Password`, both public get / protected set). |
+| `SmtpMailKitSender` | `Light.Smtp` | `SmtpConnection` + `ISmtpMailSender` implementation using MailKit's `SmtpClient`. Supports authentication (`UserName`/`Password`, both public get / protected set; authentication is skipped when `UserName` is empty). Optional `SecureSocketOptions` (`MailKit.Security.SecureSocketOptions?`) overrides the TLS mode derived from `UseSsl`. |
 | `SmtpMailOptions` | `Light.Smtp` | Options bag for `AddSmtpMail`: `Host`, `Port` (default `25`), `UseSsl` (default `false`). |
-| `SmtpMailKitOptions` | `Light.Smtp` | Options bag for `AddSmtpMailKit`: `Host`, `Port` (default `587`), `UserName`, `Password`, `UseSsl` (default `false`). |
-| `ServiceCollectionExtensions` | `Light.Extensions.DependencyInjection` | `AddSmtpMail(Action<SmtpMailOptions>)` and `AddSmtpMailKit(Action<SmtpMailKitOptions>)` — both register `ISmtpMailSender` as `AddTransient`. |
+| `SmtpMailKitOptions` | `Light.Smtp` | Options bag for `AddSmtpMailKit`: `Host`, `Port` (default `587`), `UserName`, `Password`, `UseSsl` (default `false`), `SecureSocketOptions` (default `null` = derive from `UseSsl`). |
+| `ServiceCollectionExtensions` | `Light.Extensions.DependencyInjection` | `AddSmtpMail(Action<SmtpMailOptions>)` and `AddSmtpMailKit(Action<SmtpMailKitOptions>)` — both register `ISmtpMailSender` as `AddTransient`, and throw `ArgumentException` at registration if `Host` is empty or `Port` is outside 1-65535. |
 
 ## `SmtpMailSender` vs `SmtpMailKitSender` — which one to use
 
 - **`SmtpMailSender`** wraps `System.Net.Mail.SmtpClient` directly. It has no way to authenticate — it's only suitable for simple/local relays that accept anonymous connections (e.g. an internal relay, a dev SMTP catcher, IIS SMTP). Because the legacy `SmtpClient` has no cancellation-token-accepting `SendMailAsync` overload on netstandard2.1, cancellation is wired up by registering `smtpClient.SendAsyncCancel` against the `CancellationToken` — see [Notes](#notes) for the resulting behavior.
-- **`SmtpMailKitSender`** wraps MailKit's `SmtpClient` and always authenticates (`ConnectAsync` → `AuthenticateAsync` → `SendAsync` → `DisconnectAsync`), all with full native `CancellationToken` support. This is the generally recommended choice for real mail providers (SendGrid, Ethereal, Gmail SMTP, Office 365, etc.) that require authenticated, TLS-capable SMTP.
+- **`SmtpMailKitSender`** wraps MailKit's `SmtpClient` and authenticates whenever a `UserName` is configured (`ConnectAsync` → `AuthenticateAsync` → `SendAsync` → `DisconnectAsync`), all with full native `CancellationToken` support. This is the generally recommended choice for real mail providers (SendGrid, Ethereal, Gmail SMTP, Office 365, etc.) that require authenticated, TLS-capable SMTP.
 
 In short: reach for `SmtpMailKitSender` unless you specifically need to talk to an unauthenticated relay, in which case `SmtpMailSender` is the lighter-weight option.
 
@@ -129,7 +129,11 @@ await smtpClient.SendAsync(
 ## Notes
 
 - Both senders always send an HTML body: `SmtpMailSender` sets `IsBodyHtml = true`, and `SmtpMailKitSender` sets `HtmlBody` on the `BodyBuilder`. Plain-text bodies aren't supported by either sender.
-- `SmtpMailKitSender` always authenticates — there is no anonymous-send path on that class. If you need an unauthenticated relay, use `SmtpMailSender` instead.
+- `SmtpMailKitSender` authenticates only when `UserName` is non-empty; with an empty `UserName` it sends anonymously (useful for internal relays that still support STARTTLS).
+- `SmtpMailKitSender` sets both the `From` header and the `Sender` header to `fromDisplayName <from>`. (Before this fix only `Sender` was set, so messages had no `From` header and were often rejected or flagged as spam.)
+- TLS mode for `SmtpMailKitSender` (`MailKit.Security.SecureSocketOptions`): when `SecureSocketOptions` is set it is used as-is; otherwise `UseSsl = false` → `StartTlsWhenAvailable` (unchanged from before: STARTTLS is used if the server offers it), `UseSsl = true` on port `465` → `SslOnConnect`, `UseSsl = true` on any other port (e.g. `587`) → `StartTls` (TLS required). **Behavior change:** previously `UseSsl = true` always meant SSL-on-connect, which fails against STARTTLS ports such as 587. Set `SecureSocketOptions` explicitly (e.g. `SslOnConnect`, `None`) to override.
+- `SmtpMailSender` now disposes the `MailMessage` (and therefore its attachment streams) after sending.
+- `SmtpMailKitSender.Password` has a public getter; this is kept for backward compatibility, so avoid logging/serializing sender instances.
 - `SmtpMailSender`'s cancellation support is indirect: it registers `SmtpClient.SendAsyncCancel` against the token rather than passing the token into a native async overload (none exists for `SmtpClient.SendMailAsync` on netstandard2.1). Cancelling aborts the in-flight send, but the exception surfaced comes from `SmtpClient` itself and is not guaranteed to be a clean `OperationCanceledException`.
 - `SmtpMailKitSender.SendAsync` uses MailKit's token-accepting `ConnectAsync`/`AuthenticateAsync`/`SendAsync`/`DisconnectAsync` overloads throughout, so cancellation behaves as expected at each stage.
 - Each call to `SendAsync` on either sender opens a fresh `SmtpClient`/connection and disposes/disconnects it at the end of the call — connections are not pooled or reused across calls.

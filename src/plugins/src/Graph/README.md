@@ -17,7 +17,7 @@ Thin wrapper around the Microsoft Graph SDK for sending mail and reading Teams c
 | `GraphMailService` | `Light.Infrastructure` | Public implementation of `IGraphMailService`, backed by a `GraphServiceClient`. |
 | `IGraphTeams` | `Light.Graph` | `Task<ChatCollectionResponse?> GetChatsAsync(string user)` — lists a user's Teams chats. |
 | `GraphTeamsService` | `Light.Infrastructure` | **Internal** implementation of `IGraphTeams`, backed by a `GraphServiceClient`. Not directly constructible by consumers — resolve it through `IGraphTeams`. |
-| `GraphOptions` | `Light.Infrastructure` | Options bag: `TenantId`, `ClientId`, `ClientSecret` (all `string?`). |
+| `GraphOptions` | `Light.Infrastructure` | Options bag: `TenantId`, `ClientId`, `ClientSecret` (all `string?`, all required), and optional `AllowedSenders` (`IList<string>?`). |
 | `ServiceCollectionExtensions` | `Light.Extensions.DependencyInjection` | `AddMicrosoftGraph(Action<GraphOptions> action)` registration helper. |
 
 ## `GraphMailService.SendAsync` behavior
@@ -27,13 +27,15 @@ Builds a Graph `Message` from the supplied parameters:
 - `ToRecipients` — from `recipients` (required).
 - `Subject` / `Body` — `Body.ContentType` is always `BodyType.Html`, populated from `content`.
 - `CcRecipients` / `BccRecipients` — set only if `ccRecipients` / `bccRecipients` is non-null.
-- `Attachments` — set only if `attachments` is non-null; each `Dictionary<string, byte[]>` entry becomes a Graph file attachment (`OdataType = "#microsoft.graph.fileAttachment"`) named after the key, with `AdditionalData["contentBytes"]` set to `Convert.ToBase64String(value)`.
+- `Attachments` — set only if `attachments` is non-null; each `Dictionary<string, byte[]>` entry becomes a Graph file attachment (`OdataType = "#microsoft.graph.fileAttachment"`) named after the key — built as a typed `FileAttachment { ContentBytes = value }`, which serializes to the same base64 `"contentBytes"` JSON property as the earlier `AdditionalData["contentBytes"]` approach.
 
-The message is sent via `_graphServiceClient.Users[from].SendMail.PostAsync(...)` with `SaveToSentItems = true` — i.e. it is sent **as** the mailbox identified by the `from` address (app-only Graph auth requires `Mail.Send` application permission and, typically, an application access policy scoping which mailboxes it can send as).
+The message is sent via `_graphServiceClient.Users[from].SendMail.PostAsync(...)` with `SaveToSentItems = true` — i.e. it is sent **as** the mailbox identified by the `from` address.
+
+> **Security: restrict which mailboxes the app can send as.** The app-only `Mail.Send` application permission lets the app send as **any** mailbox in the tenant, so whoever controls `from` controls the sender. Scope the app registration server-side with an Exchange Online [`ApplicationAccessPolicy`](https://learn.microsoft.com/graph/auth-limit-mailbox-access) (or RBAC for Applications), and never pass untrusted input as `from`. As an optional client-side guard, set `GraphOptions.AllowedSenders`; when non-empty, `SendAsync` throws `ArgumentException` (param `from`) for any other sender before calling Graph. It is off (`null`) by default.
 
 ## `GraphTeamsService.GetChatsAsync` behavior
 
-Calls `_graphServiceClient.Users[user].Chats.GetAsync()` and returns the raw `Microsoft.Graph.Models.ChatCollectionResponse?` (a single page — no automatic paging is performed).
+Calls `_graphServiceClient.Users[user].Chats.GetAsync()` and returns the raw `Microsoft.Graph.Models.ChatCollectionResponse?` (a single page — no automatic paging is performed; follow `OdataNextLink` yourself or use the SDK's `PageIterator`). `IGraphTeams.GetChatsAsync` takes no `CancellationToken`; adding one would change the public interface, so it has been left as-is.
 
 ## Usage
 
@@ -48,7 +50,17 @@ builder.Services.AddMicrosoftGraph(opt =>
 });
 ```
 
-`AddMicrosoftGraph` builds a `ClientSecretCredential` (scoped to `AzureAuthorityHosts.AzurePublicCloud`) from the bound `GraphOptions`, registers a single `GraphServiceClient` as `AddSingleton`, `IGraphMailService` as `AddScoped`, and `IGraphTeams` as `AddTransient`.
+`AddMicrosoftGraph` first validates that `TenantId`, `ClientId` and `ClientSecret` are all non-empty — otherwise it throws an `ArgumentException` naming the missing properties, at registration time. It then builds a `ClientSecretCredential` (scoped to `AzureAuthorityHosts.AzurePublicCloud`), registers a `GraphServiceClient` with `TryAddSingleton` (so a `GraphServiceClient` you registered **before** calling `AddMicrosoftGraph` is kept rather than replaced), `IGraphMailService` as `AddScoped` (passing `GraphOptions.AllowedSenders`), and `IGraphTeams` as `AddTransient`.
+
+Optional sender allow-list:
+
+```csharp
+builder.Services.AddMicrosoftGraph(opt =>
+{
+    // ... TenantId / ClientId / ClientSecret ...
+    opt.AllowedSenders = ["notifications@contoso.com"];
+});
+```
 
 ### 2. Send mail
 
@@ -87,7 +99,7 @@ public class TeamsController(IGraphTeams graphTeams) : ControllerBase
 
 ## Notes
 
-- Both service lifetimes wrap a single, application-wide `GraphServiceClient` (`AddSingleton`) — the `AddScoped`/`AddTransient` registrations for `IGraphMailService`/`IGraphTeams` don't create new Graph connections per request, they just wrap the shared client in a thin, stateless service.
+- Both service lifetimes wrap a single, application-wide `GraphServiceClient` (`AddSingleton`) — the `AddScoped`/`AddTransient` registrations for `IGraphMailService`/`IGraphTeams` don't create new Graph connections per request, they just wrap the shared client in a thin, stateless service. The differing lifetimes (scoped vs transient) are historical and harmless; both are safe to inject anywhere a scoped service can be.
 - `GraphTeamsService` is `internal`; the only supported entry point is `IGraphTeams`, resolved through DI.
 - `GetChatsAsync` was renamed and retyped from an earlier `GetByAsync(string user) : Task<object?>` signature to `GetChatsAsync(string user) : Task<ChatCollectionResponse?>` — callers pattern-matching on `object` will need to update to the concrete `Microsoft.Graph.Models.ChatCollectionResponse` type.
 - `SendAsync` has no built-in retry/throttling handling beyond whatever the underlying `Microsoft.Graph` SDK's default request adapter does; transient Graph errors (e.g. `429`) propagate as exceptions.

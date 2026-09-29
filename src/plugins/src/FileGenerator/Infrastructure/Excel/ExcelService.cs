@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace Light.Infrastructure.Excel
 {
@@ -27,7 +28,8 @@ namespace Light.Infrastructure.Excel
                 }
                 else
                 {
-                    var enumerable = data is IEnumerable
+                    // string implements IEnumerable<char> but must be exported as a single value
+                    var enumerable = data is IEnumerable && !(data is string)
                         ? data
                         : new object[] { data };
 
@@ -53,14 +55,14 @@ namespace Light.Infrastructure.Excel
 
             // Create a new DataTable
             var dt = new DataTable();
-            headers.ForEach(h => dt.Columns.Add(h));
+            headers.ForEach(h => dt.Columns.Add(h.Name));
 
             // Loop through the Worksheet rows, skip first row which is used for column header texts
             foreach (var row in worksheet.RowsUsed().Skip(1))
             {
                 var newRow = dt.NewRow();
                 for (int i = 0; i < headers.Count; i++)
-                    newRow[i] = row.Cell(i + 1).Value.ToString();
+                    newRow[i] = row.Cell(headers[i].Column).Value.ToString();
                 dt.Rows.Add(newRow);
             }
 
@@ -78,27 +80,33 @@ namespace Light.Infrastructure.Excel
             // get first sheet if not specify sheet name
             var worksheet = Extensions.GetWorksheet(workbook, sheetName);
 
-            // header column texts, indexing of ClosedXml is 1 not 0
-            var headers = Extensions.GetHeaders(worksheet)
-                .Select((name, i) => new { Name = name, Index = i + 1 })
-                .ToList();
+            // header column texts with their actual column number (indexing of ClosedXml is 1 not 0)
+            var headers = Extensions.GetHeaders(worksheet);
 
-            var props = typeof(T).GetProperties();
+            // build property -> column map once: only settable, non-indexer properties with a matching header
+            // (the first matching header wins when a header text is duplicated)
+            var columnMap = new List<(PropertyInfo Property, int Column)>();
+            foreach (var prop in typeof(T).GetProperties())
+            {
+                if (!prop.CanWrite || prop.GetIndexParameters().Length > 0) continue;
+
+                var propName = options?.ColumnNames.GetValueOrDefault(prop.Name) ?? prop.Name;
+                var index = headers.FindIndex(c => c.Name == propName);
+                if (index < 0) continue;
+
+                columnMap.Add((prop, headers[index].Column));
+            }
 
             // skip first row which is used for column header texts
             return worksheet.RowsUsed().Skip(1).Select(row =>
             {
                 var obj = (T)Activator.CreateInstance(typeof(T))!;
 
-                foreach (var prop in props)
+                foreach (var (prop, column) in columnMap)
                 {
-                    // find column has same prop name of class
-                    var propName = options?.ColumnNames.GetValueOrDefault(prop.Name) ?? prop.Name;
-                    var column = headers.SingleOrDefault(c => c.Name == propName);
-                    if (column is null) continue;
-
-                    var val = row.Cell(column.Index).GetString(); // must .GetString() to fix error "object must implement IConvertible"
-                    prop.SetValue(obj, Extensions.ConvertValue(val, prop.PropertyType));
+                    // blank cells leave non-nullable value-type properties at their default
+                    if (Extensions.TryConvertCell(row.Cell(column), prop.PropertyType, out var value))
+                        prop.SetValue(obj, value);
                 }
 
                 return obj;
@@ -121,18 +129,10 @@ namespace Light.Infrastructure.Excel
             {
                 var dict = new Dictionary<string, object>();
 
-                for (int i = 0; i < headers.Count; i++)
+                foreach (var (name, column) in headers)
                 {
-                    var cell = row.Cell(i + 1); // because ClosedXML start with 1
-
-                    // convert prop value to correct type
-                    dict[headers[i]] = cell.Value switch
-                    {
-                        { IsNumber: true } => Convert.ToInt64(cell.Value.ToString()),
-                        { IsDateTime: true } => Convert.ToDateTime(cell.Value.ToString()),
-                        { IsBoolean: true } => Convert.ToBoolean(cell.Value.ToString()),
-                        _ => cell.Value.ToString()
-                    };
+                    // convert prop value to correct type from the cell's typed value (culture independent)
+                    dict[name] = Extensions.GetLooseValue(row.Cell(column));
                 }
 
                 return dict;

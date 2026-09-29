@@ -26,4 +26,8 @@
 	<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(AspnetVersion)" />
   </ItemGroup>
 
+  <ItemGroup>
+	<InternalsVisibleTo Include="UnitTests" />
+  </ItemGroup>
+
 </Project>
