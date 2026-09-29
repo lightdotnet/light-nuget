@@ -140,7 +140,11 @@ public class RequestLoggingTests
             await ctx.Response.WriteAsync("pong");
         }, new RequestLoggingOptions { Enable = true, IncludeRequest = true, IncludeResponse = true, MaxBodyLogBytes = int.MaxValue });
 
+        // no Content-Length (chunked / streamed body): ReadBodyAsync falls back to the clamped maxBytes + 1 capacity
         var context = CreateContext("ping", "text/plain");
+        context.Request.Headers.TransferEncoding = "chunked";
+        context.Request.ContentLength = null;
+        Assert.That(context.Request.ContentLength, Is.Null);
 
         await middleware.InvokeAsync(context);
 
@@ -149,6 +153,85 @@ public class RequestLoggingTests
             Assert.That(logger.Entries.Any(e => e.Message.EndsWith("request ping")), Is.True);
             Assert.That(logger.Entries.Any(e => e.Message.EndsWith("response pong")), Is.True);
         });
+    }
+
+    [Test]
+    public async Task FailureAfterUnflushedBodyWriterWrite_DiscardsBufferedBytes_AndRestoresFeature()
+    {
+        var (middleware, _) = Create(ctx =>
+        {
+            ctx.Response.ContentType = "application/json";
+            // written but never flushed, then the endpoint fails
+            var bytes = Encoding.UTF8.GetBytes("{\"partial\":");
+            bytes.CopyTo(ctx.Response.BodyWriter.GetSpan(bytes.Length));
+            ctx.Response.BodyWriter.Advance(bytes.Length);
+            throw new InvalidOperationException("boom");
+        });
+
+        var context = CreateContext("{}");
+        var originalFeature = context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseBodyFeature>();
+
+        // acts as the outer exception handler (registered before request logging)
+        try
+        {
+            await middleware.InvokeAsync(context);
+            Assert.Fail("exception expected");
+        }
+        catch (InvalidOperationException)
+        {
+            Assert.That(context.Response.HasStarted, Is.False);
+            Assert.That(((MemoryStream)context.Response.Body).Length, Is.Zero, "unflushed bytes must not be written");
+
+            context.Response.Clear();
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync("{\"code\":500}");
+        }
+
+        var responseBody = Encoding.UTF8.GetString(((MemoryStream)context.Response.Body).ToArray());
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(responseBody, Is.EqualTo("{\"code\":500}"));
+            Assert.That(context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseBodyFeature>(), Is.SameAs(originalFeature));
+        });
+    }
+
+    [Test]
+    public async Task StartAsyncAndSendFileAsync_WorkThroughCaptureFeature()
+    {
+        var file = Path.GetTempFileName();
+        await File.WriteAllTextAsync(file, "file-content");
+        try
+        {
+            var (middleware, logger) = Create(async ctx =>
+            {
+                ctx.Response.ContentType = "text/plain";
+                // unflushed BodyWriter bytes must precede what StartAsync / SendFileAsync send
+                var bytes = Encoding.UTF8.GetBytes("head:");
+                bytes.CopyTo(ctx.Response.BodyWriter.GetSpan(bytes.Length));
+                ctx.Response.BodyWriter.Advance(bytes.Length);
+
+                await ctx.Response.StartAsync();
+                await ctx.Response.SendFileAsync(file);
+            });
+
+            var context = CreateContext("{}");
+
+            await middleware.InvokeAsync(context);
+
+            var responseBody = Encoding.UTF8.GetString(((MemoryStream)context.Response.Body).ToArray());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(responseBody, Is.EqualTo("head:file-content"));
+                Assert.That(logger.Entries.Any(e => e.Message.EndsWith("response head:file-content")), Is.True);
+            });
+        }
+        finally
+        {
+            File.Delete(file);
+        }
     }
 
     [Test]
