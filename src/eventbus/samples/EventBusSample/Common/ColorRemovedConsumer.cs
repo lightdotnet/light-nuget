@@ -11,8 +11,9 @@ public class ColorRemovedConsumer(
     // _error queue applies to this consumer (none is configured in ColorRemovedConsumerDefinition).
     public override bool ThrowIfError => false;
 
-    public override Task Handle(ColorRemovedIntegrationEvent message) =>
-        throw new NotSupportedException("Handle(message, context) is used instead.");
+    // still abstract, so it must be implemented, but it is never called: the ConsumeContext overload below is
+    // overridden and does not forward to it.
+    public override Task Handle(ColorRemovedIntegrationEvent message) => Task.CompletedTask;
 
     // the ConsumeContext overload gives access to the CancellationToken, headers, etc.
     protected override async Task Handle(ColorRemovedIntegrationEvent message, ConsumeContext<ColorRemovedIntegrationEvent> context)

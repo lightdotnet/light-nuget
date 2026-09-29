@@ -31,11 +31,21 @@ namespace Light.MassTransit.RabbitMQ
         {
         }
 
+        /// <summary>
+        /// Creates the definition with a per-service queue name prefix.
+        /// </summary>
         /// <param name="endpointNamePrefix">
         /// Optional per-service prefix for the queue name. When not null/whitespace and <typeparamref name="TMessage"/>
         /// has a binding name, the endpoint name becomes <c>{endpointNamePrefix}-{bindingName}</c>.
         /// Allowed characters (RabbitMQ entity names): letters, digits, <c>-</c>, <c>_</c>, <c>.</c>, <c>:</c>.
         /// </param>
+        /// <remarks>
+        /// <b>The prefix is ignored</b> (silently, no exception, no log) when <typeparamref name="TMessage"/> itself has
+        /// no <see cref="Light.EventBus.Events.BindingNameAttribute"/> — note the attribute is not inherited from base
+        /// types. <c>EndpointName</c> is then left unset and MassTransit's endpoint name formatter names the queue from
+        /// the consumer type, so the prefix does not isolate that queue per service. Either add a
+        /// <c>[BindingName]</c> to the message or set <c>EndpointName</c> yourself in the derived constructor.
+        /// </remarks>
         protected ConsumerDefinition(string? endpointNamePrefix)
         {
             if (!string.IsNullOrWhiteSpace(endpointNamePrefix)
