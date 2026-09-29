@@ -37,7 +37,22 @@ public class LdapOptionsTests
         options.Port.ShouldBe(389);
         options.Connection.ShouldBe("LDAP://127.0.0.1/DC=company,DC=local");
         options.NewUserConnection.ShouldBe("LDAP://127.0.0.1/ou=new_users,DC=company,DC=local");
-        options.UserName.ShouldBe("admin");
-        options.Password.ShouldBe("AdminP@ssword");
+        options.UseSsl.ShouldBeFalse();
+        options.UserName.ShouldBe(string.Empty);
+        options.Password.ShouldBe(string.Empty);
+    }
+}
+
+public class LdapFilterEscapeTests
+{
+    [TestCase("john.doe", "john.doe")]
+    [TestCase("*", @"\2a")]
+    [TestCase("adm*", @"adm\2a")]
+    [TestCase("x)(objectClass=*", @"x\29\28objectClass=\2a")]
+    [TestCase(@"a\b", @"a\5cb")]
+    [TestCase("a\0b", @"a\00b")]
+    public void EscapeLdapFilterValue_EscapesSpecialCharacters(string input, string expected)
+    {
+        Light.ActiveDirectory.Services.LDAPService.EscapeLdapFilterValue(input).ShouldBe(expected);
     }
 }
