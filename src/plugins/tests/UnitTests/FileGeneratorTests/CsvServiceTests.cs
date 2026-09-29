@@ -1,6 +1,9 @@
+using Light.Extensions.DependencyInjection;
+using Light.File.Csv;
 using Light.Infrastructure.Csv;
 using System.Data;
 using System.Globalization;
+using Microsoft.Extensions.DependencyInjection;
 using System.Text;
 
 namespace UnitTests.FileGeneratorTests;
@@ -240,6 +243,84 @@ public class CsvServiceTests
         var firstLine = await reader.ReadLineAsync();
 
         Assert.That(firstLine, Is.EqualTo("=1+1,1"));
+    }
+
+    private static readonly string[] InjectionValues =
+        ["-abc", "=1+1", "@SUM(A1)", "+cmd|' /C calc'!A0", "\tTab", "=a,b", "'-already", "''=twice", "'plain", "normal", "-5"];
+
+    [Test]
+    public async Task WriteAsync_Generic_EscapedValues_RoundTripThroughReadAs()
+    {
+        var csv = new CsvService();
+        var rows = InjectionValues.Select((v, i) => new TextRow { Name = v, Amount = -i }).ToList();
+
+        var read = csv.ReadAs<TextRow>(await csv.WriteAsync(rows)).ToList();
+
+        Assert.That(read.Select(r => r.Name), Is.EqualTo(InjectionValues));
+        Assert.That(read.Select(r => r.Amount), Is.EqualTo(rows.Select(r => r.Amount)));
+    }
+
+    [Test]
+    public async Task WriteAsync_DataTable_EscapedValuesAndHeaders_RoundTripThroughRead()
+    {
+        var csv = new CsvService();
+        var table = new DataTable();
+        table.Columns.Add("=Header");
+        foreach (var value in InjectionValues) table.Rows.Add(value);
+
+        var data = csv.Read(await csv.WriteAsync(table))!;
+
+        Assert.That(data.Headers, Is.EqualTo(new[] { "=Header" }));
+        Assert.That(data.Rows.Select(r => r["=Header"]), Is.EqualTo(InjectionValues));
+    }
+
+    [Test]
+    public void Read_EscapeMode_StripsOnlySingleQuoteBeforeInjectionCharacter()
+    {
+        var csv = new CsvService();
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes("Name\n'-abc\n'abc\n''=x\n"));
+
+        var names = csv.ReadAs<TextRow>(stream).Select(r => r.Name).ToList();
+
+        Assert.That(names, Is.EqualTo(new[] { "-abc", "'abc", "'=x" }));
+    }
+
+    [Test]
+    public void Read_InjectionOptionsNone_ReadsFieldsVerbatim()
+    {
+        var csv = new CsvService { InjectionOptions = CsvHelper.Configuration.InjectionOptions.None };
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes("Name\n'-abc\n"));
+
+        Assert.That(csv.ReadAs<TextRow>(stream).Single().Name, Is.EqualTo("'-abc"));
+    }
+
+    [Test]
+    public async Task AddFileGenerator_Options_CanOptOutOfInjectionEscaping()
+    {
+        var services = new ServiceCollection();
+        services.AddFileGenerator(o => o.CsvInjectionOptions = CsvHelper.Configuration.InjectionOptions.None);
+        using var provider = services.BuildServiceProvider();
+
+        var csv = (CsvService)provider.GetRequiredService<ICsvService>();
+
+        using var reader = new StreamReader(await csv.WriteAsync(new[] { new TextRow { Name = "=1+1", Amount = 1 } }, excludeHeader: true));
+
+        Assert.That(csv.InjectionOptions, Is.EqualTo(CsvHelper.Configuration.InjectionOptions.None));
+        Assert.That(await reader.ReadLineAsync(), Is.EqualTo("=1+1,1"));
+    }
+
+    [Test]
+    public void AddFileGenerator_Defaults_KeepEscaping()
+    {
+        var services = new ServiceCollection();
+        services.AddFileGenerator();
+        services.AddFileGenerator(_ => { });
+        using var provider = services.BuildServiceProvider();
+
+        var all = provider.GetServices<ICsvService>().Cast<CsvService>().ToList();
+
+        Assert.That(all.Select(c => c.InjectionOptions),
+            Is.All.EqualTo(CsvHelper.Configuration.InjectionOptions.Escape));
     }
 
     [Test]

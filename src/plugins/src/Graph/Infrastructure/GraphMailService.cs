@@ -1,4 +1,5 @@
 using Light.Graph;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using System;
@@ -23,6 +24,13 @@ namespace Light.Infrastructure
         private readonly GraphServiceClient _graphServiceClient;
         private readonly HashSet<string>? _allowedSenders;
 
+        /// <remarks>
+        /// Marked with <see cref="ActivatorUtilitiesConstructorAttribute"/> so <see cref="ActivatorUtilities"/> picks this
+        /// (unrestricted) constructor instead of binding <c>allowedSenders</c> to whatever <see cref="string"/> services
+        /// happen to be registered. <c>AddMicrosoftGraph</c> registers the service through a factory and passes
+        /// <see cref="GraphOptions.AllowedSenders"/> explicitly.
+        /// </remarks>
+        [ActivatorUtilitiesConstructor]
         public GraphMailService(GraphServiceClient graphServiceClient)
         {
             _graphServiceClient = graphServiceClient;

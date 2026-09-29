@@ -6,6 +6,7 @@ using Elastic.CommonSchema.Serilog;
 using Elastic.Ingest.Elasticsearch;
 using Elastic.Ingest.Elasticsearch.CommonSchema;
 using Elastic.Ingest.Elasticsearch.Indices;
+using Elastic.Ingest.Elasticsearch.Serialization;
 using Elastic.Transport;
 using Elastic.Transport.Products.Elasticsearch;
 using Serilog.Core;
@@ -13,9 +14,11 @@ using Serilog.Debugging;
 using Serilog.Events;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
+using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 
 namespace Light.Serilog
 {
@@ -112,7 +115,8 @@ namespace Light.Serilog
         {
             try
             {
-                _channel.WaitForDrainAsync(DrainTimeout).AsTask().GetAwaiter().GetResult();
+                // run the drain off the caller's SynchronizationContext (WPF/WinForms) so blocking on it can't deadlock
+                Task.Run(() => _channel.WaitForDrainAsync(DrainTimeout).AsTask()).GetAwaiter().GetResult();
             }
             catch (Exception e)
             {
@@ -192,16 +196,58 @@ namespace Light.Serilog
                 return PutIndexTemplate(bootstrapMethod, IndexTemplateName, BuildIndexTemplate(IndexTemplatePattern));
             }
 
+            /// <summary>
+            /// Priority used if the stock template ever comes without a numeric <c>priority</c>:
+            /// the ECS.NET 9.0.0 stock priority (589824) + 1.
+            /// </summary>
+            internal const long FallbackPriority = 589825;
+
+            /// <summary>
+            /// Resolves each document's target index under <see cref="CultureInfo.InvariantCulture"/>. The stock
+            /// <see cref="BulkRequestDataFactory.CreateBulkOperationHeaderForIndex{TEvent}"/> uses <c>string.Format</c>
+            /// with the current culture, so e.g. th-TH (Buddhist calendar) would write to <c>...-2569-09-29-...</c>
+            /// and fa-IR/ar-SA to Persian/Hijri dates instead of the Gregorian <c>yyyy-MM-dd</c> UTC date.
+            /// </summary>
+            protected override BulkOperationHeader CreateBulkOperationHeader(LogEventEcsDocument @event)
+            {
+                // swapping the culture (rather than rebuilding the header) keeps every other header field produced by the base
+                var previous = CultureInfo.CurrentCulture;
+                if (ReferenceEquals(previous, CultureInfo.InvariantCulture))
+                {
+                    return base.CreateBulkOperationHeader(@event);
+                }
+
+                try
+                {
+                    CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+                    return base.CreateBulkOperationHeader(@event);
+                }
+                finally
+                {
+                    CultureInfo.CurrentCulture = previous;
+                }
+            }
+
+            /// <summary>Exposes <see cref="CreateBulkOperationHeader"/> to tests.</summary>
+            internal BulkOperationHeader GetBulkOperationHeader(LogEventEcsDocument document) => CreateBulkOperationHeader(document);
+
+            /// <summary>
+            /// The stock ECS composable template without <c>data_stream</c> (plain indices) and with
+            /// <c>priority</c> = stock priority + 1 (<see cref="FallbackPriority"/> if the stock template has none).
+            /// </summary>
             internal static string BuildIndexTemplate(string indexPattern)
             {
-                var template = IndexTemplates.GetIndexTemplateForElasticsearchComposable(indexPattern);
+                var template = JsonNode.Parse(IndexTemplates.GetIndexTemplateForElasticsearchComposable(indexPattern))!.AsObject();
 
                 // plain indices, not data streams
-                template = Regex.Replace(template, "\"data_stream\"\\s*:\\s*\\{\\s*\\}\\s*,", string.Empty);
+                template.Remove("data_stream");
 
                 // one above the stock ECS priority so it never ties with the old per-date data-stream templates
-                return Regex.Replace(template, "\"priority\"\\s*:\\s*(\\d+)",
-                    m => $"\"priority\": {long.Parse(m.Groups[1].Value) + 1}");
+                template["priority"] = template["priority"] is JsonValue value && value.TryGetValue<long>(out var priority)
+                    ? priority + 1
+                    : FallbackPriority;
+
+                return template.ToJsonString();
             }
         }
     }
