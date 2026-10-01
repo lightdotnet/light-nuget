@@ -13,7 +13,7 @@
     <ActiveDirectoryVersion>$(NugetVersion)</ActiveDirectoryVersion>
     <FileGeneratorVersion>$(NugetVersion)</FileGeneratorVersion>
     <GraphVersion>$(NugetVersion)</GraphVersion>
-    <SerilogVersion>$(NugetVersion)</SerilogVersion>
+    <SerilogVersion>2.0.2-preview.2</SerilogVersion>
     <SmtpMailVersion>$(NugetVersion)</SmtpMailVersion>
   </PropertyGroup>
 </Project>
