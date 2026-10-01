@@ -149,7 +149,7 @@ public class ElasticsearchDailyIndexSinkTests
     }
 
     [Test]
-    public void IndexTemplate_IsPlainIndex_AtHigherPriorityThanStockEcs_AndMatchesDailyIndices()
+    public void IndexTemplate_IsDataStream_AtHigherPriorityThanStockEcs_AndMatchesDailyIndices()
     {
         var options = ElasticsearchDailyIndexSink.CreateChannelOptions(Transport, "wtcvn-api", "production");
         using var channel = new ElasticsearchDailyIndexSink.DailyEcsIndexChannel(options);
@@ -161,7 +161,9 @@ public class ElasticsearchDailyIndexSinkTests
         using var ours = JsonDocument.Parse(
             ElasticsearchDailyIndexSink.DailyEcsIndexChannel.BuildIndexTemplate(channel.IndexTemplatePattern));
 
-        Assert.That(ours.RootElement.TryGetProperty("data_stream", out _), Is.False);
+        // ES rejects a non-data-stream template that would take over the existing daily data streams
+        Assert.That(ours.RootElement.TryGetProperty("data_stream", out var dataStream), Is.True);
+        Assert.That(dataStream.ValueKind, Is.EqualTo(JsonValueKind.Object));
         ours.RootElement.GetProperty("priority").GetInt64()
             .ShouldBe(stock.GetProperty("priority").GetInt64() + 1);
         ours.RootElement.GetProperty("index_patterns")[0].GetString()
