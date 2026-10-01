@@ -92,7 +92,7 @@ namespace Light.Serilog
 
                     var endpoints = new Uri[] { new Uri(endpoint) };
 
-                    // One plain index per UTC day of each event: {service}-{env}-{yyyy-MM-dd}-generic-default.
+                    // One data stream per UTC day of each event: {service}-{env}-{yyyy-MM-dd}-generic-default.
                     var transport = ElasticsearchDailyIndexSink.CreateTransport(endpoints, username!, password!);
                     var channelOptions = ElasticsearchDailyIndexSink.CreateChannelOptions(transport, serviceName!, environment);
 

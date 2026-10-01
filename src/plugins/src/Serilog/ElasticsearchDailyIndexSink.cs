@@ -23,7 +23,7 @@ using System.Threading.Tasks;
 namespace Light.Serilog
 {
     /// <summary>
-    /// Serilog sink that writes ECS documents to one plain Elasticsearch index <b>per UTC day of each event</b>:
+    /// Serilog sink that writes ECS documents to one Elasticsearch data stream <b>per UTC day of each event</b>:
     /// <c>{service}-{environment}-{yyyy-MM-dd}-generic-default</c>. The index name is computed per document from
     /// its <c>@timestamp</c> (<see cref="IndexChannelOptions{TEvent}.TimestampLookup"/> + UTC
     /// <see cref="IndexChannelOptions{TEvent}.IndexOffset"/>), so it rolls over at 00:00 UTC without a restart.
@@ -73,7 +73,7 @@ namespace Light.Serilog
                 // route each document by its own event time, in UTC (matches the old DateTime.UtcNow date)
                 TimestampLookup = d => d.Timestamp,
                 IndexOffset = TimeSpan.Zero,
-                // 'create' ops are also accepted by existing data streams of the same (old) name on upgrade day
+                // data streams only accept 'create' ops
                 OperationMode = OperationMode.Create,
                 SerializerContext = EcsJsonContext.Default,
                 BufferOptions = new BufferOptions(),
@@ -152,13 +152,11 @@ namespace Light.Serilog
         }
 
         /// <summary>
-        /// <see cref="EcsIndexChannel{TEcsDocument}"/> whose bootstrap installs a plain-index (non data stream)
-        /// ECS template at a priority one above the stock ECS templates.
+        /// <see cref="EcsIndexChannel{TEcsDocument}"/> whose bootstrap installs the ECS data-stream template for
+        /// <c>{service}-{env}-*-generic-default</c> at a priority one above the stock ECS templates.
         /// </summary>
         /// <remarks>
-        /// Why not the stock bootstrap: (1) the synchronous <c>EcsIndexChannel.BootstrapElasticsearch</c> in
-        /// Elastic.Ingest.Elasticsearch.CommonSchema 9.0.0 leaves <c>"data_stream": {}</c> in the template, which would
-        /// turn the daily indices into data streams; (2) the previous sink installed data-stream templates such as
+        /// Why not the stock bootstrap: the previous sink installed data-stream templates such as
         /// <c>{service}-{env}-2026-09-29-generic-*</c> at the same ECS priority, and Elasticsearch refuses a new
         /// template whose patterns overlap an existing one at equal priority — which would fail startup under
         /// <see cref="BootstrapMethod.Failure"/>.
@@ -235,15 +233,20 @@ namespace Light.Serilog
             internal BulkOperationHeader GetBulkOperationHeader(LogEventEcsDocument document) => CreateBulkOperationHeader(document);
 
             /// <summary>
-            /// The stock ECS composable template without <c>data_stream</c> (plain indices) and with
+            /// The stock ECS composable template (including <c>data_stream</c>) with
             /// <c>priority</c> = stock priority + 1 (<see cref="FallbackPriority"/> if the stock template has none).
             /// </summary>
+            /// <remarks>
+            /// <c>data_stream</c> must be kept: the daily names created by the previous sink are data streams, and
+            /// Elasticsearch rejects (400 <c>illegal_argument_exception</c>) a higher-priority template without a data
+            /// stream configuration that would make existing data streams "no longer match a data stream template".
+            /// </remarks>
             internal static string BuildIndexTemplate(string indexPattern)
             {
                 var template = JsonNode.Parse(IndexTemplates.GetIndexTemplateForElasticsearchComposable(indexPattern))!.AsObject();
 
-                // plain indices, not data streams
-                template.Remove("data_stream");
+                // each daily name stays a data stream (as with the previous sink); 'create' ops auto-create it
+                template["data_stream"] ??= new JsonObject();
 
                 // one above the stock ECS priority so it never ties with the old per-date data-stream templates
                 template["priority"] = template["priority"] is JsonValue value && value.TryGetValue<long>(out var priority)
