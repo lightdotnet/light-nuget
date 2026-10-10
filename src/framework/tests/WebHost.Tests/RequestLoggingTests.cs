@@ -247,13 +247,13 @@ public class RequestLoggingTests
     }
 
     [Test]
-    public void FailedRequest_IsStillLogged()
+    public async Task FailedRequest_IsStillLogged()
     {
         var (middleware, logger) = Create(_ => throw new InvalidOperationException("boom"));
 
         var context = CreateContext("{}");
 
-        Assert.ThrowsAsync<InvalidOperationException>(() => middleware.InvokeAsync(context));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => middleware.InvokeAsync(context));
         Assert.That(logger.Entries.Any(e => e.Level == LogLevel.Warning && e.Message.Contains("InvalidOperationException")), Is.True);
     }
 }

@@ -27,7 +27,7 @@ public class UnitOfWorkTransactionTests
     }
 
     [TearDown]
-    public void TearDown() => _connection.Dispose();
+    public async Task TearDown() => _connection.Dispose();
 
     private TestDbContext CreateContext(bool retrying, IInterceptor? interceptor = null)
     {
@@ -80,7 +80,7 @@ public class UnitOfWorkTransactionTests
     {
         await using var uow = new UnitOfWork(CreateContext(retrying: true));
 
-        Assert.ThrowsAsync<InvalidOperationException>(() => uow.ExecuteInTransactionAsync(async ct =>
+        await Assert.ThrowsAsync<InvalidOperationException>(() => uow.ExecuteInTransactionAsync(async ct =>
         {
             uow.Set<Product>().Add(new Product { Id = 1, ProductName = "Rolled back" });
             await uow.SaveChangesAsync(ct); // written inside the transaction...

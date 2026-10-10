@@ -115,25 +115,25 @@ public class DistributedCacheServiceTests
     }
 
     [Test]
-    public void TryGetAsync_CanceledToken_PropagatesOperationCanceledException()
+    public async Task TryGetAsync_CanceledToken_PropagatesOperationCanceledException()
     {
         var cache = new DistributedCacheService(new CancellationAwareDistributedCache(),
             NullLogger<DistributedCacheService>.Instance);
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        Assert.CatchAsync<OperationCanceledException>(() => cache.TryGetAsync<string>("key", cts.Token));
+        await Assert.CatchAsync<OperationCanceledException>(() => cache.TryGetAsync<string>("key", cts.Token));
     }
 
     [Test]
-    public void TrySetAsync_CanceledToken_PropagatesOperationCanceledException()
+    public async Task TrySetAsync_CanceledToken_PropagatesOperationCanceledException()
     {
         var cache = new DistributedCacheService(new CancellationAwareDistributedCache(),
             NullLogger<DistributedCacheService>.Instance);
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        Assert.CatchAsync<OperationCanceledException>(() => cache.TrySetAsync("key", "value", cancellationToken: cts.Token));
+        await Assert.CatchAsync<OperationCanceledException>(() => cache.TrySetAsync("key", "value", cancellationToken: cts.Token));
     }
 
     // MemoryDistributedCache ignores the token, so use a stub that honors it (like a real Redis cache would)

@@ -83,20 +83,20 @@ public class CacheServiceExtensionsTests
     }
 
     [Test]
-    public void GetOrSetAsync_NullCacheService_ThrowsArgumentNullException()
+    public async Task GetOrSetAsync_NullCacheService_ThrowsArgumentNullException()
     {
         ICacheService? cache = null;
 
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             cache!.GetOrSetAsync("key", () => Task.FromResult<string?>("computed")));
     }
 
     [Test]
-    public void GetOrSetAsync_NullFactory_ThrowsArgumentNullException()
+    public async Task GetOrSetAsync_NullFactory_ThrowsArgumentNullException()
     {
         var cache = CreateService();
 
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             cache.GetOrSetAsync<string>("key", (Func<Task<string?>>)null!));
     }
 
@@ -180,7 +180,7 @@ public class CacheServiceExtensionsTests
         });
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
-        Assert.CatchAsync<OperationCanceledException>(() =>
+        await Assert.CatchAsync<OperationCanceledException>(() =>
             cache.GetOrSetAsync<string>(key, () => Task.FromResult<string?>("other"), cancellationToken: cts.Token));
 
         release.SetResult();

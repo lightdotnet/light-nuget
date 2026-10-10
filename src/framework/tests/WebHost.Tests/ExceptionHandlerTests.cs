@@ -148,14 +148,14 @@ public class ExceptionHandlerTests
     }
 
     [Test]
-    public void Middleware_RethrowsWhenResponseStarted()
+    public async Task Middleware_RethrowsWhenResponseStarted()
     {
         var context = CreateContext(started: true);
         var middleware = new ExceptionHandlerMiddleware(
             _ => throw new NotFoundException("x"),
             NullLogger<ExceptionHandlerMiddleware>.Instance);
 
-        Assert.ThrowsAsync<NotFoundException>(() => middleware.InvokeAsync(context));
+        await Assert.ThrowsAsync<NotFoundException>(() => middleware.InvokeAsync(context));
     }
 
     [Test]
