@@ -1,5 +1,5 @@
-using System.Globalization;
 using Light.Extensions.DynamicObject;
+using System.Globalization;
 
 namespace UnitTests.DomainTests
 {
