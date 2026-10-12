@@ -71,11 +71,11 @@
 ## Versioning & Release
 
 - **Package versioning scheme** (per solution):
-  - `Framework` and `Plugins`: a single `<NugetVersion>` in `src/framework/Directory.Build.props` / `src/plugins/Directory.Build.props` (currently `2.0.2-preview.1` in both). Each package has its own alias property defaulting to it (e.g. `<CachingVersion>$(NugetVersion)</CachingVersion>`, `<SerilogVersion>$(NugetVersion)</SerilogVersion>`), and each `.csproj` sets `<Version>$(<Package>Version)</Version>` — so all packages of a solution share one version unless an alias is overridden.
-  - `EventBus`: no version in `Directory.Build.props`; `<Version>` is set directly in each `.csproj` (`EventBus.csproj` and `EventBus.MassTransit.RabbitMQ.csproj`, currently `0.2.1`).
+  - `Framework` and `Plugins`: a single `<NugetVersion>` in `src/framework/Directory.Build.props` / `src/plugins/Directory.Build.props` (currently `2.0.2` in both). Each package has its own alias property defaulting to it (e.g. `<CachingVersion>$(NugetVersion)</CachingVersion>`, `<SerilogVersion>$(NugetVersion)</SerilogVersion>`), and each `.csproj` sets `<Version>$(<Package>Version)</Version>` — so all packages of a solution share one version unless an alias is overridden.
+  - `EventBus`: no version in `Directory.Build.props`; `<Version>` is set directly in each `.csproj` (`EventBus.csproj` and `EventBus.MassTransit.RabbitMQ.csproj`, currently `0.3.0`).
   - `BlazorComponents`: `<Version>` is set directly in each `.csproj` (independent values).
   - Package id = `AssemblyName` (`$(OrgName).<Name>` / `Lightsoft.*`; no explicit `PackageId`); all packable projects set `GeneratePackageOnBuild=True`.
-- **Changelog convention**: no CHANGELOG file and no populated `<PackageReleaseNotes>` (empty where present). Breaking/behavior changes are recorded in each package's README under a `## Breaking / behavior changes` → `### Unreleased` section (present in `src/eventbus/README.md` and the five plugin READMEs). Framework package READMEs record such changes inline in their "Notes" sections (e.g. "Behavior change (...)" bullets in the WebHost README) rather than in an `Unreleased` section.
+- **Changelog convention**: no CHANGELOG file and no populated `<PackageReleaseNotes>` (empty where present). Breaking/behavior changes are recorded in each package's README under a `## Breaking / behavior changes` → `### Unreleased` section, renamed to the version on release (`src/eventbus/README.md` currently has `### 0.3.0`; the five plugin READMEs use `Unreleased`). Framework package READMEs record such changes inline in their "Notes" sections (e.g. "Behavior change (...)" bullets in the WebHost README) rather than in an `Unreleased` section.
 
 ---
 _Last updated: 2026-09-29 — only "Testing Conventions" and "Versioning & Release" populated (verified against code); all other sections still unpopulated._
