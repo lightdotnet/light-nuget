@@ -22,7 +22,6 @@
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.*" />
     <PackageReference Include="CsvHelper" Version="33.*" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(AspnetVersion)" />
   </ItemGroup>
 
 </Project>

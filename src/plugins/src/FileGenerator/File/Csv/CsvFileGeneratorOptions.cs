@@ -1,12 +1,11 @@
 ﻿using CsvHelper.Configuration;
-using Light.Infrastructure.Csv;
 
-namespace Light.Infrastructure
+namespace Light.File.Csv
 {
     /// <summary>
-    /// Options for <c>AddFileGenerator(Action&lt;FileGeneratorOptions&gt;)</c>.
+    /// Options for configuring the CSV service, e.g. <c>new CsvService { InjectionOptions = o.CsvInjectionOptions }</c>.
     /// </summary>
-    public class FileGeneratorOptions
+    public class CsvFileGeneratorOptions
     {
         /// <summary>
         /// Value assigned to <see cref="CsvService.InjectionOptions"/> of the registered <see cref="CsvService"/>.

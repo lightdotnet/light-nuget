@@ -5,7 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 
-namespace Light.Infrastructure.Excel
+namespace Light.File.Excel
 {
     internal static class Extensions
     {

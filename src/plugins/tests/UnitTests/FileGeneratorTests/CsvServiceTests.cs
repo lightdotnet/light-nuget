@@ -1,6 +1,4 @@
-using Light.Extensions.DependencyInjection;
-using Light.File.Csv;
-using Light.Infrastructure.Csv;
+﻿using Light.File.Csv;
 using System.Data;
 using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
@@ -308,10 +306,10 @@ public class CsvServiceTests
     }
 
     [Test]
-    public async Task AddFileGenerator_Options_CanOptOutOfInjectionEscaping()
+    public async Task ManualRegistration_CanOptOutOfInjectionEscaping()
     {
         var services = new ServiceCollection();
-        services.AddFileGenerator(o => o.CsvInjectionOptions = CsvHelper.Configuration.InjectionOptions.None);
+        services.AddTransient<ICsvService>(_ => new CsvService { InjectionOptions = CsvHelper.Configuration.InjectionOptions.None });
         using var provider = services.BuildServiceProvider();
 
         var csv = (CsvService)provider.GetRequiredService<ICsvService>();
@@ -323,17 +321,15 @@ public class CsvServiceTests
     }
 
     [Test]
-    public void AddFileGenerator_Defaults_KeepEscaping()
+    public void ManualRegistration_Defaults_KeepEscaping()
     {
         var services = new ServiceCollection();
-        services.AddFileGenerator();
-        services.AddFileGenerator(_ => { });
+        services.AddTransient<ICsvService, CsvService>();
         using var provider = services.BuildServiceProvider();
 
-        var all = provider.GetServices<ICsvService>().Cast<CsvService>().ToList();
+        var csv = (CsvService)provider.GetRequiredService<ICsvService>();
 
-        Assert.That(all.Select(c => c.InjectionOptions),
-            Is.All.EqualTo(CsvHelper.Configuration.InjectionOptions.Escape));
+        Assert.That(csv.InjectionOptions, Is.EqualTo(CsvHelper.Configuration.InjectionOptions.Escape));
     }
 
     [Test]

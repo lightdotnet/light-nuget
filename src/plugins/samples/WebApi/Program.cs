@@ -1,4 +1,6 @@
 using Light.Extensions.DependencyInjection;
+using Light.File.Csv;
+using Light.File.Excel;
 using Light.Serilog;
 using System.Reflection;
 using WebApi;
@@ -30,7 +32,8 @@ if (!string.IsNullOrWhiteSpace(graphSection["TenantId"])
     });
 }
 
-builder.Services.AddFileGenerator();
+builder.Services.AddTransient<IExcelService, ExcelService>();
+builder.Services.AddTransient<ICsvService, CsvService>();
 
 builder.Services.AddControllers(options =>
 {
