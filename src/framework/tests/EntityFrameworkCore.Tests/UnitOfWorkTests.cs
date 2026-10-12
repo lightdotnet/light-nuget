@@ -73,7 +73,7 @@ public class UnitOfWorkTests : TestFixtureBase
     #region [Dispose]
 
     [Test]
-    public void Dispose_Should_Not_Throw()
+    public async Task Dispose_Should_Not_Throw()
     {
         var uow = new UnitOfWork(Context);
 
@@ -85,7 +85,7 @@ public class UnitOfWorkTests : TestFixtureBase
     {
         var uow = new UnitOfWork(Context);
 
-        Assert.DoesNotThrowAsync(async () => await uow.DisposeAsync());
+        await Assert.DoesNotThrowAsync(async () => await uow.DisposeAsync());
     }
 
     [Test]

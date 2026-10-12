@@ -48,6 +48,7 @@ Append one line per run so drift between runs is visible:
 |---|---|---|
 | 2026-08-13 | manual | first full run — 29/29 files OK, no findings |
 | 2026-09-17 | manual | 28/28 files OK, no findings (triggered by post-refactor maintenance pass) |
+| 2026-10-12 | manual | 29/29 files OK, no findings (10 agents, 12 skills, 7 workflows; no dead links; agent tool lists match live definitions) |
 
 ## Scheduling
 

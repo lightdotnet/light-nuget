@@ -20,6 +20,13 @@ public class PermissionPolicyProvider(IOptions<AuthorizationOptions> options)
             return cachedPolicy;
         }
 
+        // normally-registered policies (e.g. AddAuthorization(o => o.AddPolicy(...))) take precedence over permissions
+        var registeredPolicy = await FallbackPolicyProvider.GetPolicyAsync(policyName);
+        if (registeredPolicy is not null)
+        {
+            return registeredPolicy;
+        }
+
         if (await CheckPermissionValidAsync(policyName) is true)
         {
             var policy = new AuthorizationPolicyBuilder();
@@ -30,8 +37,7 @@ public class PermissionPolicyProvider(IOptions<AuthorizationOptions> options)
             return builtPolicy;
         }
 
-        // fall back to normally-registered policies (e.g. AddAuthorization(o => o.AddPolicy(...)))
-        return await FallbackPolicyProvider.GetPolicyAsync(policyName);
+        return null;
     }
 
     /// <summary>
@@ -43,5 +49,6 @@ public class PermissionPolicyProvider(IOptions<AuthorizationOptions> options)
         return Task.FromResult(true);
     }
 
-    public Task<AuthorizationPolicy?> GetFallbackPolicyAsync() => Task.FromResult<AuthorizationPolicy?>(null);
+    // honor AuthorizationOptions.FallbackPolicy configured by the consumer
+    public Task<AuthorizationPolicy?> GetFallbackPolicyAsync() => FallbackPolicyProvider.GetFallbackPolicyAsync();
 }

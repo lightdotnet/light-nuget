@@ -24,5 +24,14 @@ namespace UnitTests.ExtensionsTests
             var rightFrom = _test.Right(_by);
             rightFrom.ShouldBe("6F7G8");
         }
+
+        [Test]
+        public void Should_Get_Characters_By_MultiChar_Separator_Correct()
+        {
+            const string value = "path::to::leaf";
+
+            value.Left("::").ShouldBe("path");
+            value.Right("::").ShouldBe("leaf");
+        }
     }
 }

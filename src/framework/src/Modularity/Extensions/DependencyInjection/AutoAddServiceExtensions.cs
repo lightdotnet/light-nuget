@@ -9,7 +9,7 @@ namespace Light.Extensions.DependencyInjection
             // scan every loaded assembly once and reuse the result for all three lifetimes
             var candidateTypes = AppDomain.CurrentDomain
                 .GetAssemblies()
-                .SelectMany(s => s.GetTypes())
+                .SelectMany(s => s.GetLoadableTypes())
                 .Where(x => x.IsClass && !x.IsAbstract)
                 .ToList();
 
@@ -30,9 +30,7 @@ namespace Light.Extensions.DependencyInjection
             var dependencies = allAssignableFromDependency
                 .Select(s => new
                 {
-                    Interface = s
-                        .GetInterfaces()
-                        .FirstOrDefault(x => x != typeOfDependency && x.Name == "I" + s.Name),
+                    Interface = GetServiceInterface(s, typeOfDependency),
 
                     Implementation = s
                 });
@@ -47,6 +45,27 @@ namespace Light.Extensions.DependencyInjection
             }
 
             return services;
+        }
+
+        private static Type? GetServiceInterface(Type implementation, Type typeOfDependency)
+        {
+            var serviceInterface = implementation
+                .GetInterfaces()
+                .FirstOrDefault(x => x != typeOfDependency && x.Name == "I" + implementation.Name);
+
+            if (serviceInterface is null || !implementation.IsGenericTypeDefinition)
+                return serviceInterface;
+
+            // open generic implementation (ex: Repository<T> : IRepository<T>): the matching interface is
+            // reported as IRepository<T> (bound to the class's generic parameters), which the container
+            // rejects; register it as the open generic definition IRepository<> instead, but only when the
+            // interface uses the class's generic parameters directly and in the same order
+            if (serviceInterface.IsGenericType
+                && serviceInterface.GetGenericArguments().SequenceEqual(implementation.GetGenericArguments()))
+                return serviceInterface.GetGenericTypeDefinition();
+
+            // the interface cannot be expressed as an open generic mapping; register the implementation only
+            return null;
         }
 
         private static IServiceCollection AddService(this IServiceCollection services, Type interfaceType, Type implementationType, ServiceLifetime lifetime)

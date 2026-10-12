@@ -23,8 +23,22 @@ public class Repository<TEntity>(DbContext context) : IRepository<TEntity>
         => _dbSet.AsQueryable().WhereIf(condition, expression);
 
     /// <inheritdoc/>
+    /// <remarks>Filter only; ordering/paging of an <see cref="IOrderedSpecification{T}"/> are ignored. Use <see cref="Apply(ISpecification{TEntity})"/> to honour them.</remarks>
     public virtual IQueryable<TEntity> Where(ISpecification<TEntity> specification)
         => _dbSet.AsQueryable().Where(specification);
+
+    /// <inheritdoc/>
+    public virtual IQueryable<TEntity> Apply(ISpecification<TEntity> specification)
+        => Apply(specification, tracking: true);
+
+    /// <summary>
+    ///     Applies the filter, ordering and paging of <paramref name="specification"/>, optionally without change tracking.
+    /// </summary>
+    public virtual IQueryable<TEntity> Apply(ISpecification<TEntity> specification, bool tracking)
+    {
+        var query = _dbSet.AsQueryable().Apply(specification);
+        return tracking ? query : query.AsNoTracking();
+    }
 
     /// <inheritdoc/>
     public virtual IQueryable<TEntity> WhereIf(bool condition, ISpecification<TEntity> specification)

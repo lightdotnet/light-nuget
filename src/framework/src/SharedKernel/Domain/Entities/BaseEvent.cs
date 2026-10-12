@@ -1,8 +1,8 @@
 namespace Light.Domain.Entities;
 
 /// <summary>
-///     A base type for domain events. Depends on MediatR INotification.
-///     Includes DateOccurred which is set on creation.
+///     A base type for domain events.
+///     Includes <see cref="TriggeredOn"/> which is set (UTC) on creation.
 /// </summary>
 public abstract record BaseEvent
 {

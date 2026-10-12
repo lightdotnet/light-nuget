@@ -8,6 +8,16 @@ namespace Light.AspNetCore.Builder;
 
 public static class MiddlewareApplicationBuilderExtensions
 {
+    /// <summary>
+    /// Adds <see cref="RequestLoggingMiddleware"/> when <see cref="RequestLoggingOptions.Enable"/> is <c>true</c>.
+    /// </summary>
+    /// <remarks>
+    /// Register the exception handler (<see cref="UseLightExceptionHandler"/> or <c>UseExceptionHandler()</c>)
+    /// <b>before</b> this call, so exceptions propagate out of the request logging middleware. If an exception handler
+    /// runs inside it instead (registered after this call) and the failed endpoint had written to
+    /// <c>Response.BodyWriter</c> without flushing, those stale bytes are still buffered in the capturing writer and
+    /// get flushed together with the error body.
+    /// </remarks>
     public static IApplicationBuilder UseLightRequestLogging(this IApplicationBuilder app)
     {
         var settings = app.ApplicationServices.GetRequiredService<IOptions<RequestLoggingOptions>>().Value;

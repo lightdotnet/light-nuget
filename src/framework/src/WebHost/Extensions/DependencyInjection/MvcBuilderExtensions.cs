@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Net.Mime;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Light.Extensions.DependencyInjection;
 
@@ -25,10 +26,15 @@ public static class MvcBuilderExtensions
     }
 
     /// <summary>
-    /// Add controllers with custom conventions
+    /// Add controllers with a custom controller-name convention.
     /// </summary>
+    /// <remarks>
+    /// The given <paramref name="controllerModelConvention"/> <b>replaces</b> the built-in lowercase
+    /// convention (it is not added in addition to it), so pass a convention that produces the
+    /// controller names you want.
+    /// </remarks>
     /// <param name="services"></param>
-    /// <param name="controllerModelConvention"></param>
+    /// <param name="controllerModelConvention">Convention applied instead of the default lowercase convention.</param>
     /// <returns></returns>
     public static IMvcBuilder AddLowercaseControllers(this IServiceCollection services, IControllerModelConvention controllerModelConvention)
     {
@@ -49,7 +55,11 @@ public static class MvcBuilderExtensions
             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
             options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-            options.JsonSerializerOptions.Converters.Add(new BaseFirstOrderedConverterFactory());
+
+            // base-class properties first, via contract metadata (keeps [JsonIgnore], [JsonPropertyName], ...)
+            options.JsonSerializerOptions.TypeInfoResolver =
+                (options.JsonSerializerOptions.TypeInfoResolver ?? new DefaultJsonTypeInfoResolver())
+                .WithAddedModifier(JsonPropertyOrderModifiers.BaseFirst);
         });
     }
 

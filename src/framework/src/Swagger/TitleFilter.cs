@@ -10,6 +10,8 @@ public class TitleFilter(IOptions<SwaggerOptions> options) : IDocumentFilter
 
     public void Apply(OpenApiDocument doc, DocumentFilterContext context)
     {
-        doc.Info.Title = _settings.Title;
+        // keep the document's own title (e.g. per API version) when no custom title is configured
+        if (!string.IsNullOrEmpty(_settings.Title))
+            doc.Info.Title = _settings.Title;
     }
 }

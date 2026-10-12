@@ -38,6 +38,11 @@ namespace Light.Extensions
         /// <summary>
         /// Throw an ArgumentNullException when input is null or default
         /// </summary>
+        /// <remarks>
+        /// The check uses <see cref="EqualityComparer{T}.Default"/> against <c>default(T)</c>, so for value types
+        /// it also throws for legitimate default values such as <c>0</c>, <c>false</c>, <see cref="Guid.Empty"/>
+        /// or <see cref="DateTime.MinValue"/>. Do not use it for value-type arguments where the default is valid.
+        /// </remarks>
         /// <typeparam name="T"></typeparam>
         /// <param name="input"></param>
         /// <param name="paramName"></param>

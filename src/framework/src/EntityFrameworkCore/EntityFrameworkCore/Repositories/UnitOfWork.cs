@@ -1,4 +1,5 @@
 using Light.Repositories;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.Collections.Concurrent;
 
 namespace Light.EntityFrameworkCore.Repositories;
@@ -22,6 +23,13 @@ public class UnitOfWork(DbContext context, IServiceProvider? serviceProvider = n
     private readonly ConcurrentDictionary<Type, Lazy<object>> _repositories = new();
 
     /// <inheritdoc/>
+    /// <remarks>
+    ///     A custom <see cref="IRepository{T}"/> resolved from <c>serviceProvider</c> is used as-is: this unit of
+    ///     work cannot verify that it was built on the same <see cref="DbContext"/> instance. Register custom
+    ///     repositories with a lifetime/scope that yields the same context (e.g. scoped, depending on the same
+    ///     scoped <c>TContext</c> as this unit of work); otherwise changes made through the repository will not be
+    ///     saved by <see cref="SaveChangesAsync"/> nor enlisted in this unit of work's transaction.
+    /// </remarks>
     public IRepository<T> Set<T>()
         where T : class
     {
@@ -31,7 +39,8 @@ public class UnitOfWork(DbContext context, IServiceProvider? serviceProvider = n
         // ExecutionAndPublication ensures every caller observes the single winning Lazy's result.
         var lazy = _repositories.GetOrAdd(typeof(T), _ => new Lazy<object>(() =>
         {
-            // Try to resolve custom repository from application DI
+            // Try to resolve custom repository from application DI.
+            // NOTE: the resolved repository must share this unit of work's DbContext (see remarks above).
             if (serviceProvider?.GetService(typeof(IRepository<T>)) is IRepository<T> custom)
                 return custom;
 
@@ -50,22 +59,140 @@ public class UnitOfWork(DbContext context, IServiceProvider? serviceProvider = n
         => await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
+    /// <remarks>
+    ///     Not wrapped in an execution strategy: a retrying strategy (e.g. <c>EnableRetryOnFailure()</c>) cannot
+    ///     retry a single step of a user-initiated transaction, and EF Core throws when <c>SaveChanges</c> runs
+    ///     inside such a transaction. With a retrying strategy use
+    ///     <see cref="ExecuteInTransactionAsync{TResult}(Func{CancellationToken, Task{TResult}}, CancellationToken)"/>
+    ///     instead; the individual Begin/Commit/Rollback methods require a non-retrying strategy.
+    /// </remarks>
     public virtual async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
-        => await context.Database.CreateExecutionStrategy()
-            .ExecuteAsync(cancellationToken, ct => context.Database.BeginTransactionAsync(ct))
-            .ConfigureAwait(false);
+        => await context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
+    /// <remarks>See <see cref="BeginTransactionAsync"/> remarks regarding retrying execution strategies.</remarks>
     public virtual async Task CommitAsync(CancellationToken cancellationToken = default)
-        => await context.Database.CreateExecutionStrategy()
-            .ExecuteAsync(cancellationToken, ct => context.Database.CommitTransactionAsync(ct))
-            .ConfigureAwait(false);
+        => await context.Database.CommitTransactionAsync(cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
+    /// <remarks>See <see cref="BeginTransactionAsync"/> remarks regarding retrying execution strategies.</remarks>
     public virtual async Task RollbackAsync(CancellationToken cancellationToken = default)
-        => await context.Database.CreateExecutionStrategy()
-            .ExecuteAsync(cancellationToken, ct => context.Database.RollbackTransactionAsync(ct))
-            .ConfigureAwait(false);
+        => await context.Database.RollbackTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+    /// <inheritdoc/>
+    public virtual async Task ExecuteInTransactionAsync(Func<CancellationToken, Task> action, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        await ExecuteInTransactionAsync<object?>(async ct =>
+        {
+            await action(ct).ConfigureAwait(false);
+            return null;
+        }, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    ///     Begin, <paramref name="action"/>, <see cref="SaveChangesAsync"/> and commit run together as one operation
+    ///     of <c>Database.CreateExecutionStrategy()</c>, so a retrying strategy re-runs the whole unit on a transient
+    ///     failure. <paramref name="action"/> may therefore run more than once and must be safe to re-run; note that
+    ///     entities tracked by a failed attempt remain in the change tracker (call
+    ///     <c>ChangeTracker.Clear()</c> at the start of the action if that matters for your workload).
+    ///     If a transaction is already active on the context, the action and save simply run inside it (no new
+    ///     transaction, no commit, no strategy wrapping) and the caller stays responsible for committing.
+    /// </remarks>
+    public virtual async Task<TResult> ExecuteInTransactionAsync<TResult>(Func<CancellationToken, Task<TResult>> action, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        return await ExecuteInTransactionCoreAsync(action, verifySucceeded: null, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    ///     Note for inheritors: goes straight to the shared private implementation and does not call
+    ///     <see cref="ExecuteInTransactionAsync(Func{CancellationToken, Task}, CancellationToken)"/>; override this
+    ///     overload too when customizing the overloads without <paramref name="verifySucceeded"/>.
+    /// </remarks>
+    public virtual async Task ExecuteInTransactionAsync(Func<CancellationToken, Task> action, Func<CancellationToken, Task<bool>> verifySucceeded, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        ArgumentNullException.ThrowIfNull(verifySucceeded);
+
+        await ExecuteInTransactionCoreAsync<object?>(async ct =>
+        {
+            await action(ct).ConfigureAwait(false);
+            return null;
+        }, verifySucceeded, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    ///     Same as <see cref="ExecuteInTransactionAsync{TResult}(Func{CancellationToken, Task{TResult}}, CancellationToken)"/>,
+    ///     but when an attempt fails with an error the execution strategy would retry on, <paramref name="verifySucceeded"/>
+    ///     is invoked first (mirrors EF Core's <c>ExecutionStrategyExtensions.ExecuteInTransactionAsync</c> with
+    ///     <c>verifySucceeded</c>). If it returns <c>true</c> the failed attempt is treated as committed, no retry happens
+    ///     and the result produced by the action in that attempt is returned. Use it whenever re-applying the unit would
+    ///     be harmful (e.g. duplicate inserts after a commit whose acknowledgement was lost). It is ignored when joining an
+    ///     ambient transaction or with a non-retrying strategy.
+    ///     Note for inheritors: the <paramref name="verifySucceeded"/> overloads do not delegate to the overloads
+    ///     without it; both go straight to the shared private implementation. A subclass that overrides
+    ///     <see cref="ExecuteInTransactionAsync{TResult}(Func{CancellationToken, Task{TResult}}, CancellationToken)"/>
+    ///     (or the non-generic one) to add behavior must override the <paramref name="verifySucceeded"/> overloads too.
+    /// </remarks>
+    public virtual async Task<TResult> ExecuteInTransactionAsync<TResult>(Func<CancellationToken, Task<TResult>> action, Func<CancellationToken, Task<bool>> verifySucceeded, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        ArgumentNullException.ThrowIfNull(verifySucceeded);
+
+        return await ExecuteInTransactionCoreAsync(action, verifySucceeded, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<TResult> ExecuteInTransactionCoreAsync<TResult>(
+        Func<CancellationToken, Task<TResult>> action,
+        Func<CancellationToken, Task<bool>>? verifySucceeded,
+        CancellationToken cancellationToken)
+    {
+        if (context.Database.CurrentTransaction is not null)
+        {
+            var result = await action(cancellationToken).ConfigureAwait(false);
+            await SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return result;
+        }
+
+        var strategy = context.Database.CreateExecutionStrategy();
+        var state = new TransactionState<TResult>(action, verifySucceeded);
+
+        return await strategy.ExecuteAsync(
+            state,
+            async (_, s, ct) =>
+            {
+                // reset per attempt so verifySucceeded never returns a previous attempt's result
+                s.Result = default;
+
+                // Disposing an uncommitted transaction rolls it back, covering failures in the action, save or commit.
+                await using var transaction = await context.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
+                s.Result = await s.Action(ct).ConfigureAwait(false);
+                await SaveChangesAsync(ct).ConfigureAwait(false);
+                await transaction.CommitAsync(ct).ConfigureAwait(false);
+                return s.Result;
+            },
+            verifySucceeded is null
+                ? null
+                : async (_, s, ct) => new ExecutionResult<TResult>(await s.VerifySucceeded!(ct).ConfigureAwait(false), s.Result!),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private sealed class TransactionState<TResult>(
+        Func<CancellationToken, Task<TResult>> action,
+        Func<CancellationToken, Task<bool>>? verifySucceeded)
+    {
+        public Func<CancellationToken, Task<TResult>> Action { get; } = action;
+
+        public Func<CancellationToken, Task<bool>>? VerifySucceeded { get; } = verifySucceeded;
+
+        public TResult? Result { get; set; }
+    }
 
     public void Dispose()
     {

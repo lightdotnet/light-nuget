@@ -11,7 +11,10 @@ namespace Light.Extensions
             return xmlDoc;
         }
 
-        public static XmlNode GetFirstElementByTagName(this XmlDocument xmlDocument, string tagName) =>
+        /// <summary>
+        /// Get the first element with the specified tag name, or <c>null</c> when none exists.
+        /// </summary>
+        public static XmlNode? GetFirstElementByTagName(this XmlDocument xmlDocument, string tagName) =>
             xmlDocument.GetElementsByTagName(tagName)[0];
     }
 }

@@ -36,7 +36,7 @@ public interface IActiveDirectoryService
 
 - `IsConfigured()` — whether the directory backend has usable configuration.
 - `CheckPasswordSignInAsync(userName, password)` — verifies credentials against the directory.
-- `ChangePassword(userName, newPassword)` — administrative password reset. **Synchronous**, unlike the other members on this interface, even though the underlying implementations perform I/O.
+- `ChangePassword(userName, newPassword)` — **administrative password reset**, not a user-initiated change: the current password is never verified, and the identity performing the reset must hold reset-password rights on the account. Don't expose it to end users as a "change my password" flow without verifying the old password yourself first. **Synchronous**, unlike the other members on this interface, even though the underlying implementations perform I/O.
 - `GetByUserNameAsync(userName)` — looks up a user and maps it to a `DomainUserDto`. **Not implemented by `LDAPService`** — calling it there throws `NotImplementedException`.
 
 ## Implementations
@@ -45,9 +45,11 @@ public interface IActiveDirectoryService
 
 Uses `System.DirectoryServices.AccountManagement.PrincipalContext`/`UserPrincipal` against a classic Windows AD domain, constructed with `DomainOptions`.
 
-- `IsConfigured()` — `true` when `settings.Name` is non-empty.
+> **Blocking I/O.** `System.DirectoryServices.AccountManagement` has no async API, so `CheckPasswordSignInAsync` and `GetByUserNameAsync` perform synchronous network calls to the domain controller on the calling thread and return an already-completed `Task`. Each call also opens a fresh `PrincipalContext` (no connection reuse), and no `CancellationToken` is supported. Wrap calls in `Task.Run` if blocking a request thread matters.
+
+- `IsConfigured()` — `true` when `settings.Name` is non-empty/non-whitespace **and** is not the `"domain.com"` placeholder default (case-insensitive).
 - `CheckPasswordSignInAsync` — finds the user by identity, checks the account isn't locked out, then validates credentials via `PrincipalContext.ValidateCredentials`.
-- `ChangePassword` — finds the user by identity and calls `UserPrincipal.SetPassword` + `Save()`; returns `false` if the user isn't found.
+- `ChangePassword` — admin reset: finds the user by identity and calls `UserPrincipal.SetPassword` + `Save()`; returns `false` if the user isn't found.
 - `GetByUserNameAsync` — finds the user by identity and maps `UserPrincipalName`/`GivenName`/`Surname`/`VoiceTelephoneNumber`/`EmailAddress` into a `DomainUserDto`; returns `null` if not found.
 
 ### `LDAPService`
@@ -55,8 +57,8 @@ Uses `System.DirectoryServices.AccountManagement.PrincipalContext`/`UserPrincipa
 Uses `Novell.Directory.Ldap` for the credential-check path and `System.DirectoryServices.DirectoryEntry`/`DirectorySearcher` for password changes, constructed with `LdapOptions`.
 
 - `IsConfigured()` — always `true`.
-- `CheckPasswordSignInAsync` — returns `false` immediately for an empty/whitespace password; otherwise opens an `LdapConnection` (`SecureSocketLayer = false`) to `settings.Address`/`settings.Port` and binds as `"{userName}@{settings.Name}"` with the supplied password. A successful bind (no exception) is treated as a valid sign-in.
-- `ChangePassword` — binds to `settings.Connection` as `settings.UserName`/`settings.Password` via `DirectoryEntry`, searches for `sAMAccountName = userName`, and invokes `SetPassword` + `CommitChanges` on the match. Returns `false` if no matching entry is found.
+- `CheckPasswordSignInAsync` — returns `false` immediately for an empty/whitespace user name or password; otherwise opens an `LdapConnection` (`SecureSocketLayer = settings.UseSsl`) to `settings.Address`/`settings.Port` and binds as `"{userName}@{settings.Name}"` with the supplied password. A successful bind is a valid sign-in; an `InvalidCredentials` bind error returns `false` (other LDAP errors still throw).
+- `ChangePassword` — returns `false` immediately for an empty/whitespace user name; otherwise binds to `settings.Connection` as `settings.UserName`/`settings.Password` via `DirectoryEntry` (`AuthenticationTypes.Secure`), searches for `sAMAccountName = userName` (the value is escaped per RFC 4515 — `\`, `*`, `(`, `)` and NUL — so it cannot alter the filter), and invokes `SetPassword` + `CommitChanges` on the match. Returns `false` if no matching entry is found.
 - `GetByUserNameAsync` — **throws `NotImplementedException`** unconditionally.
 
 ### `FakeActiveDirectoryService`
@@ -71,16 +73,17 @@ No-op implementation with no `[SupportedOSPlatform]` restriction, intended for l
 ## Options
 
 ### `DomainOptions`
-- `Name` (`string`, default `"domain.com"`) — the AD domain to connect to.
-- `Enable` (`bool`, computed) — `!string.IsNullOrEmpty(Name)`. Note `ActiveDirectoryService.IsConfigured()` re-implements this same check inline rather than calling `Enable`.
+- `Name` (`string`, default `"domain.com"`) — the AD domain to connect to. The default is a placeholder: `ActiveDirectoryService.IsConfigured()` returns `false` until a real domain is set.
+- `Enable` (`bool`, computed) — `!string.IsNullOrEmpty(Name)`. Left unchanged for backward compatibility, so it is still `true` for the `"domain.com"` placeholder; prefer `IActiveDirectoryService.IsConfigured()`.
 
 ### `LdapOptions`
 - `Name` (`string`, default `"domain.com"`) — appended after `userName@` when binding.
 - `Address` (`string`, default `"10.0.10.2"`) — LDAP server host.
 - `Port` (`int`, default `389`).
+- `UseSsl` (`bool`, default `false`) — use LDAPS for the sign-in bind. **Enable in production** (usually with `Port = 636`); with `false` user passwords travel to the server in cleartext.
 - `Connection` (`string`, default `"LDAP://127.0.0.1/DC=company,DC=local"`) — bind path used by `ChangePassword`.
 - `NewUserConnection` (`string`, default `"LDAP://127.0.0.1/ou=new_users,DC=company,DC=local"`) — declared but not read by any method in this package.
-- `UserName` / `Password` (`string`, defaults `"admin"` / `"AdminP@ssword"`) — admin credentials used to bind for `ChangePassword`.
+- `UserName` / `Password` (`string`, defaults empty strings) — admin credentials used to bind for `ChangePassword`.
 
 ## `DomainUserDto`
 
@@ -130,7 +133,7 @@ builder.Services.AddLdapActiveDirectory(opt =>
     opt.Name = "company.local";
     opt.Connection = "LDAP://10.0.10.2/DC=company,DC=local";
     opt.UserName = "admin";
-    opt.Password = "AdminP@ssword";
+    opt.Password = "<your-admin-password>";
 });
 #pragma warning restore CA1416
 ```
@@ -165,3 +168,14 @@ Because everything is behind `IActiveDirectoryService`, controllers/services nev
 - `AddActiveDirectory()` (the no-argument overload) silently wires up `FakeActiveDirectoryService`. There is no compile-time signal distinguishing it from the real overloads other than the argument list — double-check which overload is actually being called in a given environment's startup code.
 - None of the three registration methods use `Microsoft.Extensions.Options`; `DomainOptions`/`LdapOptions` instances are private to the closure created inside each extension method and are not resolvable elsewhere via DI.
 - `LdapOptions.NewUserConnection` is defined but not consumed anywhere in this package's current code.
+
+---
+
+## Breaking / behavior changes
+
+### Unreleased
+
+- **LDAP credential defaults removed:** `LdapOptions.UserName`/`Password` now default to empty (previously `"admin"`/`"AdminP@ssword"`); set them explicitly for `ChangePassword`.
+- New `LdapOptions.UseSsl` (default `false`, as before) enables LDAPS for the `LDAPService.CheckPasswordSignInAsync` bind — recommended with `Port = 636`.
+- `LDAPService.CheckPasswordSignInAsync` returns `false` on invalid credentials (previously threw `LdapException`) and for a blank user name; `ChangePassword` returns `false` for a blank user name and escapes the user name in the LDAP filter (RFC 4515).
+- `ActiveDirectoryService.IsConfigured()` returns `false` for the `"domain.com"` placeholder default and for a whitespace name (previously `true` for any non-empty name). `DomainOptions.Enable` is unchanged.

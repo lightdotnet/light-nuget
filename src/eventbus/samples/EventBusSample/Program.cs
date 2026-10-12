@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 var executingAssembly = Assembly.GetExecutingAssembly();
 
-builder.Services.AddMassTransit(x =>
+builder.Services.AddRabbitMQEventBus(x =>
 {
     x.AddConsumers(executingAssembly);
     x.ConfigRabbitMQ(mq =>

@@ -36,7 +36,9 @@ In the middleware pipeline:
 app.UseSwagger();
 ```
 
-Both extension methods are no-ops when `Swagger:Enable` is `false` (or the `Swagger` config section is missing values), so they are safe to call unconditionally, including in production.
+Both extension methods are no-ops when `Swagger:Enable` is `false` (or the `Swagger` config section is missing entirely), so they are safe to call unconditionally, including in production.
+
+> **Name clash with Swashbuckle.** `UseSwagger(this IApplicationBuilder)` and `SwaggerOptions` have the same names as Swashbuckle's `Microsoft.AspNetCore.Builder.SwaggerBuilderExtensions.UseSwagger` and `Swashbuckle.AspNetCore.Swagger.SwaggerOptions`. Import `Light.AspNetCore.Swagger` to get this package's config-driven `UseSwagger()`; if Swashbuckle's namespaces are also imported, the call can resolve to Swashbuckle's overload (which ignores `Swagger:Enable`) or be ambiguous — call `SwaggerApplicationBuilderExtensions.UseSwagger(app)` explicitly or fully qualify `Light.AspNetCore.Swagger.SwaggerOptions` in that case.
 
 ## Configuration (`SwaggerOptions`)
 
@@ -57,7 +59,7 @@ Bound from the `"Swagger"` configuration section:
 |---|---|---|
 | `Enable` | `bool` | Master switch. When `false`, `AddSwagger` registers nothing and `UseSwagger` skips the middleware entirely. |
 | `Title` | `string?` | Sets the OpenAPI document's `Info.Title` (via `TitleFilter`, an `IDocumentFilter`) and the Swagger UI browser tab title (via `CustomSwaggerUIOptions`). Ignored if null/empty. |
-| `SecurityScheme` | `string?` | Adds security scheme(s) to the generated document. The value is matched with `Contains`, not equality, so `"jwt"`, `"basic"`, or a combined value such as `"jwt,basic"` will add the corresponding scheme(s). Any other substring is ignored. |
+| `SecurityScheme` | `string?` | Adds security scheme(s) to the generated document. The value is matched with case-sensitive `Contains` (use lowercase), not equality, so `"jwt"`, `"basic"`, or a combined value such as `"jwt,basic"` will add the corresponding scheme(s). Any other substring is ignored. |
 | `VersionDefinition` | `bool` | When `true`, generates one Swagger document per discovered API version (via `IApiVersionDescriptionProvider` from `Asp.Versioning.Mvc.ApiExplorer`) instead of a single default document, and exposes one Swagger UI endpoint per version. Requires API versioning + API explorer to already be registered by the consuming app (`AddApiVersioning().AddApiExplorer()`), otherwise resolving `IApiVersionDescriptionProvider` will throw. |
 
 `SecurityScheme` values recognized:
@@ -67,10 +69,11 @@ Bound from the `"Swagger"` configuration section:
 
 ## What `AddSwagger` registers
 
+Always (regardless of `Enable`): `SwaggerOptions` is bound from the `Swagger` section and available as `IOptions<SwaggerOptions>` (so `UseSwagger` can read it).
+
 When `Enable = true`:
 
-- `SwaggerOptions` bound and available as `IOptions<SwaggerOptions>`.
-- If `VersionDefinition = true`: `VersionDefinitionSwaggerOptions` (`IConfigureOptions<SwaggerGenOptions>`) — adds a Swagger document per discovered API version and applies the `SwaggerDefaultValues` operation filter (marks deprecated operations, backfills missing parameter descriptions from model metadata).
+- If `VersionDefinition = true`: `VersionDefinitionSwaggerOptions` (`IConfigureOptions<SwaggerGenOptions>`) — adds a Swagger document per discovered API version and applies the `SwaggerDefaultValues` operation filter (marks deprecated operations, backfills missing parameter descriptions from model metadata; parameters added by other filters that have no ApiExplorer description are left untouched).
 - `AddSwaggerGen(...)` with:
   - Security scheme(s) per `SecurityScheme` (see above).
   - `CustomSchemaIds(x => x.FullName)` — avoids schema id collisions when multiple types share the same short name.
