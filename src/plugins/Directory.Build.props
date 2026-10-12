@@ -9,11 +9,11 @@
     <AspnetVersion>10.*</AspnetVersion>
     <BaseNamespace>Light</BaseNamespace>
     <OrgName>Lightsoft</OrgName>
-    <NugetVersion>2.0.2-preview.1</NugetVersion>
+    <NugetVersion>2.0.2</NugetVersion>
     <ActiveDirectoryVersion>$(NugetVersion)</ActiveDirectoryVersion>
     <FileGeneratorVersion>$(NugetVersion)</FileGeneratorVersion>
     <GraphVersion>$(NugetVersion)</GraphVersion>
-    <SerilogVersion>2.0.2-preview.2</SerilogVersion>
+    <SerilogVersion>$(NugetVersion)</SerilogVersion>
     <SmtpMailVersion>$(NugetVersion)</SmtpMailVersion>
   </PropertyGroup>
 </Project>
