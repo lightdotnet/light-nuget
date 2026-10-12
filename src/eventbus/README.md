@@ -314,7 +314,7 @@ app.MapGet("/changed", async (Color oldColor, Color newColor, IEventBus eventBus
 
 ## Breaking / behavior changes
 
-### Unreleased
+### 0.3.0
 
 `Lightsoft.EventBus`:
 
