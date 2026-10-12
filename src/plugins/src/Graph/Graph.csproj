@@ -22,7 +22,7 @@
 
   <ItemGroup>
 	<PackageReference Include="Azure.Identity" Version="1.*" />
-	<PackageReference Include="Microsoft.Graph" Version="6.*" />
+	<PackageReference Include="Microsoft.Graph" Version="6.8.0" />
   </ItemGroup>
 
 </Project>
